@@ -9,9 +9,9 @@ v_y = 20; a_y = 0; % azimuth
 h = 5000;
 La = 2;     
 v_p = 100; 
-f0 = 2e9; c = 3e8 ; lambda = c/f0 ;
+f0 = 8.85e9; c = 3e8 ; lambda = c/f0 ;
 dur = 6 ; %
-PRF = 400; %%2.35e3
+PRF = 1000; %%2.35e3
 Kr = 20e12 ;
 Tp = 1.5e-6; % Pulse width
 B =  Kr*Tp;
@@ -108,3 +108,13 @@ if control_ac == true
     purinto(s_a)
     %clearvars eta0 M eta tau
 end 
+%%
+figure
+temp = spectrogram(s_2(:,293),128,120,300,1000,'centered','yaxis');
+x = [-3 3];
+y = [-500 500];
+imagesc(x, y, abs(temp))
+ set(gca,'Ydir','normal')
+set(gca,'FontSize',32,'Fontname','CMU Serif')
+xlabel('$\eta$','Interpreter','latex')
+ylabel('$f_\eta$','Interpreter','latex')
