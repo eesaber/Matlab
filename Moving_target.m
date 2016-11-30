@@ -118,3 +118,15 @@ imagesc(x, y, abs(temp))
 set(gca,'FontSize',32,'Fontname','CMU Serif')
 xlabel('$\eta$','Interpreter','latex')
 ylabel('$f_\eta$','Interpreter','latex')
+%%
+for i = 1 : 5
+	X_a(i,:) = frft(s_2(:,293,0.752 + 0.01*i))
+	plot(abs(X_a(i,:)),'LineWidth', 2.5)
+	hold on
+end 
+%axis([2700, 3300, 0, 7000])
+set(gca,'Ydir','normal')   
+xlabel('$u$','Interpreter','latex')
+ylabel('$\left| X_a(u) \right|$','Interpreter','latex')
+set(gca,'FontSize',28,'Fontname','CMU Serif')
+
