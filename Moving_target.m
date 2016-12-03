@@ -119,14 +119,18 @@ set(gca,'FontSize',32,'Fontname','CMU Serif')
 xlabel('$\eta$','Interpreter','latex')
 ylabel('$f_\eta$','Interpreter','latex')
 %%
-for i = 1 : 5
-	X_a(i,:) = frft(s_2(:,293,0.752 + 0.01*i))
-	plot(abs(X_a(i,:)),'LineWidth', 2.5)
-	hold on
+for i = 1 : 8000
+    X_a(i,:) = frft(s_2(:,293), 0.00025*i);
+	%X_a(i,:) = frft(s_2(:,293),0.792 + 0.0005*i);
+    plot(abs(X_a(i,:)),'LineWidth', 3)
+    hold on
+    bw(i) = powerbw(abs(X_a(i,:)),100) ;
 end 
+
 %axis([2700, 3300, 0, 7000])
 set(gca,'Ydir','normal')   
 xlabel('$u$','Interpreter','latex')
 ylabel('$\left| X_a(u) \right|$','Interpreter','latex')
 set(gca,'FontSize',28,'Fontname','CMU Serif')
-
+figure
+plot(bw)
