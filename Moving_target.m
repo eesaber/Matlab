@@ -124,14 +124,28 @@ pbaspect([4 3 1])
 %%
 for i = 1 : 8000
 	X_a(i,:) = frft(s_2(:,293), 0.00025*i);
-	bw(i) = powerbw(abs(X_a(i,:)))
+    temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
+    bw(i) = length(temp);
+    clear temp;
 end 
-x_space = linspace(0, 2 * pi, 8000);
+x_space = linspace(0, 360, 8000);
 plot(abs(X_a),'LineWidth', 3)
-%axis([2700, 3300, 0, 7000])
+axis([2700, 3300, 0, 7000])
 set(gca,'Ydir','normal')   
 xlabel('$u$','Interpreter','latex')
 ylabel('$\left| X_a(u) \right|$','Interpreter','latex')
 set(gca,'FontSize',32,'Fontname','CMU Serif')
+%%
+for i = 1 : 8000
+    temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
+    bw(i) = length(temp);
+    clear temp;
+end
+%%
 figure
-plot(bw)
+plot(x_space,bw, 'Linewidth',4)
+set(gca,'xtick',0:60:360)
+axis([0, 360, 0, 6000])
+xlabel('$a$','Interpreter','latex')
+ylabel('$L\{X_a(u)\}$','Interpreter','latex')
+set(gca,'FontSize',50,'Fontname','CMU Serif')
