@@ -7,8 +7,8 @@ if(print)
 	set(gca,'Ydir','normal')   
 	xlabel('Range $(\Delta \tau)$','Interpreter','latex')
 	ylabel('Azimuth $(\Delta \eta)$','Interpreter','latex')
-	set(gca,'FontSize',26,'Fontname','CMU Serif')
-	colormap('default')
+	set(gca,'FontSize',32,'Fontname','CMU Serif Roman')
 	colormap('Jet')
+	colorbar
 	pbaspect([4 3 1])
 end

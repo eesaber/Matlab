@@ -118,19 +118,20 @@ imagesc(x, y, abs(temp))
 set(gca,'FontSize',32,'Fontname','CMU Serif')
 xlabel('$\eta$','Interpreter','latex')
 ylabel('$f_\eta$','Interpreter','latex')
+colormap('Jet')
+colorbar
+pbaspect([4 3 1])
 %%
 for i = 1 : 8000
-    X_a(i,:) = frft(s_2(:,293), 0.00025*i);
-	%X_a(i,:) = frft(s_2(:,293),0.792 + 0.0005*i);
-    plot(abs(X_a(i,:)),'LineWidth', 3)
-    hold on
-    bw(i) = powerbw(abs(X_a(i,:)),100) ;
+	X_a(i,:) = frft(s_2(:,293), 0.00025*i);
+	bw(i) = powerbw(abs(X_a(i,:)))
 end 
-
+x_space = linspace(0, 2 * pi, 8000);
+plot(abs(X_a),'LineWidth', 3)
 %axis([2700, 3300, 0, 7000])
 set(gca,'Ydir','normal')   
 xlabel('$u$','Interpreter','latex')
 ylabel('$\left| X_a(u) \right|$','Interpreter','latex')
-set(gca,'FontSize',28,'Fontname','CMU Serif')
+set(gca,'FontSize',32,'Fontname','CMU Serif')
 figure
 plot(bw)
