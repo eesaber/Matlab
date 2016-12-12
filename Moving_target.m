@@ -40,11 +40,11 @@ s_0 = exp(i* 4* pi*R_0/ lambda - j* pi* Kr* (ref_time).^2)  ;
 M = nextpow2(length(tau)) ; 
 Fs_0 = fft( s_0, 2^M );
 % FFT to s w.r.t tau and "Do range compression"
+Fs = fft(s.',2^M).';
 for k = 1 : length(eta)
-    Fs(k,:) = fft(s(k,:),2^M);
     Fs_r(k,:) = Fs(k,:) .* Fs_0 ;
-    s_r(k,:) = ifft( Fs_r(k,:) );
 end
+s_r = ifft( Fs_r.' ).';
 %purinto(s_r); % Print the s_r
 %% RCMC for range curveture 
 % f_tau 
@@ -53,10 +53,9 @@ f_tau = f_tau/(2^M/4/B) ;
 H_c =  exp(  j* (2* pi /c )* ( (20-v_p)^2 / R_0) *eta'.^2 * f_tau); %range curveture filter
 %Multiply H_c to Fs_r
 Fs_1 = Fs_r .* H_c ;
-for k = 1 : length(eta)
-    s_1(k,:) = ifft( Fs_1(k,:) );
-end
-purinto(s_1); % Print the s_1
+s_1 = ifft( Fs_1.' ).';
+
+%purinto(s_1); % Print the s_1
 %% Compute v_r 
 control_rt = false;  % Control if the procedure go through hough transform 
 if control_rt == true
@@ -67,10 +66,9 @@ end
 %% RCMC for range walk
 H_w = exp(j* 4* pi /c * v_x /1.41* eta' * f_tau);
 Fs_2 = Fs_1 .* H_w;  
-for k = 1 : length(eta)
-   s_2(k,:) = ifft( Fs_2(k,:) );
-end
-purinto(s_2); % Print the s_2
+s_2 = ifft( Fs_2.' ).';
+
+%purinto(s_2); % Print the s_2
 %% Likelihood computation
 control_lc = false ;
 if control_lc == true
@@ -90,7 +88,7 @@ end
 %plot(real(s_2(:,I_col)))
 %plot(Test_v_y,likevector)
 %% Azimuth compression 
-control_ac = false ;
+control_ac = true ;
 if control_ac == true 
 	% Azimuth reference signal
 	eta0 = linspace(-dur/2, dur/2,length(s_2(:,1)) );
@@ -99,15 +97,16 @@ if control_ac == true
 	M = nextpow2(length(eta0));
 	Fs_a0 = fft(s_a0,2^M)'; 
 	Fs_a0 = conj(Fs_a0); 
-
+    Fs_2a = fft(s_2 ,2^M); 
 	for k = 1 : length(s_2(1,:))
-		Fs_2a = fft(s_2(:,k),2^M); 
-        Fs_a(:,k) = Fs_2a.* Fs_a0 ;
-        s_a = ifft(Fs_a);
+        Fs_a(:,k) = Fs_2a(:,k).* Fs_a0 ;
     end
+    s_a = ifft(Fs_a);
     purinto(s_a)
     %clearvars eta0 M eta tau
-end 
+end
+
+%{
 %%
 figure
 temp = spectrogram(s_2(:,293),128,120,300,1000,'centered','yaxis');
@@ -121,31 +120,41 @@ ylabel('$f_\eta$','Interpreter','latex')
 colormap('Jet')
 colorbar
 pbaspect([4 3 1])
+
+t = -6:0.1:6;
+test = rectangularPulse(-2,2,t);
+
+plot(real(frft(test, 0.5)))
+hold
+plot(imag(frft(test, 0.5)))
+%}
 %%
 for i = 1 : 8000
-	X_a(i,:) = frft(s_2(:,293), 0.00025*i);
+	X_a(i,:) = frft(s_2(:,293), 1 + 0.0005*i);
     temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
     bw(i) = length(temp);
     clear temp;
 end 
+ 
+%{
 x_space = linspace(0, 360, 8000);
 plot(abs(X_a),'LineWidth', 3)
 axis([2700, 3300, 0, 7000])
 set(gca,'Ydir','normal')   
 xlabel('$u$','Interpreter','latex')
-ylabel('$\left| X_a(u) \right|$','Interpreter','latex')
+ylabel('$\left| X_a(u) \right|$','Interpreter','latex'
 set(gca,'FontSize',32,'Fontname','CMU Serif')
+%}
 %%
-for i = 1 : 8000
-    temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
-    bw(i) = length(temp);
-    clear temp;
-end
-%%
+x_space = linspace(0,360,8000);
+[bw_min bw_min_in] = min(bw);
+a_min = x_space(bw_min_in);
+
 figure
 plot(x_space,bw, 'Linewidth',4)
-set(gca,'xtick',0:60:360)
+set(gca,'xtick',0:45:360)
 axis([0, 360, 0, 6000])
-xlabel('$a$','Interpreter','latex')
+xlabel('$a ^\circ$','Interpreter','latex')
 ylabel('$L\{X_a(u)\}$','Interpreter','latex')
 set(gca,'FontSize',50,'Fontname','CMU Serif')
+strmin = sprintf(a_min)
