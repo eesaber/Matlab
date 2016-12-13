@@ -3,8 +3,8 @@
 x_n = 5000;
 y_n = 0;
 d = 200; % Length of the target area 
-v_x = 0; a_x = 0; % range
-v_y = 20; a_y = 0; % azimuth 
+v_x = 80; a_x = 0; % rangecl
+v_y = 0; a_y = 0; % azimuth 
 % Platform
 h = 5000;
 La = 2;     
@@ -18,7 +18,8 @@ B =  Kr*Tp;
 Ta = 0.886 * (lambda * x_n)/(La *v_p *1);
 
 %% Signal 
-eta = linspace( -0-dur/2,-0+dur/2,PRF*dur) ;  % Slow time -6
+aa = 0;
+eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
 
 upran = sqrt( (x_n + d)^2 + h^2) ; downran =  sqrt( (x_n - d)^2 + h^2); %Set upper limit and down limit 
 tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + Tp  ;  % fast time space
@@ -30,7 +31,7 @@ for k = 1 : length(eta)
     td = 2* R(k)/ c ;
     s(k,:) = exp(-i* 4* pi*R(k)/ lambda + i* pi* Kr* (tau - 2* R(k)/ c).^2) .*(tau>=td & tau-td<=Tp)  ;
 end
-%purinto(s); % Print the s
+purinto(s); % Print the s
 %% Range compression 
 % Reference signal 
 td = 2* R_0 / c ;
@@ -50,21 +51,33 @@ s_r = ifft( Fs_r.' ).';
 % f_tau 
 f_tau = 0  : 1 : 2^M - 1;
 f_tau = f_tau/(2^M/4/B) ;
-H_c =  exp(  j* (2* pi /c )* ( (20-v_p)^2 / R_0) *eta'.^2 * f_tau); %range curveture filter
+H_c =  exp(  j* (2* pi /c )* ( (0-v_p)^2 / R_0) *eta'.^2 * f_tau); %range curveture filter
 %Multiply H_c to Fs_r
 Fs_1 = Fs_r .* H_c ;
 s_1 = ifft( Fs_1.' ).';
 
 %purinto(s_1); % Print the s_1
 %% Compute v_r 
-control_rt = false;  % Control if the procedure go through hough transform 
+control_rt = true;  % Control if the procedure go through hough transform 
 if control_rt == true
-		[Index temp] = max(abs(s_1') ); 
+    [temp low_index] = max(abs(s_1(1,:)), [], 2);
+	[temp up_index] = max(abs(s_1( size(s_1(:,1)),: )), [], 2); 
+    weiyi = up_index - low_index;
+    kai = 1 / 4 / B / dur * weiyi(1) ;
+    t_v_r = c / 2 * kai ;
+    t_v_x = t_v_r * R_0 / x_n
+    2 * t_v_r / lambda
      % Apply Hough tranform to fint the angle.
 end
 
 %% RCMC for range walk
-H_w = exp(j* 4* pi /c * v_x /1.41* eta' * f_tau);
+% 全能视角
+god = false;
+if god == true
+    H_w = exp(1i* 4* pi /c * v_x /1.41* eta' * f_tau);
+else 
+    H_w = exp(1i* 4* pi /c * t_v_x /1.41* eta' * f_tau);
+end
 Fs_2 = Fs_1 .* H_w;  
 s_2 = ifft( Fs_2.' ).';
 
@@ -93,7 +106,7 @@ if control_ac == true
 	% Azimuth reference signal
 	eta0 = linspace(-dur/2, dur/2,length(s_2(:,1)) );
 	K_a = 2/lambda *(v_y - v_p)^2 / R_0 ;
-	s_a0 = exp(j * pi* K_a* eta0.^2 ) ;
+	s_a0 = exp( j * 4 * pi * t_v_r / lambda * eta0 + j * pi* K_a* eta0.^2 ) ;
 	M = nextpow2(length(eta0));
 	Fs_a0 = fft(s_a0,2^M)'; 
 	Fs_a0 = conj(Fs_a0); 
@@ -106,12 +119,14 @@ if control_ac == true
     %clearvars eta0 M eta tau
 end
 
-%{
+
 %%
+%{
 figure
 temp = spectrogram(s_2(:,293),128,120,300,1000,'centered','yaxis');
 x = [-3 3];
 y = [-500 500];
+
 imagesc(x, y, abs(temp))
  set(gca,'Ydir','normal')
 set(gca,'FontSize',32,'Fontname','CMU Serif')
@@ -121,16 +136,20 @@ colormap('Jet')
 colorbar
 pbaspect([4 3 1])
 
-t = -6:0.1:6;
-test = rectangularPulse(-2,2,t);
-
-plot(real(frft(test, 0.5)))
-hold
-plot(imag(frft(test, 0.5)))
-%}
 %%
-for i = 1 : 8000
-	X_a(i,:) = frft(s_2(:,293), 1 + 0.0005*i);
+
+t = -2:0.005:2;
+%test = rectangularPulse(-2,2,t);
+qq = exp(- j * pi * K_a * t.^2);
+plot(real(qq))
+figure
+plot(real(s_2(:,293)))
+
+%%
+
+for i = 1 : 4000
+    %X_a(i,:) =  frft(qq, 1 + 0.0005*i);
+    X_a(i,:) = frft(s_2(:,293), 1 + 0.001*i);
     temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
     bw(i) = length(temp);
     clear temp;
@@ -146,7 +165,7 @@ ylabel('$\left| X_a(u) \right|$','Interpreter','latex'
 set(gca,'FontSize',32,'Fontname','CMU Serif')
 %}
 %%
-x_space = linspace(0,360,8000);
+x_space = linspace(0,360,length(bw));
 [bw_min bw_min_in] = min(bw);
 a_min = x_space(bw_min_in);
 
@@ -155,6 +174,7 @@ plot(x_space,bw, 'Linewidth',4)
 set(gca,'xtick',0:45:360)
 axis([0, 360, 0, 6000])
 xlabel('$a ^\circ$','Interpreter','latex')
-ylabel('$L\{X_a(u)\}$','Interpreter','latex')
+ylabel('$L\{X_{a + \pi / 2}(u)\}$','Interpreter','latex')
 set(gca,'FontSize',50,'Fontname','CMU Serif')
-strmin = sprintf(a_min)
+
+%}
