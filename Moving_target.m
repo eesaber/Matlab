@@ -1,12 +1,12 @@
 %% Parameters - C Band airborne SAR parameters
 % Target
-x_n = 5000;
+x_n = 3000;
 y_n = 0;
 d = 200; % Length of the target area 
-v_x = 80; a_x = 0; % rangecl
-v_y = 0; a_y = 0; % azimuth 
+v_x = 10; a_x = 0; % rangecl
+v_y = 10; a_y = 0; % azimuth 
 % Platform
-h = 5000;
+h = 8500;
 La = 2;     
 v_p = 100; 
 f0 = 8.85e9; c = 3e8 ; lambda = c/f0 ;
@@ -65,23 +65,22 @@ if control_rt == true
     weiyi = up_index - low_index;
     kai = 1 / 4 / B / dur * weiyi(1) ;
     t_v_r = c / 2 * kai ;
-    t_v_x = t_v_r * R_0 / x_n
-    2 * t_v_r / lambda
+    t_v_x = t_v_r * R_0 / x_n ;
+    2 * t_v_r / lambda ;
      % Apply Hough tranform to fint the angle.
 end
 
 %% RCMC for range walk
-% å…¨èƒ½è§†è§’
+% ¥þ¯àµø¨¤ 
 god = false;
 if god == true
-    H_w = exp(1i* 4* pi /c * v_x /1.41* eta' * f_tau);
+    H_w = exp(1i* 4* pi /c * v_x / R_0 * x_n * eta' * f_tau);
 else 
-    H_w = exp(1i* 4* pi /c * t_v_x /1.41* eta' * f_tau);
+    H_w = exp(1i* 4* pi /c * t_v_r * eta' * f_tau);
 end
 Fs_2 = Fs_1 .* H_w;  
 s_2 = ifft( Fs_2.' ).';
-
-%purinto(s_2); % Print the s_2
+purinto(s_2); % Print the s_2
 %% Likelihood computation
 control_lc = false ;
 if control_lc == true
@@ -100,12 +99,31 @@ if control_lc == true
 end
 %plot(real(s_2(:,I_col)))
 %plot(Test_v_y,likevector)
+%% WVD (spectrum)
+[dum Maxran ] = max(abs(s_2(3000,:)));
+figure
+temp= spectrogram(s_2(:,Maxran),128,120,300,1000,'centered','yaxis');
+x = [-3 3];
+y = [-500 500];
+[dum , upf] = max(temp(:,1));
+[dum , dwf] = max(temp(:,length(temp(1,:))));
+t_K_a = (dwf - upf) * 1000 / 300 / dur;
+t_v_y = 100 - sqrt( - t_K_a * c * R_0 / f0 / 2);
+imagesc(x, y, abs(temp))
+set(gca,'Ydir','normal')
+set(gca,'FontSize',32,'Fontname','CMU Serif')
+xlabel('$\eta$','Interpreter','latex')
+ylabel('$f_\eta$','Interpreter','latex')
+colormap('Jet')
+colorbar
+pbaspect([4 3 1])
 %% Azimuth compression 
+[t_v_x t_v_y]
 control_ac = true ;
 if control_ac == true 
 	% Azimuth reference signal
 	eta0 = linspace(-dur/2, dur/2,length(s_2(:,1)) );
-	K_a = 2/lambda *(v_y - v_p)^2 / R_0 ;
+	K_a = 2/lambda *(t_v_y - v_p)^2 / R_0 ;
 	s_a0 = exp( j * 4 * pi * t_v_r / lambda * eta0 + j * pi* K_a* eta0.^2 ) ;
 	M = nextpow2(length(eta0));
 	Fs_a0 = fft(s_a0,2^M)'; 
@@ -119,23 +137,7 @@ if control_ac == true
     %clearvars eta0 M eta tau
 end
 
-
-%%
 %{
-figure
-temp = spectrogram(s_2(:,293),128,120,300,1000,'centered','yaxis');
-x = [-3 3];
-y = [-500 500];
-
-imagesc(x, y, abs(temp))
- set(gca,'Ydir','normal')
-set(gca,'FontSize',32,'Fontname','CMU Serif')
-xlabel('$\eta$','Interpreter','latex')
-ylabel('$f_\eta$','Interpreter','latex')
-colormap('Jet')
-colorbar
-pbaspect([4 3 1])
-
 %%
 
 t = -2:0.005:2;
@@ -149,7 +151,7 @@ plot(real(s_2(:,293)))
 
 for i = 1 : 4000
     %X_a(i,:) =  frft(qq, 1 + 0.0005*i);
-    X_a(i,:) = frft(s_2(:,293), 1 + 0.001*i);
+    X_a(i,:) = frft(s_2(:,Maxran), 1 + 0.001*i);
     temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
     bw(i) = length(temp);
     clear temp;
