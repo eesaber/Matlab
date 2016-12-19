@@ -4,8 +4,8 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     x_n = 3000;
     y_n = 0;
     d = 200; % Length of the target area 
-    v_x = 0; a_x = 0; % rangecl
-    v_y = 0; a_y = 0; % azimuth 
+    v_x = vx; a_x = 0; % rangecl
+    v_y = vy; a_y = 0; % azimuth 
     % Platform
     h = 8500;
     La = 2;     
@@ -72,7 +72,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     end
 
     %% RCMC for range walk
-    % ¥þ¯àµø¨¤ 
+    % ï¿½ï¿½ï¿½ï¿½ï¿½ 
     god = false;
     if god == true
         H_w = exp(1i* 4* pi /c * v_x / R_0 * x_n * eta' * f_tau);
@@ -121,7 +121,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
         purinto(s_a)
         %clearvars eta0 M eta tau
     end
-
+close all
     %% Pulse sidelobe ratio (PLSR) - Right sidelobe 
     %Azimuth 
     clear temp 
@@ -139,6 +139,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     end
     % Range
     clear temp
+    coun = 0;
     [dum max_rind] = max(abs(s_a(max_aind,:)));
     temp = diff(abs(s_a(max_aind,:)));
     for k = max_rind : length(s_a(1,:))
@@ -146,7 +147,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
             coun = coun + 1;
         end
         if coun == 2
-            r_PLSR = 10 * log10(abs(s_a(max_aind, i + 1) ) / abs(s_a(max_aind, Maxran)) )
+            r_PLSR = 10 * log10(abs(s_a(max_aind, k + 1) ) / abs(s_a(max_aind, Maxran)) );
             break
         end
     end
@@ -167,6 +168,6 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
         end
     end
 
-    close all
+    
 
 end
