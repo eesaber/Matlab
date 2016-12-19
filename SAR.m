@@ -81,25 +81,8 @@ else
 end
 Fs_2 = Fs_1 .* H_w;  
 s_2 = ifft( Fs_2.' ).';
-%purinto(s_2); % Print the s_2
-%% Likelihood computation
-control_lc = false ;
-if control_lc == true
-    [Maxnum , Ind] = max(abs(s_2(:)));
-    [I_row, I_col] = ind2sub(size(s_2),Ind) ;
-    step = 0.1;
-    Test_v_y = -20: step :20 ;
-    likevector = linspace(0,0,length(Test_v_y) ) ;
-    for  k = 1 : length(Test_v_y) 
-        K_a = 2/lambda *(Test_v_y(k) - v_p)^2 / R_0 ;
-        s_a0 = exp(-j * 4 * pi / lambda * K_a* eta.^2 ).* (eta <= (max(eta)+ min(eta))/2) ;
-        likevector(k) = max(abs( conv(s_a0,s_2(:,I_col) )));
-    end
-   [Maxnum , Ind] = max(likevector) ;
-    Sim_v_y = (Ind - length(Test_v_y) /2 ) * step
-end
-%plot(real(s_2(:,I_col)))
-%plot(Test_v_y,likevector)
+%purinto(s_2); 
+
 %% WVD (spectrum)
 [dum Maxran ] = max(abs(s_2(3000,:)));
 figure
@@ -156,7 +139,7 @@ end
 % azimuth
 for k = max_aind : length(s_a(:,1))
     if abs(s_a(max_aind, Maxran)) / 2  >= abs(s_a(k, Maxran))
-        asandb = k - max_aind ;
+        asandb = (k - max_aind) * v_p / PRF;
         break
     end
 end
@@ -164,7 +147,7 @@ end
 [dum max_rind] = max(abs(s_a(max_aind,:)));
 for k = max_rind : length(s_a(1,:))
     if abs(s_a(max_aind, max_rind)) / 2 >= abs(s_a(max_aind, k))
-        rsandb = k - max_rind;
+        rsandb = (k - max_rind) * (upran - downran) / length(tau);
         break
     end
 end
