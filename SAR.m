@@ -82,24 +82,7 @@ end
 Fs_2 = Fs_1 .* H_w;  
 s_2 = ifft( Fs_2.' ).';
 %purinto(s_2); % Print the s_2
-%% Likelihood computation
-control_lc = false ;
-if control_lc == true
-    [Maxnum , Ind] = max(abs(s_2(:)));
-    [I_row, I_col] = ind2sub(size(s_2),Ind) ;
-    step = 0.1;
-    Test_v_y = -20: step :20 ;
-    likevector = linspace(0,0,length(Test_v_y) ) ;
-    for  k = 1 : length(Test_v_y) 
-        K_a = 2/lambda *(Test_v_y(k) - v_p)^2 / R_0 ;
-        s_a0 = exp(-j * 4 * pi / lambda * K_a* eta.^2 ).* (eta <= (max(eta)+ min(eta))/2) ;
-        likevector(k) = max(abs( conv(s_a0,s_2(:,I_col) )));
-    end
-   [Maxnum , Ind] = max(likevector) ;
-    Sim_v_y = (Ind - length(Test_v_y) /2 ) * step
-end
-%plot(real(s_2(:,I_col)))
-%plot(Test_v_y,likevector)
+
 %% WVD (spectrum)
 [dum Maxran ] = max(abs(s_2(3000,:)));
 figure
@@ -118,6 +101,7 @@ ylabel('$f_\eta$','Interpreter','latex')
 colormap('Jet')
 colorbar
 pbaspect([4 3 1])
+
 %% Azimuth compression 
 %[t_v_x t_v_y]
 control_ac = true ;
@@ -170,56 +154,5 @@ for k = max_rind : length(s_a(1,:))
 end
 
 close all
-%end
-%{
-%%
-close all
-figure
-plot(abs(s_a(:,Maxran)))
-figure
-plot(log10(abs(s_a(:,Maxran))))
-figure
-plot(diff(abs(s_a(:,Maxran))))
-%%
 
-t = -2:0.005:2;
-%test = rectangularPulse(-2,2,t);
-qq = exp(- j * pi * K_a * t.^2);
-plot(real(qq))
-figure
-plot(real(s_2(:,293)))
-
-%%
-
-for i = 1 : 4000
-    %X_a(i,:) =  frft(qq, 1 + 0.0005*i);
-    X_a(i,:) = frft(s_2(:,Maxran), 1 + 0.001*i);
-    temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
-    bw(i) = length(temp);
-    clear temp;
-    max_X_a(i) = max(abs(X_a(i)));
-end 
- 
-%{
-x_space = linspace(0, 360, 8000);
-plot(abs(X_a),'LineWidth', 3)
-axis([2700, 3300, 0, 7000])
-set(gca,'Ydir','normal')   
-xlabel('$u$','Interpreter','latex')
-ylabel('$\left| X_a(u) \right|$','Interpreter','latex'
-set(gca,'FontSize',32,'Fontname','CMU Serif')
-%}
-%%
-x_space = linspace(0,360,length(bw));
-[bw_min bw_min_in] = min(bw);
-a_min = x_space(bw_min_in);
-
-figure
-plot(x_space,bw, 'Linewidth',4)
-set(gca,'xtick',0:45:360)
-axis([0, 360, 0, 6000])
-xlabel('$a ^\circ$','Interpreter','latex')
-ylabel('$L\{X_{a + \pi / 2}(u)\}$','Interpreter','latex')
-set(gca,'FontSize',50,'Fontname','CMU Serif')
-%}
 end
