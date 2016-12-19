@@ -1,11 +1,11 @@
-function [asandb, PLSR, rsandb, t_v_x, t_v_y] = SAR (vx, vy) 
+function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy) 
 %% Parameters - C Band airborne SAR parameters
 % Target
 x_n = 3000;
 y_n = 0;
 d = 200; % Length of the target area 
-v_x = vx; a_x = 0; % rangecl
-v_y = vy; a_y = 0; % azimuth 
+v_x = 0; a_x = 0; % rangecl
+v_y = 0; a_y = 0; % azimuth 
 % Platform
 h = 8500;
 La = 2;     
@@ -123,8 +123,9 @@ if control_ac == true
 end
 
 %% Pulse sidelobe ratio (PLSR) - Right sidelobe 
+%Azimuth 
 clear temp 
-[dum , max_aind] = max(s_a(:,Maxran));
+[dum , max_aind] = max(abs(s_a(:,Maxran)));
 temp = diff(abs(s_a(:,Maxran)));
 coun = 0;
 for k = max_aind : length(s_a(:,1))
@@ -132,10 +133,23 @@ for k = max_aind : length(s_a(:,1))
         coun = coun + 1;
     end
     if coun == 2
-        PLSR = 10* log10(abs(s_a(k + 1, Maxran)) / abs(s_a(max_aind, Maxran)));
+        a_PLSR = 10* log10(abs(s_a(k + 1, Maxran)) / abs(s_a(max_aind, Maxran)));
         break
     end
 end
+% Range
+clear temp
+[dum max_rind] = max(abs(s_a(max_aind,:)));
+temp = diff(abs(s_a(max_aind,:)));
+for k = max_rind : length(s_a(1,:))
+    if temp(k) * temp(k + 1) < 0
+        coun = coun + 1;
+    end
+    if coun == 2
+        r_PLSR = 10 * log10(abs(s_a(max_aind, i + 1) ) / abs(s_a(max_aind, Maxran)) )
+        break
+end
+
 %% Range 3dB  azimuth 3dB
 % azimuth
 for k = max_aind : length(s_a(:,1))
@@ -145,7 +159,6 @@ for k = max_aind : length(s_a(:,1))
     end
 end
 % range 
-[dum max_rind] = max(abs(s_a(max_aind,:)));
 for k = max_rind : length(s_a(1,:))
     if abs(s_a(max_aind, max_rind)) / 2 >= abs(s_a(max_aind, k))
         rsandb = (k - max_rind) * (upran - downran) / length(tau);
