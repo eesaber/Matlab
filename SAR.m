@@ -140,7 +140,7 @@ end
 % azimuth
 for k = max_aind : length(s_a(:,1))
     if abs(s_a(max_aind, Maxran)) / 2  >= abs(s_a(k, Maxran))
-        asandb = k - max_aind ;
+        asandb = (k - max_aind) * v_p / PRF;
         break
     end
 end
@@ -148,7 +148,7 @@ end
 [dum max_rind] = max(abs(s_a(max_aind,:)));
 for k = max_rind : length(s_a(1,:))
     if abs(s_a(max_aind, max_rind)) / 2 >= abs(s_a(max_aind, k))
-        rsandb = k - max_rind;
+        rsandb = (k - max_rind) * (upran - downran) / length(tau);
         break
     end
 end
