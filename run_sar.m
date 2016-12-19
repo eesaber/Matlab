@@ -1,14 +1,18 @@
 clear
-%% v_y = 0 , v_x change
 over = 4;
+step = 3;
+x = linsapce(0, over * step, step); 
+%% v_y = 0 , v_x change
 for kk = 1 : over
-  [asandb(kk), PLSR(kk), rsandb(kk), t_v_x(kk), t_v_y(kk)] =  SAR((kk - 1) * 3, 0);
+  [r_PLSR(kk), a_PLSR(k), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] =  SAR((kk - 1) * step, 0);
 end
+figure 
+subplot
 %% v_y change, v_x = 0
 for kk = 1 : over
-   SAR(0, kk * 3)
+   SAR(0, kk * step)
 end
 %% v_y = v_x 
 for kk = 1 : over
-   SAR(kk * 3, kk * 3)
+   SAR(kk * step, kk * step)
 end
