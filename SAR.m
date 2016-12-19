@@ -1,16 +1,17 @@
+function [asandb, PLSR, rsandb, t_v_x, t_v_y] = SAR (vx, vy) 
 %% Parameters - C Band airborne SAR parameters
 % Target
 x_n = 3000;
 y_n = 0;
 d = 200; % Length of the target area 
-v_x = 10; a_x = 0; % rangecl
-v_y = 10; a_y = 0; % azimuth 
+v_x = vx; a_x = 0; % rangecl
+v_y = vy; a_y = 0; % azimuth 
 % Platform
 h = 8500;
 La = 2;     
 v_p = 100; 
 f0 = 8.85e9; c = 3e8 ; lambda = c/f0 ;
-dur = 6 ; %
+dur = 3 ; %
 PRF = 1000; %%2.35e3
 Kr = 20e12 ;
 Tp = 1.5e-6; % Pulse width
@@ -31,7 +32,7 @@ for k = 1 : length(eta)
     td = 2* R(k)/ c ;
     s(k,:) = exp(-i* 4* pi*R(k)/ lambda + i* pi* Kr* (tau - 2* R(k)/ c).^2) .*(tau>=td & tau-td<=Tp)  ;
 end
-purinto(s); % Print the s
+%purinto(s); % Print the s
 %% Range compression 
 % Reference signal 
 td = 2* R_0 / c ;
@@ -80,7 +81,7 @@ else
 end
 Fs_2 = Fs_1 .* H_w;  
 s_2 = ifft( Fs_2.' ).';
-purinto(s_2); % Print the s_2
+%purinto(s_2); % Print the s_2
 %% Likelihood computation
 control_lc = false ;
 if control_lc == true
@@ -91,7 +92,7 @@ if control_lc == true
     likevector = linspace(0,0,length(Test_v_y) ) ;
     for  k = 1 : length(Test_v_y) 
         K_a = 2/lambda *(Test_v_y(k) - v_p)^2 / R_0 ;
-        s_a0 = exp(-j * 2* pi / lambda * K_a* eta.^2 ).* (eta <= (max(eta)+ min(eta))/2) ;
+        s_a0 = exp(-j * 4 * pi / lambda * K_a* eta.^2 ).* (eta <= (max(eta)+ min(eta))/2) ;
         likevector(k) = max(abs( conv(s_a0,s_2(:,I_col) )));
     end
    [Maxnum , Ind] = max(likevector) ;
@@ -102,12 +103,12 @@ end
 %% WVD (spectrum)
 [dum Maxran ] = max(abs(s_2(3000,:)));
 figure
-temp= spectrogram(s_2(:,Maxran),128,120,300,1000,'centered','yaxis');
+temp= spectrogram(s_2(:,Maxran),128,120,8196,1000,'centered','yaxis');
 x = [-3 3];
 y = [-500 500];
 [dum , upf] = max(temp(:,1));
 [dum , dwf] = max(temp(:,length(temp(1,:))));
-t_K_a = (dwf - upf) * 1000 / 300 / dur;
+t_K_a = (dwf - upf) * 1000 / 8196 / dur;
 t_v_y = 100 - sqrt( - t_K_a * c * R_0 / f0 / 2);
 imagesc(x, y, abs(temp))
 set(gca,'Ydir','normal')
@@ -118,13 +119,13 @@ colormap('Jet')
 colorbar
 pbaspect([4 3 1])
 %% Azimuth compression 
-[t_v_x t_v_y]
+%[t_v_x t_v_y]
 control_ac = true ;
 if control_ac == true 
 	% Azimuth reference signal
 	eta0 = linspace(-dur/2, dur/2,length(s_2(:,1)) );
-	K_a = 2/lambda *(t_v_y - v_p)^2 / R_0 ;
-	s_a0 = exp( j * 4 * pi * t_v_r / lambda * eta0 + j * pi* K_a* eta0.^2 ) ;
+	K_a = 2/lambda *(v_y - v_p)^2 / R_0 ;
+	s_a0 = exp( -j * 4 * pi * t_v_r / lambda * eta0 + j * pi* K_a* eta0.^2 ) ;
 	M = nextpow2(length(eta0));
 	Fs_a0 = fft(s_a0,2^M)'; 
 	Fs_a0 = conj(Fs_a0); 
@@ -137,7 +138,48 @@ if control_ac == true
     %clearvars eta0 M eta tau
 end
 
+%% Pulse sidelobe ratio (PLSR) - Right sidelobe 
+clear temp 
+[dum , max_aind] = max(s_a(:,Maxran));
+temp = diff(abs(s_a(:,Maxran)));
+coun = 0;
+for k = max_aind : length(s_a(:,1))
+    if temp(k) * temp(k+1) < 0
+        coun = coun + 1;
+    end
+    if coun == 2
+        PLSR = 10* log10(abs(s_a(k + 1, Maxran)) / abs(s_a(max_aind, Maxran)));
+        break
+    end
+end
+%% Range 3dB  azimuth 3dB
+% azimuth
+for k = max_aind : length(s_a(:,1))
+    if abs(s_a(max_aind, Maxran)) / 2  >= abs(s_a(k, Maxran))
+        asandb = k - max_aind ;
+        break
+    end
+end
+% range 
+[dum max_rind] = max(abs(s_a(max_aind,:)));
+for k = max_rind : length(s_a(1,:))
+    if abs(s_a(max_aind, max_rind)) / 2 >= abs(s_a(max_aind, k))
+        rsandb = k - max_rind;
+        break
+    end
+end
+
+close all
+%end
 %{
+%%
+close all
+figure
+plot(abs(s_a(:,Maxran)))
+figure
+plot(log10(abs(s_a(:,Maxran))))
+figure
+plot(diff(abs(s_a(:,Maxran))))
 %%
 
 t = -2:0.005:2;
@@ -155,6 +197,7 @@ for i = 1 : 4000
     temp = find(abs(X_a(i,:)) > max(abs(X_a(i,:))) / 2);
     bw(i) = length(temp);
     clear temp;
+    max_X_a(i) = max(abs(X_a(i)));
 end 
  
 %{
@@ -178,5 +221,5 @@ axis([0, 360, 0, 6000])
 xlabel('$a ^\circ$','Interpreter','latex')
 ylabel('$L\{X_{a + \pi / 2}(u)\}$','Interpreter','latex')
 set(gca,'FontSize',50,'Fontname','CMU Serif')
-
 %}
+end
