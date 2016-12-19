@@ -1,4 +1,4 @@
-function my_plot(s, x_s, y_la)
+function my_plot(s, x_s, y_la, ti)
 print = true ;
 if(print) 
 %%It will print the magnitude of the input signal 
@@ -8,6 +8,7 @@ if(print)
     ylabel(y_la,'Interpreter','latex')
 	set(gca,'FontSize',32,'Fontname','CMU Serif Roman')
 	pbaspect([4 3 1])
+    savefig([ti '_' y_la '.fig'] )
 end
 
 end
