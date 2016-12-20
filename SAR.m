@@ -90,9 +90,15 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     x = [-3 3];
     y = [-500 500];
     [dum , upf] = max(temp(:,1));
-    [dum , dwf] = max(temp(:,length(temp(1,:))));
-    t_K_a = (dwf - upf) * 1000 / 8196 / dur;
+    [dum , dwf] = max(temp(:,10));
+    t_K_a = (dwf - upf) * 1000 / 8196 / (dur * 10 / length(temp(1,:))) ;
     t_v_y = 100 - sqrt( - t_K_a * c * R_0 / f0 / 2);
+    if imag(t_v_y) ~= 0
+        [dum , upf] = max(temp(:,length(temp(1,:)) - 10 ));
+        [dum , dwf] = max(temp(:,length(temp(1,:)) ));
+        t_K_a = (dwf - upf) * 1000 / 8196 / dur;
+        t_v_y = 100 - sqrt( - t_K_a * c * R_0 / f0 / 2);
+    end
     imagesc(x, y, abs(temp))
     set(gca,'Ydir','normal')
     set(gca,'FontSize',32,'Fontname','CMU Serif')
