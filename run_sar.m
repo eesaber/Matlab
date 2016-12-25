@@ -7,21 +7,26 @@ for kk = 1 : over
   [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] =  SAR((kk - 1) * step, 0);
 end
 
-my_plot(t_v_x - x, 0, x, '$\tilde{v}_x - v_x$ (m)','errx_vyfix')
-my_plot(r_PLSR, a_PLSR, x, 'PLSR (dB)','plsr_vyfix')
-my_plot(rsandb, asandb, x, 'Pulse width (m)','sand_vyfix')
+my_plot(t_v_x - x, x, '$\tilde{v}_x - v_x$(m)','errx_y0')
+my_plotyy(r_PLSR, a_PLSR, x, 'PSLR$_\tau$(dB)', 'PSLR$_\eta$(dB)','plsr_y0')
+my_plotyy(rsandb, asandb, x, 'IRW$_\tau$ (m)', 'IRW$_\eta$ (m)','sand_y0')
 
 %% v_y change, v_x = 0
 for kk = 1 : over
    [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR(0, (kk-1) * step);
 end
-my_plot(real(t_v_y) - x, 0, x, '$\tilde{v}_y - v_y$ (m/s)','erry_vxfix')
-my_plot(r_PLSR, a_PLSR, x, 'PLSR (dB)','plsr_vxfix')
-my_plot(rsandb, asandb, x, 'Pulse width (m)','sand_vxfix')
+%%
+close all
+my_plot(real(t_v_y) - x, x,'$\tilde{v}_y - v_y$(m/s)','erry_x0')
+my_plotyy(r_PLSR, a_PLSR, x, 'PSLR$_\tau$(dB)', 'PSLR$_\eta$(dB)','plsr_x0')
+my_plotyy(rsandb, asandb, x, 'IRW$_\tau$ (m)', 'IRW$_\eta$ (m)','sand_x0')
+
 %% v_y = v_x 
 for kk = 1 : over
    [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR((kk-1) * step, (kk-1) * step);
 end
-my_plot(t_v_x - x, real(t_v_y) - x, x, '$\tilde{v} - v$ (m/s)','errx_')
-my_plot(r_PLSR, a_PLSR, x, 'PLSR (dB)','plsr_')
-my_plot(rsandb, asandb, x, 'Pulse width (m)','sand_')
+%%
+close all
+my_plotyy(t_v_x - x, real(t_v_y) - x, x, '$\tilde{v_x} - v_x$(m/s)', '$\tilde{v}_y - v_y$(m/s)','errx_')
+my_plotyy(r_PLSR, a_PLSR, x, 'PSLR$_\tau$(dB)', 'PSLR$_\eta$(dB)','plsr_')
+my_plotyy(rsandb, asandb, x, 'IRW$_\tau$ (m)', 'IRW$_\eta$ (m)','sand_')
