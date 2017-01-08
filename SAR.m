@@ -1,11 +1,11 @@
-function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy) 
+function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx,vy) 
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_n = 3000;
     y_n = 0;
     d = 200; % Length of the target area 
-    v_x = vx; a_x = 0; % rangecl
-    v_y = vy; a_y = 0; % azimuth 
+    v_x = 10; a_x = 0; % rangecl
+    v_y = 10; a_y = 0; % azimuth 
     % Platform
     h = 8500;
     La = 2;     
@@ -72,7 +72,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     end
 
     %% RCMC for range walk
-    % ï¿½ï¿½ï¿½ï¿½ï¿½ 
+    % ï¿½ï¿½ï¿½ï¿½ï¿?
     god = false;
     if god == true
         H_w = exp(1i* 4* pi /c * v_x / R_0 * x_n * eta' * f_tau);
@@ -90,7 +90,7 @@ function [r_PLSR, a_PLSR, rsandb, asandb, t_v_x, t_v_y] = SAR (vx, vy)
     x = [-3 3];
     y = [-500 500];
     [dum , upf] = max(temp(:,1));
-    [dum , dwf] = max(temp(:,length(temp(1,:)));
+    [dum , dwf] = max(temp(:,length(temp(1,:))));
     t_K_a = (dwf - upf) * 1000 / 8196 / dur ;
     t_v_y = 100 - sqrt( - t_K_a * c * R_0 / f0 / 2);
     if imag(t_v_y) ~= 0
