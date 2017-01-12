@@ -1,5 +1,4 @@
 function [s] =  Gen_signal(vx, vy)
-    clear
     delete parameter.mat
     if nargin ~= 2
         vx = 0; vy = vx; 

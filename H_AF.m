@@ -7,6 +7,8 @@ clear
     s = exp(j* 2 * pi * 00 * t + j*pi * K_a *t.^2);
     %
     close all
+    
+    ambgfun(s ,1000,100)
 %%    
     N = length(s);
     M = nextpow2(length(s)) ; 
