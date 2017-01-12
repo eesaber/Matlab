@@ -5,7 +5,7 @@ x = 0: step: (over - 1) * step ;
 cd D:\Code\Simu
 %% v_y = 0 , v_x change
 for kk = 1 : over
-  [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] =  SAR((kk - 1) * step, 0);
+  [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] =  SAR_rda((kk - 1) * step, 0);
 end
 %%
 close all
@@ -15,7 +15,7 @@ my_plotyy(rsandb, asandb, x, 'IRW$_\tau$ (m)', 'IRW$_\eta$ (m)','sand_y0')
 
 %% v_y change, v_x = 0
 for kk = 1 : over
-   [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR(0, (kk-1) * step);
+   [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR_rda(0, (kk-1) * step);
 end
 %%
 close all
@@ -25,7 +25,7 @@ my_plotyy(rsandb, asandb, x, 'IRW$_\tau$ (m)', 'IRW$_\eta$ (m)','sand_x0')
 
 %% v_y = v_x 
 for kk = 1 : over
-   [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR((kk-1) * step, (kk-1) * step);
+   [r_PLSR(kk), a_PLSR(kk), rsandb(kk), asandb(kk), t_v_x(kk), t_v_y(kk)] = SAR_rda((kk-1) * step, (kk-1) * step);
 end
 %%
 close all
