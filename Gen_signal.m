@@ -5,21 +5,21 @@ function [s] =  Gen_signal(vx, vy)
     end
     %% Parameters - C Band airborne SAR parameters
     % Target
-    x_n = 3000;
+    x_n = 1000;
     y_n = 0;
-    d = 200; % Length of the target area 
+    d = 50; % Length of the target area 
     v_x = vx; a_x = 0; % rangecl
     v_y = vy; a_y = 0; % azimuth 
     % Platform
-    h = 8500;
+    h = 1000;
     La = 2;     
     v_p = 100; 
-    f_0 = 8.85e9; c = 3e8 ; lambda = c/f0 ;
-    dur = 3 ; %
-    PRF = 1000; %%2.35e3
-    K_r = 20e12 ;
-    T_p = 1.5e-6; % Pulse width
-    B =  Kr*Tp;
+    f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
+    dur = 2 ; %
+    PRF = 2000; %%2.35e3
+    K_r = 5e15 ;
+    T_p = 0.1e-6; % Pulse width
+    B =  K_r*T_p;
     T_a = 0.886 * (lambda * x_n)/(La *v_p *1);
 
     %% Signal 
@@ -35,6 +35,6 @@ function [s] =  Gen_signal(vx, vy)
      
     for k = 1 : length(eta)
         td = 2* R(k)/ c ;
-        s(k,:) = exp(-i* 4* pi*R(k)/ lambda + i* pi* K_r* (tau - 2* R(k)/ c).^2) .*(tau>=td & tau-td<=Tp)  ;
+        s(k,:) = exp(-i* 4* pi*R(k)/ lambda + i* pi* K_r* (tau - 2* R(k)/ c).^2) .*(tau>=td & tau-td<=T_p)  ;
     end
 end
