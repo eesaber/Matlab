@@ -1,4 +1,10 @@
 function [s] =  Gen_signal(vx, vy)
+% This function generate the SAR signal regarding to the input parameter.
+% Usage: Gen_signal(vx, vy), vx is range velocity and vy is azimuth
+% velocity. If no input parameters, the velocity in both direction are set
+% to zero
+% Noth that the parameters of SAR need to be modified in the function.
+
     delete parameter.mat
     if nargin ~= 2
         vx = 0; vy = vx; 
