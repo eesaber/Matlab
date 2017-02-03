@@ -13,7 +13,7 @@ function [] = SAR_key(vx, vy)
     if ispc 
 		cd D:\Code\Simu
     else
-		cd /Matlab 
+		cd ~/Matlab 
 	end
     %% Signal 
     s = Gen_signal(10,0);
@@ -65,16 +65,34 @@ function [] = SAR_key(vx, vy)
     
  
     %% RCMC for range walk 
-    v_rt = 10 ; % 修正?
+    v_rt = 25 ; % 修正?
     Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );
     Fs_2 = Fs_1 .* Fh_rw ; 
     s_2 = ifft(Fs_2.').';
     
-    
-   
-    purinto(s_1);
+    %purinto(s_1);
     purinto(s_2);
     %% Ambiguity function
-    H_AF(s_2);
+    H_AF(s_2(:, 1024));
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 end

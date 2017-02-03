@@ -1,4 +1,9 @@
 function [af] = H_AF(s)
+% This function implement high-order ambiguity function (forth order
+% function).
+% Usage: H_AF(s), "s" is a vector, and function will return a 2-D array
+%
+
 %{
 clear
     % Testing parameters
