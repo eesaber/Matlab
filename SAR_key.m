@@ -67,6 +67,6 @@ function [] = SAR_key(vx, vy)
     end
     purinto(s_2)
     %% Ambiguity function
-    %H_AF(s_2(:, 1024));
+    H_AF(s_2(:, 667)',4);
     
 end
