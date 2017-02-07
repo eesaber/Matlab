@@ -27,6 +27,7 @@ function [] = SAR_key(vx, vy)
     for i = 1 : length(eta)
         h_m(i,:) = exp(j * 4 * pi * f_0 * R_m(length(eta)/2) / c) *  exp(- j * pi * K_r * ref_time.^2) ; 
     end
+    sprintf('這是用固定的R_0 不是用R(eta)')
 	%purinto(h_m)
     %purinto(s)
     tau_nt2 = nextpow2(length(tau)) ;  % Make total number to power of 2
@@ -57,7 +58,7 @@ function [] = SAR_key(vx, vy)
     end
     %purinto(s_1);
     %% RCMC for range walk 
-    v_rt = 10 * x_n / R_0; 
+    v_rt = 10.2 * x_n / R_0; 
     Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
     Fs_2 = Fs_1 .* Fh_rw ; 
     if shift == 1
@@ -66,7 +67,10 @@ function [] = SAR_key(vx, vy)
         s_2 = ifft(Fs_2.').';
     end
     purinto(s_2)
+    8*xi_0 *f_0/c * v_rt *(100)^2 / 2 / R_0^2
     %% Ambiguity function
-    H_AF(s_2(:, 667)',4);
+    xi_4 = H_AF(s_2(:, 666)',4);
+    
+    purinto(xi_4 , '$t$(s)', '$f_\xi$(Hz)', linspace(-2, 2,8192), linspace(-1000, 1000 ,4096) )
     
 end

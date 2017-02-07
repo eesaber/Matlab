@@ -1,35 +1,27 @@
-function [af] = H_AF(s, order)
+function [xi] = H_AF(s, order)
 % This function implement high-order ambiguity function (forth order
 % function).
 % Usage: H_AF(s, order),where "s" is a 1xN vector and "order == 2 v 4", 2 is the regular 
 % ambguity function(A.F.). 4 is the forth order A.F. The function will return a
 % 2-D array 
 
-%{
-clear
-    % Testing parameters
-    K_a = -100;
-    t = linspace(-1 , 1, 1000 );
-    s = exp(j* 2 * pi * 00 * t + j*pi * K_a *t.^2);
-    %
-    close all
-    
-    ambgfun(s ,1000,100)
-%}
 %% Order == 4
     if order == 4
-       %xi_0 = floor(0.089 * length(s));
-       xi_0 = 0 ;
-       s_len = length(s) ;
-       temp = zeros(1,s_len); % s_zp -> zeropadding
-       size(s_zp)
-       for n = -s_len : s_len
-           s_1 = [temp(1:n), s(n, :), temp(n :s_len)];
-           
-           xi(n,:) = s_1 .* s_2 .* s_3 .* s_4; 
+       len_s = length(s) ;
+       xi_0 = floor(0.089 * len_s);
+       temp = zeros(1, 2 * len_s); % s_zp -> zeropadding
+       s_1 = zeros(len_s, len_s * 2 + xi_0 * 2);
+       s_2 = s_1 ; s_3 = s_1; s_4 = s_1;
+       for n = -len_s / 2 : len_s / 2
+            s_1(n + len_s / 2 + 1, :) = [temp(1: -n + len_s / 2 ), s, temp(1: n + len_s / 2 + 2 * xi_0 )];
+            %s_1 = [temp(-xi_0 - xi + 1 + xi_0   ) , s , temp(1 + xi_0 - (-xi_0 - xi + len_s/2)  ) ]
+            s_2(n + len_s / 2 + 1, :) = [temp(1: n + len_s / 2 + 2* xi_0), s, temp(1: -n + len_s / 2) ];
+            s_3(n + len_s / 2 + 1, :) = [temp(1: n + len_s / 2), s, temp(1: -n + len_s /2 + 2 * xi_0) ];
+            s_4(n + len_s / 2 + 1, :) = [temp(1: -n + len_s /2 + 2 * xi_0), s, temp(1: n + len_s / 2) ];
        end
-       xi = fftshift(fft(xi), 1) ;
-       mesh(xi)
+       xi = s_1 .* s_2 .* conj(s_3) .* conj(s_4); 
+       xi = fftshift(fft(xi, 2^nextpow2(len_s)), 1) ;
+       return 
     end
 %%  Order == 2 
     if order == 2
@@ -61,5 +53,4 @@ clear
         colorbar
         %pbaspect([4 3 1])
     end
-    
-end
+end 
