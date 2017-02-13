@@ -21,6 +21,7 @@ function [xi] = H_AF(s, order)
        end
        xi = s_1 .* s_2 .* conj(s_3) .* conj(s_4); 
        xi = fftshift(fft(xi, 2^nextpow2(len_s)), 1) ;
+       %xi = fft(xi, 2^nextpow2(len_s));
        return 
     end
 %%  Order == 2 

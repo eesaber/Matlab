@@ -5,7 +5,7 @@ function my_plotyy (s1, s2, x_s, l_y_la, r_y_la,ti)
     hLine2.LineStyle = '-.';
     set(qq,'linewidth',4)
     set(qq,'color','k')
-    
+    set(gcf,'color','w');
 	xlabel('$v$ (m/s)','Interpreter','latex')
     ylabel (ax(1), l_y_la,'Interpreter','latex')
     %ylim(ax(1), [floor(min(s1)) ceil(max(s1))]) 

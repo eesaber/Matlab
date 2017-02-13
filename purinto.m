@@ -10,17 +10,26 @@ function purinto(s, label_x, label_y , x, y)
     end 
 %%It will print the magnitude of the input signal 
 	figure
-    if nargin == 3
+    if nargin ~= 3
         imagesc(abs(s))
     end
     if nargin == 5
         imagesc(x, y, abs(s))
+        %axis off 
     end
+    % Maximize the figure
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1); 
+    
+    set(gcf,'color','w');
 	set(gca,'Ydir','normal')   
 	xlabel(label_x, 'Interpreter', 'latex')
 	ylabel(label_y, 'Interpreter', 'latex')
 	set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
 	colormap('Jet')
 	colorbar
-	pbaspect([4 3 1])
+	%pbaspect([4 3 1])
+    
+    
 end

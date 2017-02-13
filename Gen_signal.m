@@ -1,23 +1,24 @@
-function [s] =  Gen_signal(vx, vy)
+function [s] =  Gen_signal(vx, vy, ax, ay)
 % This function generate the SAR signal regarding to the input parameter.
-% Usage: Gen_signal(vx, vy), vx is range velocity and vy is azimuth
-% velocity. If no input parameters, the velocity in both direction are set
+% Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
+% velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
 % to zero
 % Noth that the parameters of SAR need to be modified in the function.
 
     delete parameter.mat
-    if nargin ~= 2
-        vx = 0; vy = vx; 
+    if nargin == 0
+        vx = 0; vy = 0; 
+        ax = 0; ay = 0;
     end
     %% Parameters - C Band airborne SAR parameters
     % Target
-    x_n = 1000;
+    x_n = 1000/1.41;
     y_n = 0;
     d = 50; % Length of the target area 
-    v_x = vx; a_x = 0; % rangecl
-    v_y = vy; a_y = 0; % azimuth 
+    v_x = vx; a_x = ax; % rangecl
+    v_y = vy; a_y = ay; % azimuth 
     % Platform
-    h = 1000;
+    h = 1000/1.41;
     La = 2;     
     v_p = 100; 
     f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
@@ -38,7 +39,7 @@ function [s] =  Gen_signal(vx, vy)
     R = sqrt(h^2 + (x_n + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_n + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
     R_0 = R(length(R)/2);
     save('parameter.mat'); %Save the parameters for the after processing.
-     
+    s = zeros(length(eta), length(tau));
     for k = 1 : length(eta)
         td = 2* R(k)/ c ;
         s(k,:) = exp(-i* 4* pi*R(k)/ lambda + i* pi* K_r* (tau - 2* R(k)/ c).^2) .*(tau>=td & tau-td<=T_p)  ;
