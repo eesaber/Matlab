@@ -1,8 +1,34 @@
-a = linspace(179/180*pi, 179.5/180*pi , 100);
+close all
+clear
+%Time space
+time_mov = 1/8; 
+tot_point = 1024*8;
+t_1 = linspace(0, 1, tot_point);
+t_2 = linspace(time_mov * 2, 1, tot_point * (1 - time_mov * 2)) ;
+% a_m parameters
+a_0 = 100 ;
+a_1 = 10 * 2*pi;
+a_2 = 100 * 2*pi;
+a_3 = 500 * 2*pi;
+a_4 = 000 * 2*pi;
+% Siganl 
+s_1 = exp(j*(a_0 + a_1 *t_1 + a_2 * t_1.^2 + a_3 *t_1.^3 + a_4 * t_1.^4)) ;
+s_2 = [exp(-j*(a_0 + a_1 *t_2 + a_2 * t_2.^2 + a_3 *t_2.^3 + a_4 * t_2.^4)), zeros(1, tot_point * time_mov * 2)];
+s1D = s_1 .* s_2 ;
+
+s = s1D(1: tot_point * 0.5) .* conj(s1D(tot_point * 0.25+1: tot_point * 0.75)) ;
 figure
-plot(1/sin(a))
-hold
-plot(1/(pi-a))
+plot(real(s))
+figure
+
+spectrogram(s1D,256,250,256,tot_point,'yaxis')
+figure
+%spectrogram(s,256,250,256,tot_point,'yaxis')
+plot(linspace(0,tot_point,length(s)),abs(fft(s)))  
+    set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+	xlabel('Hz', 'Interpreter', 'latex')
+	
+
 %{
 x_n = 5000;
 y_n = 0;
