@@ -14,7 +14,7 @@ function [v_r, v_rt, v_yt] = SAR_key(vx, vy, ax, ay)
     if ispc 
 		cd D:\Code\Simu
     else
-		cd ~/Matlab 
+		cd ~/Code/Matlab 
 	end
     %% Signal 
     s = Gen_signal(-10,0,0,0);
