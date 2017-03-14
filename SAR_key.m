@@ -17,8 +17,8 @@ function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay)
 		cd ~/Code/Matlab 
 	end
     %% Signal 
-    %s = Gen_signal(3,10,0,0);
-    s = Gen_signal(vx, vy, ax, ay); 
+    s = Gen_signal(3,10,0,0);
+    %s = Gen_signal(vx, vy, ax, ay); 
     load('parameter.mat');
     ref_time = -T_p : 1/4/B : 0 ;
 	R_m = sqrt(x_n^2 + (y_n - v_p * eta).^2 + h^2); % Static target range equation
