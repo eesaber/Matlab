@@ -37,7 +37,7 @@ function [s] =  Gen_signal(vx, vy, ax, ay)
     tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
 
     R = sqrt(h^2 + (x_n + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_n + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-    R_0 = R(length(R)/2);
+    [R_0, ind_R_0] = min(R);
     save('parameter.mat'); %Save the parameters for the after processing.
     s = zeros(length(eta), length(tau));
     for k = 1 : length(eta)

@@ -49,12 +49,12 @@ tot_point = 1024*6;
 t_1 = linspace(0, 1, tot_point);
 % a_m parameters
 a_0 = 10 ;
-a_1 = 100 * 2*pi / 1;
-a_2 = 500 * 2*pi / 2;
-a_3 = 100 * 2*pi / 6;
-a_4 = 000 * 2*pi / 24;
+a_1 = 100 ;
+a_2 = 500 ;
+a_3 = 200 ;
+a_4 = 000 ;
 % Siganl 
-s_1 = exp(j*(a_0 + a_1 *t_1 + a_2 * t_1.^2 + a_3 *t_1.^3 + a_4 * t_1.^4)) ;
+s_1 = exp(j*2*pi*(a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3 *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
 % K_2
 k_2 = [zeros(1,tot_point * t_mov) s_1(1: tot_point * (1 - t_mov)) ] .* conj([ s_1(tot_point* t_mov + 1:end) zeros(1,tot_point*t_mov) ]) ;
 AF_2 = fftshift(fft(k_2, 2^nextpow2(length(k_2))));
@@ -63,9 +63,12 @@ AF_2 = fftshift(fft(k_2, 2^nextpow2(length(k_2))));
 k_3 = [zeros(1,tot_point * t_mov) k_2(1: tot_point * (1 - t_mov)) ] .* conj([ k_2(tot_point* t_mov + 1:end) zeros(1,tot_point*t_mov) ]) ;
 AF_3 = fftshift(fft(k_3, 2^nextpow2(length(k_2))));
 %plot(real(k_3))
+[~, qq] = max(abs(AF_3));
 
 % The simulation result
-f = linspace(-2^(nextpow2(length(k_2)-1)), 2^(nextpow2(length(k_2)-1)), 2^(nextpow2(length(k_2)-1)) );
+f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(k_2)-1)) );
+f(qq)
+%{
 figure
     plot(f,abs(AF_2),'k','Linewidth',3.5)
     set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
@@ -75,7 +78,7 @@ figure
     pause(0.00001);
     frame_h = get(handle(gcf),'JavaFrame');
     set(frame_h,'Maximized',1); 
-    export_fig AF_2.jpg
+    %export_fig AF_2.jpg
 figure
     plot(f,abs(AF_3),'k','Linewidth',3.5)
     set(gcf,'color','w');
@@ -85,10 +88,10 @@ figure
     pause(0.00001);
     frame_h = get(handle(gcf),'JavaFrame');
     set(frame_h,'Maximized',1); 
-    export_fig AF_3.jpg
+    %export_fig AF_3.jpg
 	
 
-%{
+
 
 %% Expand the High order Generalized Ambiguity function 
 clc
