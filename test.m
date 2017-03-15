@@ -54,20 +54,13 @@ a_2 = 500 ;
 a_3 = 200 ;
 a_4 = 000 ;
 % Siganl 
-s_1 = exp(j*2*pi*(a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3 *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
-% K_2
-k_2 = [zeros(1,tot_point * t_mov) s_1(1: tot_point * (1 - t_mov)) ] .* conj([ s_1(tot_point* t_mov + 1:end) zeros(1,tot_point*t_mov) ]) ;
-AF_2 = fftshift(fft(k_2, 2^nextpow2(length(k_2))));
-%plot(real(k_2))
-% K_3 
-k_3 = [zeros(1,tot_point * t_mov) k_2(1: tot_point * (1 - t_mov)) ] .* conj([ k_2(tot_point* t_mov + 1:end) zeros(1,tot_point*t_mov) ]) ;
-AF_3 = fftshift(fft(k_3, 2^nextpow2(length(k_2))));
-%plot(real(k_3))
-[~, qq] = max(abs(AF_3));
+s = exp(j * 2 * pi * (a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3 *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
+AF = GAF(s,3,3);
+[~,qq] = max(abs(AF));
+f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(s)-1)) );
+xi = 1 / 3 / 2 ;
+t_a_3 = f(qq) / 4 / xi^2;
 
-% The simulation result
-f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(k_2)-1)) );
-f(qq)
 %{
 figure
     plot(f,abs(AF_2),'k','Linewidth',3.5)
