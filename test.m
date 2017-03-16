@@ -9,7 +9,7 @@ t_1 = linspace(0, 1, tot_point);
 c_0 = 10 ;
 c_1 = 100 ;
 c_2 = 500 ;
-c_3 = 99;
+c_3 = 100;
 c_4 = 0 ;
 m = 3 ;
 % Siganl 

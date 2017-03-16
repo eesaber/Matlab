@@ -2,7 +2,7 @@ v_space = linspace(-20,20,41);
 if ispc 
 	cd D:\Code\Simu
 else
-	cd ~/Matlab 
+	cd ~/Code/Matlab 
 end
 %% v_y change , v_x = 3
 t_v_y = zeros(1,41);
@@ -11,7 +11,7 @@ c_3 = zeros(1,41);
 for m = 1 : 41
    [co_3(m), c_3(m), t_v_y(m)] = SAR_key(3, m,0,0);
 end
-%%
+
 close all
 figure
 plot(v_space, co_3,'k--','Linewidth',4)
