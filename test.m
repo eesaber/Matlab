@@ -9,11 +9,11 @@ t_1 = linspace(0, 1, tot_point);
 c_0 = 10 ;
 c_1 = 100 ;
 c_2 = 500 ;
-c_3 = 100;
+c_3 = 99;
 c_4 = 0 ;
 m = 3 ;
 % Siganl 
-f = linspace(-tot_point/2, tot_point/2, tot_point);
+f = linspace(-tot_point/2, tot_point/2, 2^nextpow2(tot_point));
 s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3 *t_1.^3 / 6+ c_4 * t_1.^4 / 24)) ;
 AF = GAF(s,3,3);
 [~,qq] = max(abs(AF));
