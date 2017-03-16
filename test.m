@@ -28,7 +28,7 @@ clear
 % parameter 
 eta = linspace(-10,10,10000);
 x_0 = 1000/1.41; y_0 = 0; h = 1000/1.41; 
-v_r = linspace(-25,25,52); v_y = linspace(-40,40,81);
+v_r = linspace(-25,25,52); v_y = linspace(-10,10,81);
 v_p = 100;
 f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
 co_3 = zeros(length(v_r),length(v_y));
@@ -41,13 +41,38 @@ for h = 1 : length(v_r)
 		co_3(h,k) = -1 / lambda * 6* v_r(h) * (v_y(k) - v_p)^2 / R_0(h,k)^2 ;
 	end
 end
-figure
-imagesc(v_r,v_y,co_3)
 %%
-[v_r v_y] = meshgrid(v_r,v_y);
-		co_3(h,k) = -1 / lambda * 6* v_r .* (v_y - v_p).^2 ./ R_0.^2 ;
+close all
 figure
-mesh(v_r,v_y,co_3)
+	imagesc(co_3)
+	xlabel('$v_r$', 'Interpreter', 'latex')
+	ylabel('$v_y$', 'Interpreter', 'latex')
+	%xlim([-10 10])
+	%ylim([-10 10])
+	hold on
+	[C,h] = contour(co_3,10,'k--','LineWidth',3,'ShowText','on');
+	clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
+	set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+	set(gcf,'color','w');
+	colormap('Jet')
+	colorbar
+	pause(0.00001);
+	frame_h = get(handle(gcf),'JavaFrame');
+	set(frame_h,'Maximized',1); 
+	export_fig c3Contour.jpg
+	
+	
+figure
+	imagesc(v_r, v_y, co_3)
+	xlabel('$v_r$', 'Interpreter', 'latex')
+	ylabel('$v_y$', 'Interpreter', 'latex')
+	set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+	set(gcf,'color','w');
+	pause(0.00001);
+	frame_h = get(handle(gcf),'JavaFrame');
+	set(frame_h,'Maximized',1); 
+	export_fig c3Contour1.jpg
+%set(gca,'xtick',[-25:25],'ytick',[-10:10]);
 %{
 figure
     plot(f,abs(AF_2),'k','Linewidth',3.5)
