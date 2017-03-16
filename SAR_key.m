@@ -30,7 +30,7 @@ function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay)
     for i = 1 : length(eta)
         h_m(i,:) = exp(j * 4 * pi * f_0 * R_m(length(eta)/2) / c) *  exp(- j * pi * K_r * ref_time.^2) ; 
     end
-    %sprintf('這是用固定的R_0 不是用R(eta)')
+    %sprintf('?�是?�固定�?R_0 不是?�R(eta)')
 	%purinto(h_m)
     %purinto(s)
     tau_nt2 = nextpow2(length(tau)) ;  % Make total number to power of 2
@@ -79,23 +79,16 @@ function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay)
     fprintf(' v_r: %f , v_rt: %f \n Estimation error: %f \n ', v_r , v_rt, v_r - v_rt )
 	
 %% General Ambiguity function (m = 3)
-	
 	%Chose the maximum value when R = R_0
 	[~, qq]= max(real(s_2(ind_R_0,:)))
 	s_3 = s_2(:,664);
 	s_3 = [s_3.' zeros(1, 6 - mod(length(s_3),6)) ] ;
-	t_mov = length(s_3) / 6 ;
-	% K_2
-	k_2 = [zeros(1, t_mov) s_3(1: 5 * t_mov) ] .* conj( [ s_3(t_mov + 1:end) zeros(1, t_mov)] ) ;
-	AF_2 = fftshift(fft(k_2, 2^nextpow2(length(k_2))));
-	%plot(real(k_2))
-	% K_3 
-	k_3 = [zeros(1, t_mov) k_2(1: 5 * t_mov) ] .* conj([ k_2(t_mov + 1:end) zeros(1, t_mov) ]) ;
-	AF_3 = fftshift(fft(k_3, 2^nextpow2(length(k_2))));
-	f = linspace(-PRF/2, PRF/2, 2^(nextpow2(length(k_2)-1)) );
+	
+	AF_3 = GAF(s_3,3,3);
 	
 	[~, f_t] = max(AF_3);
 	xi = dur / 6 ;
+	f = linspace(-PRF/2, PRF/2, 2^(nextpow2(length(s_3)-1)) );
 	c_3 = -f(f_t) / 4 / xi^2;
 	t_v_y = v_p - sqrt( -c_3 * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
 	%fprintf(' t_v_y: %f , Estimation error: %f \n ', t_v_y , v_y - t_v_y );
