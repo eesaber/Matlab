@@ -3,26 +3,51 @@ close all
 clear
 %Time space
 t_mov = 1/6;
-tot_point = 1024*6;
+tot_point = 1024;
 t_1 = linspace(0, 1, tot_point);
 % a_m parameters
-a_0 = 10 ;
-a_1 = 100 ;
-a_2 = 500 ;
-a_3 = linspace(1,100,100) ;
-a_4 = 000 ;
+c_0 = 10 ;
+c_1 = 100 ;
+c_2 = 500 ;
+c_3 = 100;
+c_4 = 0 ;
+m = 3 ;
 % Siganl 
-f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(t_1)-1)) );
-t_a_3 = zeros(1,length(a_3));
-for i = 1 : length(a_3)
-	s = exp(j * 2 * pi * (a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3(i) *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
-	AF = GAF(s,3,3);
-	[~,qq] = max(abs(AF));
-	xi = 1 / 3 / 2 ;
-	t_a_3(i) = f(qq) / 4 / xi^2;
-	fprintf('a_3 = %f, Estimated a_3 = %f \n', a_3(i), t_a_3(i))
-end
+f = linspace(-tot_point/2, tot_point/2, tot_point);
+s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3 *t_1.^3 / 6+ c_4 * t_1.^4 / 24)) ;
+AF = GAF(s,3,3);
+[~,qq] = max(abs(AF));
+xi = 1 / 3 / 2 ;
+t_c_3 = f(qq) / 4 / xi^2;
+fprintf('c_3 = %f, Estimated c_3 = %f \n', c_3, t_c_3)
 
+figure
+    plot(f,abs(AF),'k','Linewidth',3.5)
+    set(gcf,'color','w');
+    set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+    xlabel('Hz', 'Interpreter', 'latex')
+    xlim([-100 100])
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1); 
+    %export_fig AF_3.jpg
+s = s .* exp(-j * 2 * pi * c_3 * t_1.^3 / 6) ;
+AF = GAF(s,2,2);
+[~,qq] = max(abs(AF));
+xi = 1 / 2 / 2;
+t_c_2 = f(qq) / 2/ xi;
+fprintf('c_2 = %f, Estimated c_2 = %f \n', c_2, t_c_2)
+
+figure
+    plot(f,abs(AF),'k','Linewidth',3.5)
+    set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+    set(gcf,'color','w');
+    xlabel('Hz', 'Interpreter', 'latex')
+    xlim([100 400])
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1); 
+    %export_fig AF_2.jpg
 %% the change of c_3 
 clear
 % parameter 
@@ -59,7 +84,7 @@ figure
 	pause(0.00001);
 	frame_h = get(handle(gcf),'JavaFrame');
 	set(frame_h,'Maximized',1); 
-	export_fig c3Contour.jpg
+	%export_fig c3Contour.jpg
 	
 	
 figure
@@ -71,33 +96,11 @@ figure
 	pause(0.00001);
 	frame_h = get(handle(gcf),'JavaFrame');
 	set(frame_h,'Maximized',1); 
-	export_fig c3Contour1.jpg
+	%export_fig c3Contour1.jpg
 %set(gca,'xtick',[-25:25],'ytick',[-10:10]);
-%{
-figure
-    plot(f,abs(AF_2),'k','Linewidth',3.5)
-    set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
-    set(gcf,'color','w');
-    xlabel('Hz', 'Interpreter', 'latex')
-    xlim([-1000 0])
-    pause(0.00001);
-    frame_h = get(handle(gcf),'JavaFrame');
-    set(frame_h,'Maximized',1); 
-    %export_fig AF_2.jpg
-figure
-    plot(f,abs(AF_3),'k','Linewidth',3.5)
-    set(gcf,'color','w');
-    set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
-    xlabel('Hz', 'Interpreter', 'latex')
-    xlim([-100 100])
-    pause(0.00001);
-    frame_h = get(handle(gcf),'JavaFrame');
-    set(frame_h,'Maximized',1); 
-    %export_fig AF_3.jpg
+
 	
-
-
-
+%{
 %% Expand the High order Generalized Ambiguity function 
 clc
 clear

@@ -3,12 +3,9 @@ function [AF] = GAF(s, total_ord, n)
 % Usage: GAF(s, total_ord, n), where "s" is the 1xN array, "total_ord" is
 % the order, at begin, of the polynomial phase signal. "n" is the order
 % "NOW". Return an n-th order ambiguity function.
-	if mod(length(s), total_ord * 2)
-		s = [s zeros(1, total_ord * 2 - mod(length(s), total_ord * 2))];
-	end
-	t_mov = length(s) / total_ord / 2;
+	t_mov = floor(length(s) / total_ord) ;
 	for qq = 1 : n - 1
-		s = [zeros(1, t_mov) s(1: length(s) - t_mov) ] .* conj( [ s(t_mov + 1:end) zeros(1, t_mov)] ) ;
+		s =  s(t_mov + 1: end) .* conj(s(1: length(s) - t_mov) ) ;
 	end
-	AF = fftshift(fft(s, 2^nextpow2(length(s))));
+	AF = fftshift(fft(s, 2^nextpow2(t_mov * total_ord)));
 end
