@@ -1,45 +1,3 @@
-%% HAF kernal of rect(t) 
-s = ones(1,1000); % one point 0.001 s 
-N = length(s) ;
-s = [zeros(1,500) s zeros(1,500)];
-t = linspace(-1, 1, length(s));
-
-% K_1
-K_1 = s ;
-
-% K_2 
-K_2 = zeros(N,length(s)); 
-for xi = 1 : N / 2 
-    K_2(xi + N/2,:) = [zeros(1,500 + xi) ones(1,1000 - 2 *xi) zeros(1,500 + xi)];
-    K_2(1 -xi + N/2,:) = [zeros(1,500 + xi) ones(1,1000 - 2 *xi) zeros(1,500 + xi)];
-end
-%AF_2 = fft(K_2,2^next2pow)
-% K_3 
-K_3  = zeros(N, N, length(s));
-for xi = 1 : N / 2
-    K_3(xi + N / 2, :, :) = [K_2(:,xi:length(s)) zeros(N,xi-1)] .* [zeros(N,xi-1) K_2(:, xi:length(s)) ];
-    K_3(1 - xi + N/2, :, :) = [K_2(:,xi:length(s)) zeros(N,xi-1)] .* [zeros(N,xi-1) K_2(:, xi:length(s))];
-end 
-close all
-figure 
-    plot(t, K_1,'k','linewidth',4)
-figure
-    imagesc(t, linspace(-1/2,1/2,1000), K_2)
-    pause(0.00001);
-    frame_h = get(handle(gcf),'JavaFrame');
-    set(frame_h,'Maximized',1); 
-    
-    set(gcf,'color','w');
-	set(gca,'Ydir','normal')   
-	xlabel('t', 'Interpreter', 'latex')
-	ylabel('$\xi_1$', 'Interpreter', 'latex')
-	set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
-	colormap('Jet')
-	colorbar
-    %export_fig K_2.jpg
- figure 
-    surf(K_3(:,:,1000))
-
 %% High-order Ambiguity function 
 close all
 clear
@@ -51,16 +9,45 @@ t_1 = linspace(0, 1, tot_point);
 a_0 = 10 ;
 a_1 = 100 ;
 a_2 = 500 ;
-a_3 = 200 ;
+a_3 = linspace(1,100,100) ;
 a_4 = 000 ;
 % Siganl 
-s = exp(j * 2 * pi * (a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3 *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
-AF = GAF(s,3,3);
-[~,qq] = max(abs(AF));
-f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(s)-1)) );
-xi = 1 / 3 / 2 ;
-t_a_3 = f(qq) / 4 / xi^2;
+f = linspace(-tot_point/2, tot_point/2, 2^(nextpow2(length(t_1)-1)) );
+t_a_3 = zeros(1,length(a_3));
+for i = 1 : length(a_3)
+	s = exp(j * 2 * pi * (a_0 + a_1 *t_1 + a_2 * t_1.^2 / 2 + a_3(i) *t_1.^3 / 6+ a_4 * t_1.^4 / 24)) ;
+	AF = GAF(s,3,3);
+	[~,qq] = max(abs(AF));
+	xi = 1 / 3 / 2 ;
+	t_a_3(i) = f(qq) / 4 / xi^2;
+	fprintf('a_3 = %f, Estimated a_3 = %f \n', a_3(i), t_a_3(i))
+end
 
+%% the change of c_3 
+clear
+% parameter 
+eta = linspace(-10,10,10000);
+x_0 = 1000/1.41; y_0 = 0; h = 1000/1.41; 
+v_r = linspace(-25,25,52); v_y = linspace(-40,40,81);
+v_p = 100;
+f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
+co_3 = zeros(length(v_r),length(v_y));
+R_0 = zeros(length(v_r),length(v_y));
+% generate c_3
+for h = 1 : length(v_r)
+	for k = 1 : length(v_y)
+		R = sqrt(h^2 + (x_0 + v_r(h)* eta ).^2 + (y_0 + v_y(k)* eta - v_p* eta).^2 );
+		[R_0(h,k), ~] = min(R);
+		co_3(h,k) = -1 / lambda * 6* v_r(h) * (v_y(k) - v_p)^2 / R_0(h,k)^2 ;
+	end
+end
+figure
+imagesc(v_r,v_y,co_3)
+%%
+[v_r v_y] = meshgrid(v_r,v_y);
+		co_3(h,k) = -1 / lambda * 6* v_r .* (v_y - v_p).^2 ./ R_0.^2 ;
+figure
+mesh(v_r,v_y,co_3)
 %{
 figure
     plot(f,abs(AF_2),'k','Linewidth',3.5)
