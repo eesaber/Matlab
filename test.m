@@ -51,28 +51,33 @@
 % We find GAF has a poor resolution, and want to chekc if add more points
 % can improve the resolution. 
 	clear AF
-	tot_point = 1024;
+	close all
+	tot_point = 1024*2;
 	t_1 = linspace(0, 1, tot_point) ;
-	f = linspace(-tot_point/2, tot_point/2, 2^nextpow2(tot_point)); 
-	s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3 *t_1.^3 / 6+ c_4 * t_1.^4 / 24));
-	AF = GAF(s,3,3);
-	[~,qq] = max(abs(AF));
-	xi = 1 / 3 / 2 ;
-	t_c_3 = f(qq) / 4 / xi^2;
-	fprintf('c_3 = %f, Estimated c_3 = %f \n', c_3, t_c_3)
-
-	figure
-		plot(f,abs(AF),'k','Linewidth',3.5)
-		hold on 
-		stem(f,abs(AF),'Linewidth',3.5)
-		set(gcf,'color','w');
-		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
-		xlabel('Hz', 'Interpreter', 'latex')
-		%xlim([0 20])
-		pause(0.00001);
-		frame_h = get(handle(gcf),'JavaFrame');
-		set(frame_h,'Maximized',1); 
-		%export_fig AF_3.jpg
+	c_3 = linspace(1,25,50);
+	t_c_3 = zeros(5,length(c_3));
+	for k = 0 : 4
+		f = linspace(-tot_point/2, tot_point/2, tot_point*2^k); 
+		for n = 1 : 50
+			s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3(n) *t_1.^3 / 6+ c_4 * t_1.^4 / 24));
+			AF = GAF(s,3,3,k);
+			[~,qq] = max(abs(AF));
+			xi = 1 / 3 / 2 ;
+			t_c_3(k+1,n) = f(qq) / 4 / xi^2;
+		end
+	end
+	%%
+	
+	plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:),'k', c_3, t_c_3(5,:),'k-.','Linewidth',3.5)
+	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+	set(gcf,'color','w');
+	xlabel('$c_3$', 'Interpreter', 'latex')
+	ylabel('$\tilde{c}_3$', 'Interpreter', 'latex')
+	pause(0.00001);
+	frame_h = get(handle(gcf),'JavaFrame');
+	set(frame_h,'Maximized',1); 
+	export_fig c3ResoDiffN.jpg
+	
 %% Aim: Plot the contour of c_3. 
 %I want to show that c_3 changes little when v_y changes a lot 
 	clear
