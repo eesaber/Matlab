@@ -1,4 +1,4 @@
-function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay) 
+function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay) 
 % Signal generation is coded in other function.
 % This function implement SAR from range compression, 
 % Keystone transform, which is for range curvature correction. Then estimate the slope of the line to 
@@ -17,8 +17,8 @@ function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay)
 		cd ~/Code/Matlab 
 	end
     %% Signal 
-    %s = Gen_signal(3,10,0,0);
-    s = Gen_signal(vx, vy, ax, ay); 
+    s = Gen_signal(3,10,0,0);
+    %s = Gen_signal(vx, vy, ax, ay); 
     load('parameter.mat');
     ref_time = -T_p : 1/4/B : 0 ;
 	R_m = sqrt(x_n^2 + (y_n - v_p * eta).^2 + h^2); % Static target range equation
@@ -82,17 +82,28 @@ function [co_3, c_3, t_v_y] = SAR_key(vx, vy, ax, ay)
 	%Chose the maximum value when R = R_0
 	[~, index] = max(abs(s_2(:)));
 	[~, I_col] = ind2sub(size(s_2),index);
-	s_3 = s_2(:,I_col);
+	s_3 = s_2(:,I_col).';
 	
-	AF_3 = GAF(s_3,3,3);
-	[~, f_t] = max(AF_3);
-	xi = dur / 6 ;
-	f = linspace(-PRF/2, PRF/2, 2^(nextpow2(length(s_3))) );
-	c_3 = -f(f_t) / 4 / xi^2;
-	t_v_y = v_p - sqrt( -c_3 * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
-	fprintf(' t_v_y: %f , Estimation error: %f \n ', t_v_y , v_y - t_v_y );
+	order = 3;
+	Ec = zeros(1, order + 1);
+	for n =  order : -1 : 2
+		AF = GAF(s_3,3,n,3);
+		[~, f_t] = max(AF);
+		xi = dur / 6 ;
+		f = linspace(-PRF/2, PRF/2, length(AF)); 
+		Ec(n+1) = f(f_t) / 2^(n-1) / xi^(n-1)
+		s_3 = s_3 .* exp(- j*2*pi * Ec(n+1) / factorial(n) * eta.^(n));
+		figure
+		plot(f,abs(AF))
+	end
+	t_vy = v_p - sqrt( -Ec(4) * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
+	fprintf(' vy: %f , Estimation error: %f \n ', t_vy , v_y - t_vy );
+	t_ar = Ec(3) * c / 2 / f_0 - (t_vy - v_p)^2 / R_0;
+	a_r = a_x * x_n / R_0;
+	fprintf(' ar: %f , Estimation error: %f \n ', t_ar , a_r - t_ar );
 	
-	 % Analyze the coefficient
+	
+	% Analyze the coefficient
     co_0 = -2 / lambda * R_0;
     co_1 = -2 / lambda * v_r; 
     co_2 = -2 / lambda * ((v_y -v_p)^2 + a_x * x_n) / R_0;

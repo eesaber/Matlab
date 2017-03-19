@@ -12,14 +12,14 @@
 	c_4 = 0 ;
 	m = 3 ;
 	% Siganl 
-	f = linspace(-tot_point/2, tot_point/2, 2^nextpow2(tot_point));
-	s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3 *t_1.^3 / 6+ c_4 * t_1.^4 / 24)) ;
-	AF = GAF(s,3,3);
+	
+	s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3 *t_1.^3 / 6+ c_4 * t_1.^4 / 24));
+	AF = GAF(s,3,3,2);
 	[~,qq] = max(abs(AF));
+	f = linspace(-tot_point/2, tot_point/2, length(AF));
 	xi = 1 / 3 / 2 ;
 	t_c_3 = f(qq) / 4 / xi^2;
 	fprintf('c_3 = %f, Estimated c_3 = %f \n', c_3, t_c_3)
-
 	figure
 		plot(f,abs(AF),'k','Linewidth',3.5)
 		set(gcf,'color','w');
@@ -31,7 +31,7 @@
 		set(frame_h,'Maximized',1); 
 		%export_fig AF_3.jpg
 	s = s .* exp(-j * 2 * pi * c_3 * t_1.^3 / 6) ;
-	AF = GAF(s,2,2);
+	AF = GAF(s,2,2,2);
 	[~,qq] = max(abs(AF));
 	xi = 1 / 2 / 2;
 	t_c_2 = f(qq) / 2/ xi;
@@ -55,29 +55,53 @@
 	tot_point = 1024*2;
 	t_1 = linspace(0, 1, tot_point) ;
 	c_3 = linspace(1,25,50);
+	c_2 = linspace(-20,20,100);
 	t_c_3 = zeros(5,length(c_3));
+	t_c_2 = zeros(5,length(c_3),length(c_2));
 	for k = 0 : 4
 		f = linspace(-tot_point/2, tot_point/2, tot_point*2^k); 
-		for n = 1 : 50
-			s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2 * t_1.^2 / 2 + c_3(n) *t_1.^3 / 6+ c_4 * t_1.^4 / 24));
-			AF = GAF(s,3,3,k);
-			[~,qq] = max(abs(AF));
-			xi = 1 / 3 / 2 ;
-			t_c_3(k+1,n) = f(qq) / 4 / xi^2;
+		for n = 1 : length(c_3)
+			for g = 1 : length(c_2)
+				s = exp(j * 2 * pi * (c_0 + c_1 *t_1 + c_2(g) * t_1.^2 / 2 + c_3(n) *t_1.^3 / 6+ c_4 * t_1.^4 / 24));
+				AF = GAF(s,3,3,k);
+				[~,qq] = max(abs(AF));
+				xi = 1 / 3 / 2 ;
+				t_c_3(k+1,n) = f(qq) / 4 / xi^2;
+				s = s .* exp(-j * 2 * pi * t_c_3(k+1,n) * t_1.^3 / 6) ;
+				AF = GAF(s,2,2,k);
+				[~,qq] = max(abs(AF));
+				xi = 1 / 2 / 2;
+				t_c_2(k+1,n,g) = f(qq) / 2/ xi;
+			end
 		end
 	end
-	%%
-	
-	plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:),'k', c_3, t_c_3(5,:),'k-.','Linewidth',3.5)
+	figure
+	plot(c_3, t_c_3(1,:) - c_3,'--k', c_3, t_c_3(4,:) - c_3,'k', c_3, t_c_3(5,:) - c_3,'k-.','Linewidth',3.5)
 	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
 	set(gcf,'color','w');
 	xlabel('$c_3$', 'Interpreter', 'latex')
-	ylabel('$\tilde{c}_3$', 'Interpreter', 'latex')
+	ylabel('$\tilde{c}_3 - c_3$', 'Interpreter', 'latex')
 	pause(0.00001);
 	frame_h = get(handle(gcf),'JavaFrame');
 	set(frame_h,'Maximized',1); 
-	export_fig c3ResoDiffN.jpg
+	%export_fig c3ResoDiffN.jpg
+	%%
 	
+	figure
+	imagesc(c_2,c_3,squeeze(t_c_2(5,:,:)) - repmat(c_2,length(c_3),1) )
+	set(gca,'Ydir','normal')   
+	xlabel('$c$', 'Interpreter', 'latex')
+	ylabel('$v_r$', 'Interpreter', 'latex')
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+		set(gcf,'color','w');
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1); 
+		export_fig c3Contour1.jpg
+		set(gca,'xtick',[-20:5:20],'ytick',[-25:5:25]);
+		set(gca,'linewidth',2.5)
+		colorbar
+		export_fig c3Contour1.jpg
 %% Aim: Plot the contour of c_3. 
 %I want to show that c_3 changes little when v_y changes a lot 
 	clear
