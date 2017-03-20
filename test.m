@@ -1,4 +1,4 @@
-%% Aim:  Verify “High-order Ambiguity function“
+%% Aim:  Verify: High-order Ambiguity function
 	close all
 	clear
 	%Time space
@@ -8,7 +8,7 @@
 	c_0 = 10 ;
 	c_1 = 100 ;
 	c_2 = 500 ;
-	c_3 = 100;
+	c_3 = -100;
 	c_4 = 0 ;
 	m = 3 ;
 	% Siganl 
@@ -75,33 +75,46 @@
 			end
 		end
 	end
+
+	% Fig.1 Quantization error of c_3
+	%{
+		left_color = [1 0.6 0.2];
+		right_color = [0 0 0];
+		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
+		yyaxis left
+		plot(c_3, t_c_3(1,:) - c_3,'--','Linewidth',3.5)
+		yyaxis right
+		plot(c_3, t_c_3(4,:) - c_3, c_3, t_c_3(5,:) - c_3,'-.','Linewidth',3.5)
+	%}
+	% Fig.2 Show three lines of "c_3" in different total point
+		plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:) ,'k', c_3, t_c_3(5,:) ,'k-.','Linewidth',3.5);
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gcf,'color','w');
+		xlabel('$c_3$', 'Interpreter', 'latex')
+		ylabel('$\tilde{c}_3 - c_3$', 'Interpreter', 'latex')
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1); 
+		%export_fig c3ResoDiffN.jpg
+	%% Subaim: The effect of cccuracy of c_3 when estimate c_2
 	figure
-	plot(c_3, t_c_3(1,:) - c_3,'--k', c_3, t_c_3(4,:) - c_3,'k', c_3, t_c_3(5,:) - c_3,'k-.','Linewidth',3.5)
-	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
-	set(gcf,'color','w');
-	xlabel('$c_3$', 'Interpreter', 'latex')
-	ylabel('$\tilde{c}_3 - c_3$', 'Interpreter', 'latex')
-	pause(0.00001);
-	frame_h = get(handle(gcf),'JavaFrame');
-	set(frame_h,'Maximized',1); 
-	%export_fig c3ResoDiffN.jpg
-	%%
-	
-	figure
-	imagesc(c_2,c_3,squeeze(t_c_2(5,:,:)) - repmat(c_2,length(c_3),1) )
-	set(gca,'Ydir','normal')   
-	xlabel('$c$', 'Interpreter', 'latex')
-	ylabel('$v_r$', 'Interpreter', 'latex')
+		%{surf(c_2,c_3,squeeze(t_c_2(5,:,:)) - repmat(c_2,length(c_3),1) )
+		xlabel('$c_2$', 'Interpreter', 'latex')
+		ylabel('$c_3$', 'Interpreter', 'latex')
+		zlabel('$\tilde{c}_2 - c_2$', 'Interpreter', 'latex')
+		%}
+		imagesc(c_2,c_3,squeeze(t_c_2(5,:,:)) - repmat(c_2,length(c_3),1) )
+		xlabel('$c_2$', 'Interpreter', 'latex')
+		ylabel('$c_2 - \tilde{c}_2$', 'Interpreter', 'latex')
+		colorbar
+		colormap('Jet')
+
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
 		set(gcf,'color','w');
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1); 
-		export_fig c3Contour1.jpg
-		set(gca,'xtick',[-20:5:20],'ytick',[-25:5:25]);
-		set(gca,'linewidth',2.5)
-		colorbar
-		export_fig c3Contour1.jpg
+		export_fig c2Contour.jpg
 %% Aim: Plot the contour of c_3. 
 %I want to show that c_3 changes little when v_y changes a lot 
 	clear
