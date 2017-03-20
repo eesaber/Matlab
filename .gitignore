@@ -1,5 +1,8 @@
 *.jpg
 *.tif
+*.mat
+
+ASP/
 output/
 output_Key
 Itfat/

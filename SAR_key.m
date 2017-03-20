@@ -1,4 +1,4 @@
-function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay) 
+function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay) 
 % Signal generation is coded in other function.
 % This function implement SAR from range compression, 
 % Keystone transform, which is for range curvature correction. Then estimate the slope of the line to 
@@ -17,8 +17,8 @@ function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay)
 		cd ~/Code/Matlab 
 	end
     %% Signal 
-    s = Gen_signal(10,-10,0,0);
-    %s = Gen_signal(vx, vy, ax, ay); 
+    %s = Gen_signal(10,-10,0,0);
+    s = Gen_signal(vx, vy, ax, ay); 
     load('parameter.mat');
     ref_time = -T_p : 1/4/B : 0 ;
 	R_m = sqrt(x_n^2 + (y_n - v_p * eta).^2 + h^2); % Static target range equation
@@ -74,7 +74,7 @@ function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay)
     else
         s_2 = ifft(Fs_2.').';
     end
-    purinto(s_2)
+    %purinto(s_2)
     %export_fig s_2.jpg
     %fprintf(' v_r: %f , v_rt: %f \n Estimation error: %f \n ', v_r , v_rt, v_r - v_rt )
 	
@@ -83,6 +83,15 @@ function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay)
 	[~, index] = max(abs(s_2(:)));
 	[~, I_col] = ind2sub(size(s_2),index);
 	s_3 = s_2(:,I_col).';
+	
+	%{
+	AF = GAF(s_3,4,4,3);
+	[~, f_t] = max(AF);
+	xi = dur / 8 ;
+	f = linspace(-PRF/2, PRF/2, length(AF)); 
+	f(f_t) / 2^(3) / xi^(3)
+	%}
+	
 	%s_3 = exp( j * 2 * pi * ( co_0 + co_1 * eta + co_2 * eta.^2 / 2 + co_3 * eta.^3 / 6 ) );
 	order = 3;
 	Ec = zeros(1, order + 1);
@@ -95,22 +104,24 @@ function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay)
 		s_3 = s_3 .* exp(- j*2*pi * Ec(n+1) / factorial(n) * eta.^(n));
 		%figure
 		%plot(f,abs(AF))
-		
 	end
-	t_vy = v_p - sqrt( -Ec(4) * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
-	fprintf(' t_vy: %f , error: %f \n ', t_vy , v_y - t_vy );
-	t_ar = - Ec(3) -2 / lambda * (v_y -v_p)^2 / R_0;
-	a_r = a_x * x_n / R_0;
-	fprintf(' t_ar: %f , error: %f \n ', t_ar , a_r - t_ar );
-	
+	v_yt = v_p - sqrt( Ec(4) * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
+	c_3 = Ec(4);
+	%fprintf(' t_vy: %f , error: %f \n ', t_vy , v_y - t_vy );
+	t_ar = - Ec(3) -2 / lambda * (v_yt -v_p)^2 / R_0;
+	a_rt = a_x * x_n / R_0;
+	%fprintf(' t_ar: %f , error: %f \n', t_ar , a_r - t_ar );
+	%fprintf('------------------------------------------\n');
 	
 	% Analyze the coefficient
     co_0 = -2 / lambda * R_0;
     co_1 = -2 / lambda * v_r; 
-    co_2 = -2 / lambda * ((v_y -v_p)^2 + a_x * x_n) / R_0;
-    co_3 = -1 / lambda * 6* v_r * (v_y - v_p)^2 / R_0^2 ;
-    refSignal = exp(j * 2 * pi * ( co_0 + co_1 * eta + co_2 * eta.^2 / 2 + co_3 * eta.^3 / 6 ) );
-    %%
+    co_2 = -2 / lambda * ((v_yt -v_p)^2 + a_x * x_n) / R_0;
+    co_3 = 1 / lambda * 6* v_r * (v_yt - v_p)^2 / R_0^2 ;
+	%ahq = [co_0 co_1 co_2 co_3];
+    %refSignal = exp(j * 2 * pi * ( co_0 + co_1 * eta + co_2 * eta.^2 / 2 + co_3 * eta.^3 / 6 ) );
+    %{
+	%%
     close all
     figure
 	subplot(2,1,1) 
@@ -121,7 +132,7 @@ function [co_3, c_3, t_vy] = SAR_key(vx, vy, ax, ay)
 	xlim([-.8 -.5 ])
 	%plot(eta,real(s_2(:,662)))
     %fprintf('The coefficient of the signal is: \n  co_0 = %d , co_1 = %d \n  co_2 = %d , co_3 = %d \n', co_0, co_1, co_2, co_3);
-	%{
+	
 	%plot(real(k_3))
 	% The simulation result
 	figure

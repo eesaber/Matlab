@@ -168,4 +168,11 @@
 		set(gca,'linewidth',2.5)
 		colorbar
 		export_fig c3Contour1.jpg
-%}
+%% Range equation expansion 
+	syms t x_0 y_0 v_x v_y v_p a_x a_y h 
+	f = sqrt( (x_0 + v_x * t + a_x* t^2 / 2)^2 + h^2 ...
+		+ (y_0 + (v_y - v_p) * t + a_y * t^2 / 2 )^2  );
+	taylor(f, t, 'order', 2)
+	taylor(f, t, 'order', 3)
+	taylor(f, t, 'order', 4) 
+
