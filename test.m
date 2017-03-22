@@ -77,25 +77,28 @@
 	end
 
 	% Fig.1 Quantization error of c_3
-	%{
+	%%
 		left_color = [1 0.6 0.2];
 		right_color = [0 0 0];
 		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
 		yyaxis left
 		plot(c_3, t_c_3(1,:) - c_3,'--','Linewidth',3.5)
 		yyaxis right
-		plot(c_3, t_c_3(4,:) - c_3, c_3, t_c_3(5,:) - c_3,'-.','Linewidth',3.5)
-	%}
+		plot(c_3, t_c_3(4,:) - c_3,'-.',c_3, t_c_3(5,:) - c_3,'k','Linewidth',3.5)
+	%{
 	% Fig.2 Show three lines of "c_3" in different total point
 		plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:) ,'k', c_3, t_c_3(5,:) ,'k-.','Linewidth',3.5);
+	%}	
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
 		set(gcf,'color','w');
 		xlabel('$c_3$', 'Interpreter', 'latex')
 		ylabel('$\tilde{c}_3 - c_3$', 'Interpreter', 'latex')
+		
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1); 
 		%export_fig c3ResoDiffN.jpg
+		
 	%% Subaim: The effect of cccuracy of c_3 when estimate c_2
 	figure
 		%{surf(c_2,c_3,squeeze(t_c_2(5,:,:)) - repmat(c_2,length(c_3),1) )
@@ -143,17 +146,17 @@
 		%xlim([-10 10])
 		%ylim([-10 10])
 		hold on
-		[C,h] = contour(co_3,10,'k--','LineWidth',3,'ShowText','on');
+		[C,h] = contour(co_3,9,'k--','LineWidth',1,'ShowText','on');
 		clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
 		set(gcf,'color','w');
 		set(gca,'linewidth',2.5)
 		colormap('Jet')
-		colorbar
+		%colorbar
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
-		set(frame_h,'Maximized',1); 
-		export_fig c3Contour.jpg
+		%set(frame_h,'Maximized',1); 
+		%export_fig c3Contour.jpg
 	figure
 		imagesc(v_y, v_r, co_3)
 		xlabel('$v_y$', 'Interpreter', 'latex')
@@ -166,8 +169,8 @@
 		export_fig c3Contour1.jpg
 		set(gca,'xtick',[-20:5:20],'ytick',[-25:5:25]);
 		set(gca,'linewidth',2.5)
-		colorbar
-		export_fig c3Contour1.jpg
+		%colorbar
+		%export_fig c3Contour1.jpg
 %% Range equation expansion 
 	syms t x_0 y_0 v_x v_y v_p a_x a_y h 
 	f = sqrt( (x_0 + v_x * t + a_x* t^2 / 2)^2 + h^2 ...
