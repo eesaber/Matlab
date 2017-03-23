@@ -47,6 +47,7 @@
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1); 
 		%export_fig AF_2.jpg
+		close all
 %% Aim: Total points will not makes resolution better
 % We find GAF has a poor resolution, and want to chekc if add more points
 % can improve the resolution. 
@@ -77,7 +78,6 @@
 	end
 
 	% Fig.1 Quantization error of c_3
-	%%
 		left_color = [1 0.6 0.2];
 		right_color = [0 0 0];
 		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
@@ -85,19 +85,19 @@
 		plot(c_3, t_c_3(1,:) - c_3,'--','Linewidth',3.5)
 		yyaxis right
 		plot(c_3, t_c_3(4,:) - c_3,'-.',c_3, t_c_3(5,:) - c_3,'k','Linewidth',3.5)
-	%{
+	
 	% Fig.2 Show three lines of "c_3" in different total point
-		plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:) ,'k', c_3, t_c_3(5,:) ,'k-.','Linewidth',3.5);
-	%}	
+		%plot(c_3, t_c_3(1,:),'--k', c_3, t_c_3(4,:) ,'k', c_3, t_c_3(5,:) ,'k-.','Linewidth',3.5);
+		
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
 		set(gcf,'color','w');
 		xlabel('$c_3$', 'Interpreter', 'latex')
 		ylabel('$\tilde{c}_3 - c_3$', 'Interpreter', 'latex')
-		
+		pbaspect([7 5 1])
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1); 
-		%export_fig c3ResoDiffN.jpg
+		export_fig c3ResoDiffN.jpg
 		
 	%% Subaim: The effect of cccuracy of c_3 when estimate c_2
 	figure
@@ -125,57 +125,101 @@
 	T_a = 1;
 	eta = linspace(-T_a,T_a,T_a * 2000);
 	x_0 = 1000/1.41; y_0 = 0; h = 1000/1.41; 
-	v_r = linspace(-25,25,52); v_y = linspace(-20,20,81);
+	v_x = linspace(-25,25,52); v_y = linspace(-20,20,81);
+	a_x = linspace(-10,10,41);
 	v_p = 100;
 	f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
 	% vector space
-	co_3 = zeros(length(v_r),length(v_y));
-	R_0 = zeros(length(v_r),length(v_y));
+	co_3 = zeros(length(v_x),length(v_y));
+	R_0 = zeros(length(v_x),length(v_y));
 	% generate c_3
-	for h = 1 : length(v_r)
+	for h = 1 : length(v_x)
 		for k = 1 : length(v_y)
-			R = sqrt(h^2 + (x_0 + v_r(h)* eta ).^2 + (y_0 + v_y(k)* eta - v_p* eta).^2 );
+			R = sqrt(h^2 + (x_0 + v_x(h)* eta ).^2 + (y_0 + v_y(k)* eta - v_p* eta).^2 );
 			[R_0(h,k), ~] = min(R);
-			co_3(h,k) = -1 / lambda * 6* v_r(h) * (v_y(k) - v_p)^2 / R_0(h,k)^2 ;
+			co_3(h,k) = -1 / lambda * 6* v_x(h) * (v_y(k) - v_p)^2 / R_0(h,k)^2 ;
 		end
 	end
+	% Countour of c_3 v.s. v_y & v_x
 	figure
 		imagesc(co_3)
 		xlabel('$v_y$', 'Interpreter', 'latex')
-		ylabel('$v_r$', 'Interpreter', 'latex')
-		%xlim([-10 10])
-		%ylim([-10 10])
+		ylabel('$v_x$', 'Interpreter', 'latex')
 		hold on
-		[C,h] = contour(co_3,9,'k--','LineWidth',1,'ShowText','on');
+		[C,h] = contour(co_3,'k','LineWidth',2.5,'ShowText','on');
 		clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
 		set(gcf,'color','w');
 		set(gca,'linewidth',2.5)
 		colormap('Jet')
-		%colorbar
+		pbaspect([7 5 1])
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
-		%set(frame_h,'Maximized',1); 
-		%export_fig c3Contour.jpg
+		set(frame_h,'Maximized',1); 
+		export_fig c3Contour.jpg
 	figure
-		imagesc(v_y, v_r, co_3)
+		imagesc(v_y, v_x, co_3)
 		xlabel('$v_y$', 'Interpreter', 'latex')
-		ylabel('$v_r$', 'Interpreter', 'latex')
+		ylabel('$v_x$', 'Interpreter', 'latex')
 		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
 		set(gcf,'color','w');
 		pause(0.00001);
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1); 
-		export_fig c3Contour1.jpg
+		pbaspect([7 5 1])
 		set(gca,'xtick',[-20:5:20],'ytick',[-25:5:25]);
 		set(gca,'linewidth',2.5)
-		%colorbar
-		%export_fig c3Contour1.jpg
+		export_fig c3Contour1.jpg
+		%%
+	% Contour of c_2 v.s. v_y & a_x
+	% generate c_2
+	v_x = 10;
+	co_2 = zeros(length(v_y),length(a_x));
+	for h = 1 : length(v_y)
+		for k = 1 : length(a_x)
+			R = sqrt(h^2 + (x_0 + 10* eta + a_x(k) * eta.^2 /2).^2 + (y_0 + v_y(h)* eta - v_p* eta).^2 );
+			[R_0(h,k), ~] = min(R);
+			co_2(h,k) = -2 / lambda *( (v_y(h) - v_p).^2 + a_x(k) * x_0) / R_0(h,k);
+		end
+	end
+	figure 
+		imagesc(co_2)
+		xlabel('$a_x$', 'Interpreter', 'latex')
+		ylabel('$v_y$', 'Interpreter', 'latex')
+		hold on
+		[C,h] = contour(co_2,'k','LineWidth',2.5,'ShowText','on');
+		clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+		set(gcf,'color','w');
+		set(gca,'linewidth',2.5)
+		colormap('Jet')
+		pause(0.00001);
+		pbaspect([7 5 1])
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1); 
+		export_fig c2Contour.jpg
+	figure
+		imagesc(a_x,v_y,co_2)
+		xlabel('$a_x$', 'Interpreter', 'latex')
+		ylabel('$v_y$', 'Interpreter', 'latex')
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman')
+		set(gcf,'color','w');
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1); 
+		pbaspect([7 5 1])
+		set(gca,'xtick',[-20:5:20],'ytick',[-20:5:20]);
+		set(gca,'linewidth',2.5)
+		export_fig c2Contour1.jpg
+	close all
 %% Range equation expansion 
 	syms t x_0 y_0 v_x v_y v_p a_x a_y h 
 	f = sqrt( (x_0 + v_x * t + a_x* t^2 / 2)^2 + h^2 ...
-		+ (y_0 + (v_y - v_p) * t + a_y * t^2 / 2 )^2  );
+		+ ( y_0 + (v_y - v_p) * t + 0 * t^2 / 2 )^2  );
 	taylor(f, t, 'order', 2)
 	taylor(f, t, 'order', 3)
-	taylor(f, t, 'order', 4) 
-
+	taylor(f, t, 'order', 4)
+	
+	- (t^3*((3*(2*v_x*x_0)*(((v_p - v_y)^2 + a_x*x_0 + v_x^2)*R_0 - (2*v_x*x_0)^2/(4*R_0)))/(4*R_0^2) - (3*a_x*v_x*R_0)/2))/(3*R_0^2)
+	%(t^3*((3*a_x*v_x*R_0)/2 -(3*v_x*x_0*(R_0*((v_p - v_y)^2 + a_x*x_0 + v_x^2) - (v_x^2*x_0^2)/R_0))/(2*R_0^2)))/(3*R_0^2)
+	

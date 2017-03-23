@@ -17,8 +17,8 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
 		cd ~/Code/Matlab 
 	end
     %% Signal 
-    %s = Gen_signal(10,-10,0,0);
-    s = Gen_signal(vx, vy, ax, ay); 
+    %s = Gen_signal(20,-10,5,0);
+	s = Gen_signal(vx, vy, ax, ay); 
     load('parameter.mat');
     ref_time = -T_p : 1/4/B : 0 ;
 	R_m = sqrt(x_n^2 + (y_n - v_p * eta).^2 + h^2); % Static target range equation
@@ -73,16 +73,19 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
         s_2 = ifft(ifftshift(Fs_2, 2).').';
     else
         s_2 = ifft(Fs_2.').';
-    end
+	end
+	
     %purinto(s_2)
     %export_fig s_2.jpg
-    %fprintf(' v_r: %f , v_rt: %f \n Estimation error: %f \n ', v_r , v_rt, v_r - v_rt )
+    fprintf(' v_r: %f , v_rt: %f Estimation error: %f \n ', v_r , v_rt, v_r - v_rt )
 	
 %% General Ambiguity function (m = 3)
 	%Chose the maximum value when R = R_0
 	[~, index] = max(abs(s_2(:)));
 	[~, I_col] = ind2sub(size(s_2),index);
 	s_3 = s_2(:,I_col).';
+	close all
+	%plot(real(s_2(:,663)))
 	
 	%{
 	AF = GAF(s_3,4,4,3);
@@ -105,19 +108,19 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
 		%figure
 		%plot(f,abs(AF))
 	end
-	v_yt = v_p - sqrt( Ec(4) * c / f_0 * R_0^2 / 6 / v_r); % There are bug.
+	v_yt = v_p - sqrt( Ec(4) * c / f_0 * R_0^2 / 6 / v_rt); % There are bug.
 	c_3 = Ec(4);
-	%fprintf(' t_vy: %f , error: %f \n ', t_vy , v_y - t_vy );
-	t_ar = - Ec(3) -2 / lambda * (v_yt -v_p)^2 / R_0;
-	a_rt = a_x * x_n / R_0;
-	%fprintf(' t_ar: %f , error: %f \n', t_ar , a_r - t_ar );
-	%fprintf('------------------------------------------\n');
+	fprintf('v_y: %f, t_vy: %f , error: %f \n',v_y, v_yt , v_y - v_yt );
+	a_rt = - Ec(3) -2 / lambda * (v_yt -v_p)^2 / R_0;
+	a_r = a_x * x_n / R_0;
+	fprintf('a_r: %f, t_ar: %f , error: %f \n', a_r, a_rt , a_r - a_rt );
+	fprintf('------------------------------------------\n');
 	
 	% Analyze the coefficient
     co_0 = -2 / lambda * R_0;
     co_1 = -2 / lambda * v_r; 
-    co_2 = -2 / lambda * ((v_yt -v_p)^2 + a_x * x_n) / R_0;
-    co_3 = 1 / lambda * 6* v_r * (v_yt - v_p)^2 / R_0^2 ;
+    co_2 = -2 / lambda * ((v_y -v_p)^2 + a_x * x_n) / R_0;
+    co_3 = 1 / lambda * 6* v_r * (v_y - v_p)^2 / R_0^2 ;
 	%ahq = [co_0 co_1 co_2 co_3];
     %refSignal = exp(j * 2 * pi * ( co_0 + co_1 * eta + co_2 * eta.^2 / 2 + co_3 * eta.^3 / 6 ) );
     %{

@@ -14,11 +14,13 @@ function [s] =  Gen_signal(vx, vy, ax, ay)
     % Target
     x_n = 1000/1.41;
     y_n = 0;
+	
     d = 50; % Length of the target area 
     v_x = vx; a_x = ax; % rangecl
     v_y = vy; a_y = ay; % azimuth 
     % Platform
     h = 1000/1.41;
+	R_0 = sqrt(x_n^2 + y_n^2 + h^2);
     La = 2;     
     v_p = 100; 
     f_0 = 5e9; c = 3e8 ; lambda = c/f_0 ;
@@ -37,7 +39,7 @@ function [s] =  Gen_signal(vx, vy, ax, ay)
     tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
 
     R = sqrt(h^2 + (x_n + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_n + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-    [R_0, ind_R_0] = min(R);
+    %R_0, ind_R_0] = min(R);
     save('parameter.mat'); %Save the parameters for the after processing.
     s = zeros(length(eta), length(tau));
     for k = 1 : length(eta)
