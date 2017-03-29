@@ -16,11 +16,11 @@ function DualRx()
     y_0 = 400;
 	
     d = 300; % Length of the target area 
-    v_x = vx; a_x = ax; % rangecl
-    v_y = vy; a_y = ay; % azimuth 
+    v_x = 0; a_x = 0; % rangecl
+    v_y = 0; a_y = 0; % azimuth 
     % Platform
     h = 2200;
-	R_0 = sqrt(x_n^2 + y_n^2 + h^2);
+	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
     d_a = 0.2;     
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
@@ -35,18 +35,19 @@ function DualRx()
     aa = 0;
     eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
 
-    upran = sqrt( (x_n + d)^2 + h^2) ; downran =  sqrt( (x_n - d)^2 + h^2); %Set upper limit and down limit 
+    upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
 
-    R1 = sqrt(h^2 + (x_n + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_n + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-    R2 = sqrt(h^2 + (x_n + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_n + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-    save('parameter.mat'); %Save the parameters for the after processing.
+    R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+    R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+   
     s1 = zeros(length(eta), length(tau));
 	s2 = zeros(length(eta), length(tau));
     for k = 1 : length(eta)
-        2* R1(k)/ c ;
-        s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td & tau-td<=T_p)  ;
-		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td & tau-td<=T_p)  ;
-    end
-
+        td1 = 2* R1(k)/ c ;
+		td2 = (R1(k) + R2(k)) /c ;
+        s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+	end
+	abs()
 end
