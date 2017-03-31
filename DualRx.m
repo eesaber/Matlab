@@ -22,6 +22,7 @@
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
+	l_0 = sqrt( y_0^2 + h^2);
     d_a = 0.2;     
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
@@ -30,8 +31,46 @@
     K_r = 5e15 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-   
-
+%%
+	%{
+    temp = 0.04419 : -1000 / 2^20 : 0.02209;
+	v_y = linspace(-30,30,61);
+	step_ft = zeros(1,length(v_y));
+	con = 1;
+	for i = 1 :length(v_y)
+		if d_a / lambda * y_0 * (v_p - v_y(i)) / R_0 / l_0  >= temp(con)
+			step_ft(i) = temp(con);
+		else 
+			con = con + 1;
+			if con > length(temp)
+				con = con - 1;
+			end
+			step_ft(i) = temp(con);
+		end
+	end
+	
+	close all
+	figure
+		plot(v_y, d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 ,'k', v_y, step_ft,'k-.','Linewidth',3.5)	
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gcf,'color','w');
+		xlabel('$v_y$', 'Interpreter', 'latex')
+		ylabel('$f_t$', 'Interpreter', 'latex')
+		pbaspect([7 5 1])
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1);
+	figure
+		plot(v_y, (d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 - step_ft)./( d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0),'k','Linewidth',3.5)	
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gcf,'color','w');
+		xlabel('$v_y$', 'Interpreter', 'latex')
+		ylabel('$\frac{f_t - \tilde{f_t}}{f_t}$', 'Interpreter', 'latex')
+		pbaspect([7 5 1])
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1);
+	%}
     %% Signal 
     aa = 0;
     eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
@@ -99,7 +138,7 @@
 	
     %% RCMC for range walk 
     v_r = v_x * x_0 / R_0;
-    Fh_rw = exp(j * 4 * pi / c * t / 2 * -26 .* repmat(f_tau, length(eta), 1) );    
+    Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
     Fs1_2 = Fs1_1 .* Fh_rw ; 
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     if shift == 1
@@ -110,12 +149,13 @@
 		s2_2 = ifft(Fs2_2.').';
 	end
 	figure
-    imagesc(abs(s1_2))
-	figure
-	imagesc(abs(s2_2))
-	figure
-	%plot(real(s1_2(:,1468).*conj(s2_2(:,1468))))
-	plot(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468))))))
+	imagesc(abs(s1_2))
+	
+	N = 2^16;
+	[~, ind] = max(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468)), N ))));
+	temp =linspace(-PRF/2,PRF/2, N) ;
+	temp(ind)
+	d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0
     %export_fig s_2.jpg
-    
+    %clear
 %end
