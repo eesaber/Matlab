@@ -28,7 +28,7 @@
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
     PRF = 1000; %%2.35e3
-    K_r = 5e15 ;
+    K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
 %%
@@ -150,12 +150,17 @@
 	end
 	figure
 	imagesc(abs(s1_2))
-	
-	N = 2^16;
+    figure
+	plot(angle(s1_2(:,1468).*conj(s2_2(:,1468))))
+
+    %%
+	N = 2^18;
 	[~, ind] = max(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468)), N ))));
 	temp =linspace(-PRF/2,PRF/2, N) ;
-	temp(ind)
-	d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0
+	f_tp = temp(ind);
+    clear temp
+    v_yt = v_p + f_tp * R_0 * c /(2 * f_0 * d_a);
+	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
     %export_fig s_2.jpg
     %clear
 %end
