@@ -12,7 +12,7 @@
     end
 %}
 
-for v_y = -20 : 20
+for v_y = 18 : 18
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
@@ -153,6 +153,7 @@ for v_y = -20 : 20
         s1_2 = ifft(Fs1_2.').';
 		s2_2 = ifft(Fs2_2.').';
 	end
+    %{
 	%purinto(s1_2)
 	%purinto(s2_2)
 	%figure
@@ -183,13 +184,15 @@ for v_y = -20 : 20
         set(frame_h,'Maximized',1);
         export_fig Diff_ang.jpg
 	
-	%{%}
+	%}
 	%% Search the parameters by phase 
-		temp = angle(s1_2(:,148).*conj(s2_2(:,148)));
-		[~,ind] = min(temp);
-		ell = (temp(ind) - temp(1))/(ind - 1)/2000*(t(end,148)-t(1,148));
-		v_yt = v_p + ell * lambda / 2 / pi *R_0 / d_a;
-		fprintf('Actual: %f, Estimate: %f\n', v_y, v_y_t)
+		
+		%ell = (temp(ind) - temp(1))/(t(ind,148)-t(1,148));
+        f = fittype('a*x+b');
+        [fit1,gof,fitinfo] = fit(t(:,148),unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))),f,'StartPoint',[1 1]);
+		v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+		%fprintf('Actual: %f, Estimate: %f\n', v_y, v_yt)
+		fprintf('%f, ',v_yt)
 	%{
     %% Search the parameters by Fourier transform
 	N = 2^18;
@@ -201,4 +204,17 @@ for v_y = -20 : 20
 	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
     %export_fig s_2.jpg
     %}
+	clear
 end
+%{
+plot(linspace(-20,20,41),v_yt,'k'',Linewidth',3)
+    xlabel('$v_y$', 'Interpreter', 'latex')
+    ylabel('$\tilde{v}_y$', 'Interpreter', 'latex')
+    set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+    set(gcf,'color','w');
+    pbaspect([7 5 1])
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1);
+    %export_fig Diff_ang.jpg
+  %}  
