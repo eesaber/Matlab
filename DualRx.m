@@ -12,7 +12,7 @@
     end
 %}
 
-for v_y = 18 : 18
+for v_y = -18 : -18
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
@@ -204,12 +204,29 @@ for v_y = 18 : 18
 	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
     %export_fig s_2.jpg
     %}
-	clear
+	%clear
 end
+I2 = exp(-j * 4* pi /lambda *(R_0 + d_a y_0 / 2 / R_0 - d_a(v_p - v_y)/ 2 / R_0 *ｔ(:,148) ...
+        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ))
+I1 = exp(-j * 4* pi /lambda *(R_0 + ...
+        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ))
+figure
+plot(t(:,148),angle(I1),t(:,148),angle(I2))
+figure
+plot(t(:,148),angle(s1_2(:,148)), t(:,148),angle(s2_2(:,148)))
+figure
+plot(t(:,148),angle(I1),t(:,148),angle(s1_2(:,148)))
+figure
+plot(t(:,148),angle(I2),t(:,148),angle(s2_2(:,148)))
+figure
+plot(t(:,148),angle(I1 .* conj(s1_2(:,148))))
+figure
+plot(t(:,148),angle(I2 .* conj(s2_2(:,148))))
+
 %{
-plot(linspace(-20,20,41),v_yt,'k'',Linewidth',3)
+plot(linspace(-20,20,41), v_yt -linspace(-20,20,41),'k','Linewidth',3)
     xlabel('$v_y$', 'Interpreter', 'latex')
-    ylabel('$\tilde{v}_y$', 'Interpreter', 'latex')
+    ylabel('$\tilde{v}_y - v_y$', 'Interpreter', 'latex')
     set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
     set(gcf,'color','w');
     pbaspect([7 5 1])
