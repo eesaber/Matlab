@@ -11,6 +11,8 @@
         ax = 0; ay = 0;
     end
 %}
+
+for v_y = -20 : 20
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
@@ -18,7 +20,8 @@
 	
     d = 100; % Length of the target area 
     v_x = 0; a_x = 0; % rangecl
-    v_y = 10; a_y = 0; % azimuth 
+    %v_y = 0; 
+	a_y = 0; % azimuth 
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
@@ -79,7 +82,7 @@
     tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
 
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-    R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+    R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
    
     s1 = zeros(length(eta), length(tau));
 	s2 = zeros(length(eta), length(tau));
@@ -89,6 +92,7 @@
         s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
 		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
 	end
+	clear R1 R2
 	%% range compression 
 	ref_time = -T_p : 1/4/B : 0 ;
 	h_m = repmat(exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
@@ -99,7 +103,7 @@
     s1_rc = ifft( Fs1_rc.' ).';
     Fs2_rc = fft(s2.', 2^tau_nt2).' .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc.' ).';
-	
+	clear Fh_m s1 s2
 	%%
 	% Key Stone transform - RCMC for range curveture 
     % Interpolation 
@@ -125,6 +129,7 @@
     	s1_1 = ifft(Fs1_1.').';
 		s2_1 = ifft(Fs2_1.').';
 	end
+	clear Fs1_rc Fs2_rc
 	%%
 	
     [~, down] = max(abs(s1_1(1,:)) );
@@ -148,12 +153,45 @@
         s1_2 = ifft(Fs1_2.').';
 		s2_2 = ifft(Fs2_2.').';
 	end
-	figure
-	imagesc(abs(s1_2))
-    figure
-	plot(angle(s1_2(:,1468).*conj(s2_2(:,1468))))
-
+	%purinto(s1_2)
+	%purinto(s2_2)
+	%figure
+	%imagesc(abs(s1_2))
     %%
+	close all
+    rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
+	
+		left_color = [0 0 0];
+		right_color = [204/255 133/255 0];
+		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
+	yyaxis left
+	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k--','Linewidth',3)
+	hold on 
+	plot(t(:,148),angle(rrr),'k','Linewidth',3)
+	hold off
+		xlabel('$t$', 'Interpreter', 'latex')
+        ylabel('Phase', 'Interpreter', 'latex')
+	yyaxis right
+	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148)))-angle(rrr),'Linewidth',3)
+		xlabel('$t$', 'Interpreter', 'latex')
+        ylabel('Phase different', 'Interpreter', 'latex')
+	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+    set(gcf,'color','w');
+	pbaspect([7 5 1])
+        pause(0.00001);
+        frame_h = get(handle(gcf),'JavaFrame');
+        set(frame_h,'Maximized',1);
+        export_fig Diff_ang.jpg
+	
+	%{%}
+	%% Search the parameters by phase 
+		temp = angle(s1_2(:,148).*conj(s2_2(:,148)));
+		[~,ind] = min(temp);
+		ell = (temp(ind) - temp(1))/(ind - 1)/2000*(t(end,148)-t(1,148));
+		v_yt = v_p + ell * lambda / 2 / pi *R_0 / d_a;
+		fprintf('Actual: %f, Estimate: %f\n', v_y, v_y_t)
+	%{
+    %% Search the parameters by Fourier transform
 	N = 2^18;
 	[~, ind] = max(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468)), N ))));
 	temp =linspace(-PRF/2,PRF/2, N) ;
@@ -162,5 +200,5 @@
     v_yt = v_p + f_tp * R_0 * c /(2 * f_0 * d_a);
 	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
     %export_fig s_2.jpg
-    %clear
-%end
+    %}
+end
