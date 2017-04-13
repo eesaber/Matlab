@@ -1,25 +1,29 @@
-function DualRx()
+%function DualRx()
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
 % to zero
 % Noth that the parameters of SAR need to be modified in the function.
-
+%{
     delete parameter.mat
     if nargin == 0
         vx = 0; vy = 0; 
         ax = 0; ay = 0;
     end
-
-
+%}
+azi = [-10, 0, 10];
+ran = [-10 , 0 ,10];
+for zz = 1 : 3
+for ii = 1 : 3
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
     y_0 = 400;
 	
     d = 100; % Length of the target area 
-    v_x = vx; a_x = ax; % rangecl
-    v_y = vy; a_y = ay; % azimuth 
+    v_x = ran(zz); a_x = 0; % rangecl
+    v_y = azi(ii); 
+	a_y = 0; % azimuth 
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
@@ -32,7 +36,46 @@ function DualRx()
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-
+%%
+	%{
+    temp = 0.04419 : -1000 / 2^20 : 0.02209;
+	v_y = linspace(-30,30,61);
+	step_ft = zeros(1,length(v_y));
+	con = 1;
+	for i = 1 :length(v_y)
+		if d_a / lambda * y_0 * (v_p - v_y(i)) / R_0 / l_0  >= temp(con)
+			step_ft(i) = temp(con);
+		else 
+			con = con + 1;
+			if con > length(temp)
+				con = con - 1;
+			end
+			step_ft(i) = temp(con);
+		end
+	end
+	
+	close all
+	figure
+		plot(v_y, d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 ,'k', v_y, step_ft,'k-.','Linewidth',3.5)	
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gcf,'color','w');
+		xlabel('$v_y$', 'Interpreter', 'latex')
+		ylabel('$f_t$', 'Interpreter', 'latex')
+		pbaspect([7 5 1])
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1);
+	figure
+		plot(v_y, (d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 - step_ft)./( d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0),'k','Linewidth',3.5)	
+		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gcf,'color','w');
+		xlabel('$v_y$', 'Interpreter', 'latex')
+		ylabel('$\frac{f_t - \tilde{f_t}}{f_t}$', 'Interpreter', 'latex')
+		pbaspect([7 5 1])
+		pause(0.00001);
+		frame_h = get(handle(gcf),'JavaFrame');
+		set(frame_h,'Maximized',1);
+	%}
     %% Signal 
     aa = 0;
     eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
@@ -89,13 +132,17 @@ function DualRx()
 		s2_1 = ifft(Fs2_1.').';
 	end
 	clear Fs1_rc Fs2_rc
-	%% Estimate the slope 
+	%%
 	
     [~, down] = max(abs(s1_1(1,:)) );
     [~, up] = max(abs(s1_1(length(s1_1(:,1)),:)));
     x_sl = (up - down) / 4 / B / dur  ;    
     v_rt = c * x_sl ;
-  		
+  
+	Rot = [cosd(10), 0; sind(10), 1];
+	Rot_m = Rot^-1 * [ 0:1:(length(tau)-1); ones(1,length(tau))];
+	
+	
     %% RCMC for range walk 
     v_r = v_x * x_0 / R_0;
     Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
@@ -108,14 +155,49 @@ function DualRx()
         s1_2 = ifft(Fs1_2.').';
 		s2_2 = ifft(Fs2_2.').';
 	end
-	%% Search the parameters by phase 
-	f = fittype('a*x+b');
-	[fit1,~,~] = fit(t(:,148),unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))),f,'StartPoint',[1 1]);
-	v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
-	%fprintf('Actual: %f, Estimate: %f\n', v_y, v_yt)
-	fprintf('%f\n, ',v_yt)
-	clear f fit1
+    %{
+	%purinto(s1_2)
+	%purinto(s2_2)
+	%figure
+	%imagesc(abs(s1_2))
+    %%
+	close all
+    rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
 	
+		left_color = [0 0 0];
+		right_color = [204/255 133/255 0];
+		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
+	yyaxis left
+	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k--','Linewidth',3)
+	hold on 
+	plot(t(:,148),angle(rrr),'k','Linewidth',3)
+	hold off
+		xlabel('$t$', 'Interpreter', 'latex')
+        ylabel('Phase', 'Interpreter', 'latex')
+	yyaxis right
+	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148)))-angle(rrr),'Linewidth',3)
+        ylabel('Phase different', 'Interpreter', 'latex')
+	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+    set(gcf,'color','w');
+	pbaspect([7 5 1])
+        pause(0.00001);
+        frame_h = get(handle(gcf),'JavaFrame');
+        set(frame_h,'Maximized',1);
+        export_fig Diff_ang.jpg
+	
+	%}
+	
+	
+	%% Search the parameters by phase 
+		
+		%ell = (temp(ind) - temp(1))/(t(ind,148)-t(1,148));
+        f = fittype('a*x+b');
+        [fit1,~,~] = fit(t(:,148),unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))),f,'StartPoint',[1 1]);
+		v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+		%fprintf('Actual: %f, Estimate: %f\n', v_y, v_yt)
+		fprintf('%f\n, ',v_yt)
+		clear f fit1
+	%{
     %% Search the parameters by Fourier transform
 	N = 2^18;
 	[~, ind] = max(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468)), N ))));
@@ -124,69 +206,108 @@ function DualRx()
     clear temp
     v_yt = v_p + f_tp * R_0 * c /(2 * f_0 * d_a);
 	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
-    
-	plot(linspace(-20,20,41), v_yt -linspace(-20,20,41),'k','Linewidth',3)
+    %export_fig s_2.jpg
+    %}
+	%clear
+
+
+%{
+plot(linspace(-20,20,41), v_yt -linspace(-20,20,41),'k','Linewidth',3)
     xlabel('$v_y$', 'Interpreter', 'latex')
     ylabel('$\tilde{v}_y - v_y$', 'Interpreter', 'latex')
-    plot_para(1,1)
-    
+    set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
+    set(gcf,'color','w');
+    pbaspect([7 5 1])
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1);
+    %export_fig Diff_ang.jpg
+  %}  
+%{	
+%%
+close all
+rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
+I2 = exp(-j * 4* pi /lambda *(R_0 + d_a * y_0 / 2 / R_0 - d_a*(v_p - v_y)/ 2 / R_0 *t(:,148) ...
+        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
+I1 = exp(-j * 4* pi /lambda *(R_0 + ...
+        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
 
-	%% Analyze the phase characteristic
+	
+figure 
+plot(angle(I1))
+hold on 
+plot(angle(I2))
+plot_para(1,1,'1')
+
+figure 
+plot(unwrap(angle(I1)))
+hold on 
+plot(unwrap(angle(I2)))
+plot_para(1,1,'2')
+
+figure
+yyaxis left
+plot(angle(I1) - angle(I2),'Linewidth',2)
+yyaxis right
+plot(unwrap(angle(I1)) - unwrap(angle(I2)),'Linewidth',2)
+plot_para(1,1,'3')
+
+
+close all
+temp = 1 : length(s1_2(:,148));
+
+figure
+plot(angle(s1_2(:,148)),'Linewidth',1)
+hold on 
+plot(angle(s2_2(:,148)),'r','Linewidth',1)
+plot_para(1,1,'4')
+
+figure
+plot(unwrap(angle(s1_2(:,148))),'Linewidth',1)
+hold on 
+plot(unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
+plot_para(1,1,'5')
+
+figure
+yyaxis left
+plot(angle(s1_2(:,148)) - angle(s2_2(:,148)),'Linewidth',1)
+yyaxis right
+plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'Linewidth',1)
+plot_para(1,1,'6')
+
+figure
+plot(angle(s1_2(:,148).*conj(s2_2(:,148))),'Linewidth',1)
+hold on 
+plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
+plot_para(1,1,'7')
+
+	
+figure
+plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k','Linewidth',2)
+xlabel('t')
+ylabel('Phase')
+plot_para(1,1,'7')
+%}
+
+%% 
+%{
 	close all
-	% Ideal signal 
-	I2 = exp(-j * 4* pi /lambda *(R_0 + d_a * y_0 / 2 / R_0 - d_a*(v_p - v_y)/ 2 / R_0 *t(:,148) ...
-			+ (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
-	I1 = exp(-j * 4* pi /lambda *(R_0 + ...
-			+ (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
-	figure 
-	plot(angle(I1))
-	hold on 
-	plot(angle(I2))
-	plot_para(1,1,'1')
-
-	figure 
-	plot(unwrap(angle(I1)))
-	hold on 
-	plot(unwrap(angle(I2)))
-	plot_para(1,1,'2')
-
-	figure
-	yyaxis left
-	plot(angle(I1) - angle(I2),'Linewidth',2)
-	yyaxis right
-	plot(unwrap(angle(I1)) - unwrap(angle(I2)),'Linewidth',2)
-	plot_para(1,1,'3')
-
-	temp = 1 : length(s1_2(:,148));
-	figure
-	plot(angle(s1_2(:,148)),'Linewidth',1)
-	hold on 
-	plot(angle(s2_2(:,148)),'r','Linewidth',1)
-	plot_para(1,1,'4')
-
-	figure
-	plot(unwrap(angle(s1_2(:,148))),'Linewidth',1)
-	hold on 
-	plot(unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
-	plot_para(1,1,'5')
-
-	figure
-	yyaxis left
-	plot(angle(s1_2(:,148)) - angle(s2_2(:,148)),'Linewidth',1)
-	yyaxis right
-	plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'Linewidth',1)
-	plot_para(1,1,'6')
-
-	figure
-	plot(angle(s1_2(:,148).*conj(s2_2(:,148))),'Linewidth',1)
-	hold on 
-	plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
-	plot_para(1,1,'7')
-
-	figure
-	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k','Linewidth',2)
-	xlabel('t')
-	ylabel('Phase')
-	plot_para(1,1,'7')
-
+	num = [11, 51, 101, 151];
+	for gg = 1 : length(num)
+		clear f fit1
+		h_avg = ones(1,num(gg))/num(gg);
+		s_(gg,:) = filter(h_avg,1,angle(s1_2(:,148).*conj(s2_2(:,148))));
+		s_(gg,:) = filter(h_avg,1,s_(gg,:));
+		f = fittype('a*x+b');
+		[fit1,~,~] = fit(t(num(gg)*2:end,148),s_(gg,num(gg)*2:end).',f,'StartPoint',[1 1]);
+		v_yt(gg) = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+	end
+	[result ind]= min(abs(v_yt - v_y));
+	whi_num(zz,ii) = ind;
+	v_azi(zz,ii) = v_yt(ind);
+%}
 end
+end
+%whi_num
+%v_azi
+
