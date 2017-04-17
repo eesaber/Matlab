@@ -1,4 +1,4 @@
-%function DualRx()
+%function DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -11,19 +11,16 @@
         ax = 0; ay = 0;
     end
 %}
-azi = [-10, 0, 10];
-ran = [-10 , 0 ,10];
-for zz = 1 : 3
-for ii = 1 : 3
+
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
     y_0 = 400;
 	
     d = 100; % Length of the target area 
-    v_x = ran(zz); a_x = 0; % rangecl
-    v_y = azi(ii); 
-	a_y = 0; % azimuth 
+    v_x = -12; a_x = 0; % rangecl
+    v_y = -16; 
+	a_y = 5; % azimuth 
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
@@ -36,46 +33,6 @@ for ii = 1 : 3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-%%
-	%{
-    temp = 0.04419 : -1000 / 2^20 : 0.02209;
-	v_y = linspace(-30,30,61);
-	step_ft = zeros(1,length(v_y));
-	con = 1;
-	for i = 1 :length(v_y)
-		if d_a / lambda * y_0 * (v_p - v_y(i)) / R_0 / l_0  >= temp(con)
-			step_ft(i) = temp(con);
-		else 
-			con = con + 1;
-			if con > length(temp)
-				con = con - 1;
-			end
-			step_ft(i) = temp(con);
-		end
-	end
-	
-	close all
-	figure
-		plot(v_y, d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 ,'k', v_y, step_ft,'k-.','Linewidth',3.5)	
-		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
-		set(gcf,'color','w');
-		xlabel('$v_y$', 'Interpreter', 'latex')
-		ylabel('$f_t$', 'Interpreter', 'latex')
-		pbaspect([7 5 1])
-		pause(0.00001);
-		frame_h = get(handle(gcf),'JavaFrame');
-		set(frame_h,'Maximized',1);
-	figure
-		plot(v_y, (d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0 - step_ft)./( d_a / lambda * y_0 * (v_p - v_y) / R_0 / l_0),'k','Linewidth',3.5)	
-		set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
-		set(gcf,'color','w');
-		xlabel('$v_y$', 'Interpreter', 'latex')
-		ylabel('$\frac{f_t - \tilde{f_t}}{f_t}$', 'Interpreter', 'latex')
-		pbaspect([7 5 1])
-		pause(0.00001);
-		frame_h = get(handle(gcf),'JavaFrame');
-		set(frame_h,'Maximized',1);
-	%}
     %% Signal 
     aa = 0;
     eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
@@ -94,6 +51,8 @@ for ii = 1 : 3
         s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
 		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
 	end
+	%purinto(s1)
+	%purinto(s2)
 	clear R1 R2
 	%% range compression 
 	ref_time = -T_p : 1/4/B : 0 ;
@@ -119,7 +78,6 @@ for ii = 1 : 3
     	t(:, m) = eta * sqrt(f_0 / (f_0 + f_tau(m)) ).' ;    
 	end
 	
-	
     for m = 1 : 2^tau_nt2
     	Fs1_1(:, m) = interp1(eta, Fs1_rc(:,m).', t(:,m).', 'spline', 0).';
 		Fs2_1(:, m) = interp1(eta, Fs2_rc(:,m).', t(:,m).', 'spline', 0).';
@@ -131,21 +89,34 @@ for ii = 1 : 3
     	s1_1 = ifft(Fs1_1.').';
 		s2_1 = ifft(Fs2_1.').';
 	end
+	%purinto(s1_1)
+	%purinto(s2_1)
 	clear Fs1_rc Fs2_rc
+	
+	%% Radon transform to estimate the slop
+	iptsetpref('ImshowAxesVisible','on')
+	theta = [0:0.01:30 150:0.01:180-0.01];
+	[R,xp] = radon(abs(s1_1),theta);
+	%{
+	figure
+	imagesc(R)
+	xlabel('\theta (degrees)')
+	ylabel('x''')
+	colormap(gca,hot), colorbar
+	%}
 	%%
+	[~,ind_c] = max(max(R));
+	ell = -1/(tand(theta(ind_c)+90)*4*B/PRF);
 	
     [~, down] = max(abs(s1_1(1,:)) );
     [~, up] = max(abs(s1_1(length(s1_1(:,1)),:)));
     x_sl = (up - down) / 4 / B / dur  ;    
     v_rt = c * x_sl ;
   
-	Rot = [cosd(10), 0; sind(10), 1];
-	Rot_m = Rot^-1 * [ 0:1:(length(tau)-1); ones(1,length(tau))];
-	
-	
     %% RCMC for range walk 
-    v_r = v_x * x_0 / R_0;
-    Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
+    
+    %Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
+	Fh_rw = exp(j * 2 * pi  * ell * t .* repmat(f_tau, length(eta), 1) );    
     Fs1_2 = Fs1_1 .* Fh_rw ; 
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     if shift == 1
@@ -155,74 +126,38 @@ for ii = 1 : 3
         s1_2 = ifft(Fs1_2.').';
 		s2_2 = ifft(Fs2_2.').';
 	end
-    %{
-	%purinto(s1_2)
+	purinto(s1_2)
+	caxis([0 20])
+	%export_fig s1_2.jpg
 	%purinto(s2_2)
-	%figure
-	%imagesc(abs(s1_2))
-    %%
-	close all
-    rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
-	
-		left_color = [0 0 0];
-		right_color = [204/255 133/255 0];
-		set(figure,'defaultAxesColorOrder',[left_color; right_color]);
-	yyaxis left
-	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k--','Linewidth',3)
-	hold on 
-	plot(t(:,148),angle(rrr),'k','Linewidth',3)
-	hold off
-		xlabel('$t$', 'Interpreter', 'latex')
-        ylabel('Phase', 'Interpreter', 'latex')
-	yyaxis right
-	plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148)))-angle(rrr),'Linewidth',3)
-        ylabel('Phase different', 'Interpreter', 'latex')
-	set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
-    set(gcf,'color','w');
-	pbaspect([7 5 1])
-        pause(0.00001);
-        frame_h = get(handle(gcf),'JavaFrame');
-        set(frame_h,'Maximized',1);
-        export_fig Diff_ang.jpg
-	
-	%}
-	
 	
 	%% Search the parameters by phase 
-		
-		%ell = (temp(ind) - temp(1))/(t(ind,148)-t(1,148));
-        f = fittype('a*x+b');
-        [fit1,~,~] = fit(t(:,148),unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))),f,'StartPoint',[1 1]);
-		v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
-		%fprintf('Actual: %f, Estimate: %f\n', v_y, v_yt)
-		fprintf('%f\n, ',v_yt)
-		clear f fit1
 	%{
-    %% Search the parameters by Fourier transform
-	N = 2^18;
-	[~, ind] = max(abs(fftshift(fft(s1_2(:,1468).*conj(s2_2(:,1468)), N ))));
-	temp =linspace(-PRF/2,PRF/2, N) ;
-	f_tp = temp(ind);
-    clear temp
-    v_yt = v_p + f_tp * R_0 * c /(2 * f_0 * d_a);
-	fprintf('The ideal f_tp: %f, The estimation f_tp: %f', -2 * d_a / lambda * d_a *  (v_p - v_y) / R_0, f_tp)
-    %export_fig s_2.jpg
-    %}
-	%clear
-
-
-%{
-plot(linspace(-20,20,41), v_yt -linspace(-20,20,41),'k','Linewidth',3)
-    xlabel('$v_y$', 'Interpreter', 'latex')
-    ylabel('$\tilde{v}_y - v_y$', 'Interpreter', 'latex')
-    set(gca,'FontSize',40,'Fontname','CMU Serif Roman','Linewidth',2)
-    set(gcf,'color','w');
-    pbaspect([7 5 1])
-    pause(0.00001);
-    frame_h = get(handle(gcf),'JavaFrame');
-    set(frame_h,'Maximized',1);
-    %export_fig Diff_ang.jpg
-  %}  
+	f = fittype('a*x+b');	
+	[fit1,~,~] = fit(t(:,148), unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))), f,'StartPoint',[1 1]);
+	v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+	fprintf('Method 0, Actual: %f, Estimate: %f\n', v_y, v_yt)
+	clear f fit1
+	%}	
+		L =31;
+		filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
+		for gg = 1 : 1
+			s_filter = ifft(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))) .*  fft(filt_(gg,:),length(eta)).'  );
+			%{
+			figure
+			plot(s_filter,'k','Linewidth',2)
+			hold on
+			plot(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))),'Linewidth',2)
+			xlabel('$\Delta t$', 'Interpreter', 'latex')
+			ylabel('Phase', 'Interpreter', 'latex')
+			plot_para(1,1,int2str(gg))
+			%}
+			f = fittype('a*x+b');
+			[fit1,~,~] = fit(t(L:end,148),s_filter(L:end) ,f,'StartPoint',[1 1]);
+			v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+			fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
+			clear f fit1
+		end
 %{	
 %%
 close all
@@ -289,25 +224,28 @@ ylabel('Phase')
 plot_para(1,1,'7')
 %}
 
-%% 
 %{
-	close all
-	num = [11, 51, 101, 151];
-	for gg = 1 : length(num)
-		clear f fit1
-		h_avg = ones(1,num(gg))/num(gg);
-		s_(gg,:) = filter(h_avg,1,angle(s1_2(:,148).*conj(s2_2(:,148))));
-		s_(gg,:) = filter(h_avg,1,s_(gg,:));
-		f = fittype('a*x+b');
-		[fit1,~,~] = fit(t(num(gg)*2:end,148),s_(gg,num(gg)*2:end).',f,'StartPoint',[1 1]);
-		v_yt(gg) = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
-	end
-	[result ind]= min(abs(v_yt - v_y));
-	whi_num(zz,ii) = ind;
-	v_azi(zz,ii) = v_yt(ind);
+	%% Spectrum of the filter
+	L = 101;
+	lon = 2^10;
+	filter = [rectwin(L).'; triang(L).'; hamming(L).'];
+	f_spect = linspace(-0.5,0.5,lon);
+	figure 
+	plot(f_spect,10*log10(fftshift(abs(fft(filter(1,:),lon)  .* conj(fft(filter(1,:),lon))))/max(abs(fft(filter(1,:),lon) .* conj(fft(filter(1,:),lon))))) ,'Linewidth',2)
+	hold on 
+	plot(f_spect,10*log10(fftshift(abs(fft(filter(2,:),lon)  .* conj(fft(filter(2,:),lon))))/max(abs(fft(filter(2,:),lon) .* conj(fft(filter(2,:),lon))))) ,'Linewidth',2)
+	hold on 
+	plot(f_spect,10*log10(fftshift(abs(fft(filter(3,:),lon)  .* conj(fft(filter(3,:),lon))))/max(abs(fft(filter(3,:),lon) .* conj(fft(filter(3,:),lon))))) ,'k','Linewidth',2)
+	ylim([-50 0])
+	xlabel('Normalized frequency','Interpreter', 'latex')
+	ylabel('Spectrum (dB)','Interpreter', 'latex')
+	plot_para(1,1,'f_respon')
+	
+	f_spect = linspace(-0.5,0.5,length(eta));
+	plot(f_spect,10*log10(fftshift(abs(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))))  .* conj(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))))))/max(abs(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))) .* conj(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))))))),'k' ,'Linewidth',2)
+	xlabel('Normalized frequency','Interpreter', 'latex')
+	ylabel('Spectrum (dB)','Interpreter', 'latex')
+	plot_para(1,1,'ATI_Pha_f')
+	
 %}
-end
-end
-%whi_num
-%v_azi
 
