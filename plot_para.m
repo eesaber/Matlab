@@ -8,7 +8,7 @@ function plot_para(Spec, Maximize,Filename)
 	end
 	%%
 	if Spec == 1 
-		set(gca,'FontSize',30,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gca,'FontSize',27,'Fontname','CMU Serif Roman','Linewidth',2)
 		set(gcf,'color','w');
 		pbaspect([7 5 1])
 	end
