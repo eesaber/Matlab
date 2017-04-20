@@ -7,8 +7,14 @@ function plot_para(Spec, Maximize,Filename)
 		Filename = 'Default';
 	end
 	%%
+	get_size = get(0,'screensize');
+	if get_size(3:4) == [1920 1080]
+		font_size = 40;
+	else
+		font_size = 28;
+	end
 	if Spec == 1 
-		set(gca,'FontSize',27,'Fontname','CMU Serif Roman','Linewidth',2)
+		set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
 		set(gcf,'color','w');
 		pbaspect([7 5 1])
 	end
