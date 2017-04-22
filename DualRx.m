@@ -20,6 +20,7 @@
     d = 100; % Length of the target area 
     v_x = 10; a_x = 0; % rangecl -16
     v_y = -10; a_y = 0; % azimuth 
+
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
@@ -29,7 +30,7 @@
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
     PRF = 1000; %%2.35e3
-    K_r = 5e14 ;
+    K_r = 5e15 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
     %% Signal 
@@ -47,8 +48,8 @@
     for k = 1 : length(eta)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
-        s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
-		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+        s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
 	end
 	%purinto(s1)
 	%purinto(s2)
@@ -58,11 +59,11 @@
 	h_m = repmat(exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
 
 	tau_nt2 = nextpow2(length(tau)) ;  % Make total number to power of 2
-    Fh_m = fft( h_m.', 2^tau_nt2 ).'; 
-    Fs1_rc = fft(s1.', 2^tau_nt2).' .* Fh_m; % Range compression
-    s1_rc = ifft( Fs1_rc.' ).';
-    Fs2_rc = fft(s2.', 2^tau_nt2).' .* Fh_m; % Range compression
-	s2_rc = ifft( Fs2_rc.' ).';
+    Fh_m = fft( h_m, 2^tau_nt2, 2); 
+    Fs1_rc = fft(s1, 2^tau_nt2, 2) .* Fh_m; % Range compression
+    s1_rc = ifft( Fs1_rc,[], 2);
+    Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
+	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
 	%purinto(s1_rc)
 	%% Key Stone transform - RCMC for range curveture 
@@ -97,11 +98,14 @@
 	caxis([0 160])
 	%export_fig 1.jpg
 	%}
+	clear Fs1_rc Fs2_rc
+	
+
 	purinto(Fs1_1)
 	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	caxis([0 160])
-	export_fig 1.jpg
+	%export_fig 1.jpg
 	
 	plot(angle(Fs1_1(430,:)),'Linewidth',2)
 	hold on 
@@ -110,11 +114,10 @@
 	plot(angle(Fs1_1(433,:)),'Linewidth',2)
 	
 	
-	
 	purinto(s1_1)
 	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
-	export_fig 3.jpg
+	%export_fig 3.jpg
 	%caxis([0 160])
 	%export_fig aa.jpg
 	
@@ -131,6 +134,7 @@
 		theta = [170:0.01:190];
 		[R,xp] = radon(abs(s1_1),theta);
 		figure
+
 		imagesc(theta,xp/PRF,R)
 		colormap('jet'),colorbar
 		xlabel('$\theta$ (degrees)','Interpreter', 'latex')
@@ -156,6 +160,9 @@
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
+
+	clear Fh_rw
+
 	
 		
 	%% Search the parameters by phase 
