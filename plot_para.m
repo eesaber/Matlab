@@ -1,9 +1,10 @@
-function plot_para(Spec, Maximize,Filename)
-	
-	if nargin == 1 
+function plot_para(Maximize,Filename)
+	parser = inputParser;
+
+	if nargin == 0
 		Maximize = 0 ;
 	end
-	if nargin ~= 3
+	if nargin ~= 2
 		Filename = 'Default';
 	end
 	%%
@@ -13,11 +14,9 @@ function plot_para(Spec, Maximize,Filename)
 	else
 		font_size = 28;
 	end
-	if Spec == 1 
-		set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
-		set(gcf,'color','w');
-		pbaspect([7 5 1])
-	end
+	set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
+	set(gcf,'color','w');
+	pbaspect([7 5 1])
 	
 	if Maximize
 		pause(0.00001);

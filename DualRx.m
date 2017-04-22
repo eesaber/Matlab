@@ -1,4 +1,4 @@
-function [v_yt] = DualRx(vx,vy,ax,ay)
+%function [v_yt] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -18,9 +18,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     y_0 = 400;
 	
     d = 100; % Length of the target area 
-    v_x = vx; a_x = ax; % rangecl -16
-    v_y = vy; 
-	a_y = ay; % azimuth 
+    v_x = 10; a_x = 0; % rangecl -16
+    v_y = -10; a_y = 0; % azimuth 
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
@@ -69,64 +68,56 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
     f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
-    shift = 0; % FFTshift false
-    if shift == 1
-    	f_tau = linspace(-2*B, 2*B -1, 2^tau_nt2 ); 
-    	Fs_rc = fftshift(Fs_rc, 2);
-	end
-	
 	t = eta.' * sqrt((f_0 + f_tau)/f_0);
-	Fs1_1 = zeros(floor(t(end,end)*PRF*dur),2^tau_nt2);
+	Fs1_1 = zeros(2*floor(t(end,end)*PRF),2^tau_nt2);
 	Fs2_1 = Fs1_1;
+	add_ = floor(PRF*t(end,end))-PRF;
 	for m = 1 : 2^tau_nt2
-		temp_cou = floor(PRF*t(end,m)) - 1000;
-		Fs1_1(:, m) = [zeros(10-temp_cou,1); ...
-			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) .* exp(j * [zeros(10-temp_cou,1); ...
-			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)]);
+		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
+		Fs1_1(:, m) = [zeros(cou_,1); ...
+			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) .* exp(j * [zeros(cou_,1); ...
+			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
 		%Fs1_1(:, m) = [zeros(10-temp_cou,1); ...
 		%	interp1(eta, Fs1_rc(:,m).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)];
 		
-		Fs2_1(:, m) = [zeros(10-temp_cou,1); ...
-			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)];
-		Fs2_1(:, m) = Fs2_1(:,m) .* exp(j * [zeros(10-temp_cou,1); ...
-			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)]);
+		Fs2_1(:, m) = [zeros(cou_,1); ...
+			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		Fs2_1(:, m) = Fs2_1(:,m) .* exp(j * [zeros(cou_,1); ...
+			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
 	end
-	
-    if shift == 1
-    	s1_1 = ifft(ifftshift(Fs1_1, 2).').'; % If the central of f_tau is 0, then ifftshift is needed. If not so, do not do ifftshift 
-		s2_1 = ifft(ifftshift(Fs2_1, 2).').';
-    else
-    	s1_1 = ifft(Fs1_1.').';
-		s2_1 = ifft(Fs2_1.').';
-	end
+	%s1_1 = ifft(Fs1_1.').';
+	s1_1 = ifft(Fs1_1, 2^(tau_nt2 + 2),2);
+	%s2_1 = ifft(Fs2_1.').';
+	s2_1 = ifft(Fs2_1, 2^(tau_nt2 + 2),2);
 	%{
 	purinto(Fs1_rc)
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
 	caxis([0 160])
 	%export_fig 1.jpg
-	
+	%}
 	purinto(Fs1_1)
 	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	caxis([0 160])
-	%export_fig 2.jpg
-	purinto(Fs2_1)
-	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
-	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
-	caxis([0 160])
+	export_fig 1.jpg
+	
+	plot(angle(Fs1_1(430,:)),'Linewidth',2)
+	hold on 
+	plot(angle(Fs1_1(434,:)),'Linewidth',2)
+	hold on 
+	plot(angle(Fs1_1(433,:)),'Linewidth',2)
+	
 	
 	
 	purinto(s1_1)
 	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
+	export_fig 3.jpg
 	%caxis([0 160])
 	%export_fig aa.jpg
-	purinto(s2_1)
-	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
-	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
-	%}
+	
 
 	%% Radon transform to estimate the slop
 	% real v_r  and the Doppler frequency
@@ -137,13 +128,15 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	do_radon = 1;
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
-		theta = [0:0.01:10 165:0.01:180-0.01];
+		theta = [170:0.01:190];
 		[R,xp] = radon(abs(s1_1),theta);
 		figure
-		imagesc(R)
-		xlabel('\theta (degrees)')
-		ylabel('x''')
-		colormap(gca,hot), colorbar
+		imagesc(theta,xp/PRF,R)
+		colormap('jet'),colorbar
+		xlabel('$\theta$ (degrees)','Interpreter', 'latex')
+		ylabel('$t''$','Interpreter', 'latex')
+		%xlim([178 182]), ylim([0.32 0.4])
+		plot_para(1,'4')
 		[~,ind_c] = max(max(R));
 		ell = -1/(tand(theta(ind_c)+90)*4*B/PRF);
 	else
@@ -161,14 +154,9 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	end
     Fs1_2 = Fs1_1 .* Fh_rw ; 
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
+    s1_2 = ifft(Fs1_2.').';
+	s2_2 = ifft(Fs2_2.').';
 	
-    if shift == 1
-        s1_2 = ifft(ifftshift(Fs1_2, 2).').';
-		s2_2 = ifft(ifftshift(Fs2_2, 2).').';
-    else
-        s1_2 = ifft(Fs1_2.').';
-		s2_2 = ifft(Fs2_2.').';
-	end
 		
 	%% Search the parameters by phase 
 	
@@ -190,7 +178,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 			%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
 			%xlabel('$\Delta t$', 'Interpreter', 'latex')
 			%ylabel('Phase', 'Interpreter', 'latex')
-			%plot_para(1,1,int2str(gg))
+			%plot_para(1,int2str(gg))
 			
 			f = fittype('a*x+b');
 			[fit1,~,~] = fit(t(L:end,148),s_filter(L:end) ,'poly1');
@@ -201,10 +189,10 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 			%plot(fit1,t(L:end,148),s_filter(L:end))
 			%xlabel('$t$', 'Interpreter', 'latex')
 			%ylabel('Phase', 'Interpreter', 'latex')
-			%plot_para(1,1,'fit')
+			%plot_para(1,'fit')
 			clear f fit1
 		end
-end
+
 %{	
 	%%
 	ind = 148;
