@@ -49,10 +49,14 @@
     for k = 1 : length(eta)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
+		%s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		%s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+		
 		zxc((tau>=td1 & tau-td1<=T_p)) = linspace(0, T_p, length(tau((tau>=td1 & tau-td1<=T_p))));
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td1 & tau-td1<=T_p);
 		zxc((tau>=td2 & tau-td2<=T_p)) = linspace(0, T_p, length(tau((tau>=td2 & tau-td2<=T_p))));
 		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td2 & tau-td2<=T_p) ;
+		%{%}
 	end
 	%purinto(s1)
 	%purinto(s2)
@@ -69,7 +73,7 @@
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
-	%purinto(s1_rc)
+	purinto(s1_rc)
 
 	%{
 	purinto(Fs1_rc)
@@ -78,7 +82,6 @@
 	caxis([0 160])
 	%export_fig 1.jpg
 	%}
-	<<<<<<< HEAD
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
     f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
@@ -90,9 +93,9 @@
 		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
 		
 		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, real(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) + 1j* [zeros(cou_,1); ...
-			interp1(eta, (imag(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) .* exp(1j* [zeros(cou_,1); ...
+			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
 		
 		%{
 		Fs1_1(:, m) = [zeros(cou_,1); ...
@@ -122,7 +125,7 @@
 	%clear Fs1_rc Fs2_rc
 
 	%  Filter h_c - RCMC for range curveture 
-    rcc_f = 0
+    rcc_f = 0;
 	if rcc_f  
 		f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
 			
@@ -172,7 +175,7 @@
 	%t = repmat(linspace(-t(end,end),t(end,end),2*floor(PRF*t(end,end))),length(f_tau),1).';
     if do_radon 
 		%Fh_rw = exp(j * 2 * pi  * ell * t .* repmat(f_tau, length(t(:,1)), 1) );    
-		Fh_rw = exp(j * 2 * pi  * ell * eta.' * f_tau );    
+		Fh_rw = exp(j * 2 * pi  * ell * linspace(t(1,end), t(end,end), length(s1_1(:,1))).' * f_tau );    
 	else 
 		Fh_rw = exp(j * 4 * pi / c * t / 2 * v_rt .* repmat(f_tau, length(eta), 1) );    
 	end
@@ -180,19 +183,20 @@
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
+	purinto(s1_2)
 	clear Fh_rw
 	%% Search the parameters by phase 
-	f = fittype('a*x+b');	
-	[fit1,~,~] = fit(eta.', unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))), f,'StartPoint',[1 1]);
-	v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
-	fprintf('Method 0, Actual: %f, Estimate: %f\n', v_y, v_yt)
-	clear f fit1
+	%f = fittype('a*x+b');	
+	%[fit1,~,~] = fit(eta.', unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))), f,'StartPoint',[1 1]);
+	%v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
+	%fprintf('Method 0, Actual: %f, Estimate: %f\n', v_y, v_yt)
+	%clear f fit1
 		
 		L =31;
 		ind = 148;
 		filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
 		for gg = 1 : 1
-			s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(eta)).' );
+			s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
 			
 			%figure
 			%plot(s_filter,'k','Linewidth',2)
@@ -202,8 +206,8 @@
 			%ylabel('Phase', 'Interpreter', 'latex')
 			%plot_para('Maximize',1,'Filename',int2str(gg))
 			
-			f = fittype('a*x+b');
-			[fit1,~,~] = fit(eta(L:end).',s_filter(L:end) ,'poly1');
+			t2fit = linspace(t(1,end), t(end,end), length(s1_1(:,1))) ;
+			[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
 			v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
 			fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
 			
