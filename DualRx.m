@@ -18,7 +18,7 @@
     y_0 = 400;
 	
     d = 100; % Length of the target area 
-    v_x = 10; a_x = 0; % rangecl -16
+    v_x = 9; a_x = 0; % rangecl -16
     v_y = -10; a_y = 0; % azimuth 
 
     % Platform
@@ -30,7 +30,7 @@
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
     PRF = 1000; %%2.35e3
-    K_r = 5e15 ;
+    K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
     %% Signal 
@@ -66,6 +66,14 @@
 	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
 	%purinto(s1_rc)
+	%{
+	purinto(Fs1_rc)
+	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
+	caxis([0 160])
+	%export_fig 1.jpg
+	%}
+	
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
     f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
@@ -75,30 +83,32 @@
 	add_ = floor(PRF*t(end,end))-PRF;
 	for m = 1 : 2^tau_nt2
 		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
-		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) .* exp(j * [zeros(cou_,1); ...
-			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
-		%Fs1_1(:, m) = [zeros(10-temp_cou,1); ...
-		%	interp1(eta, Fs1_rc(:,m).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)];
 		
+		Fs1_1(:, m) = [zeros(cou_,1); ...
+			interp1(eta, real(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) + 1j* [zeros(cou_,1); ...
+			interp1(eta, (imag(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		
+		%temp(:, m) = interp1(linspace(-1,1, 2*add_+ PRF*dur), abs(Fs1_1(:,m)).', eta, 'spline', 0).' ;
+		%temp(:, m) =temp(:, m) .* exp(j *interp1(linspace(-1,1, 2*add_+ PRF*dur), unwrap(angle(Fs1_1(:,m))).', eta, 'spline', 0).');
+		
+		
+		%{
+		Fs1_1(:, m) = [zeros(cou_,1); ...
+			interp1(eta, real(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) + 1j*[zeros(cou_,1); ...
+			interp1(eta, imag(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+		%}
 		Fs2_1(:, m) = [zeros(cou_,1); ...
 			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
 		Fs2_1(:, m) = Fs2_1(:,m) .* exp(j * [zeros(cou_,1); ...
 			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
 	end
 	%s1_1 = ifft(Fs1_1.').';
-	s1_1 = ifft(Fs1_1, 2^(tau_nt2 + 2),2);
+	s1_1 = ifft(Fs1_1, [],2);
+	%stemp = ifft(temp, [],2);
 	%s2_1 = ifft(Fs2_1.').';
-	s2_1 = ifft(Fs2_1, 2^(tau_nt2 + 2),2);
-	%{
-	purinto(Fs1_rc)
-	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
-	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
-	caxis([0 160])
-	%export_fig 1.jpg
-	%}
-	clear Fs1_rc Fs2_rc
+	s2_1 = ifft(Fs2_1, [],2);
 	
 
 	purinto(Fs1_1)
@@ -120,7 +130,7 @@
 	%export_fig 3.jpg
 	%caxis([0 160])
 	%export_fig aa.jpg
-	
+	%clear Fs1_rc Fs2_rc
 
 	%% Radon transform to estimate the slop
 	% real v_r  and the Doppler frequency
@@ -140,7 +150,7 @@
 		xlabel('$\theta$ (degrees)','Interpreter', 'latex')
 		ylabel('$t''$','Interpreter', 'latex')
 		%xlim([178 182]), ylim([0.32 0.4])
-		plot_para(1,'4')
+		%plot_para('Maximize',1,'Filename','4')
 		[~,ind_c] = max(max(R));
 		ell = -1/(tand(theta(ind_c)+90)*4*B/PRF);
 	else
@@ -160,13 +170,8 @@
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
-
 	clear Fh_rw
-
-	
-		
 	%% Search the parameters by phase 
-	
 	f = fittype('a*x+b');	
 	[fit1,~,~] = fit(t(:,148), unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))), f,'StartPoint',[1 1]);
 	v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
@@ -185,7 +190,7 @@
 			%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
 			%xlabel('$\Delta t$', 'Interpreter', 'latex')
 			%ylabel('Phase', 'Interpreter', 'latex')
-			%plot_para(1,int2str(gg))
+			%plot_para('Maximize',1,'Filename',int2str(gg))
 			
 			f = fittype('a*x+b');
 			[fit1,~,~] = fit(t(L:end,148),s_filter(L:end) ,'poly1');
@@ -196,7 +201,7 @@
 			%plot(fit1,t(L:end,148),s_filter(L:end))
 			%xlabel('$t$', 'Interpreter', 'latex')
 			%ylabel('Phase', 'Interpreter', 'latex')
-			%plot_para(1,'fit')
+			%plot_para('Maximize',1,'Filename','fit')
 			clear f fit1
 		end
 
