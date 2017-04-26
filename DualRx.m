@@ -34,7 +34,7 @@
     B =  K_r*T_p;
     %% Signal 
     aa = 0;
-    eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
+    eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
 
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
@@ -47,7 +47,7 @@
     for k = 1 : length(eta)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
-        s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+        s1(k,:) = exp(-i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2).*(tau>=td1 & tau-td1<=T_p)  ;
 		s2(k,:) = exp(-i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
 	end
 	%purinto(s1)
@@ -63,34 +63,38 @@
     s1_rc = ifft( Fs1_rc.' ).';
     Fs2_rc = fft(s2.', 2^tau_nt2).' .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc.' ).';
+	purinto(fft(s1.', 2^tau_nt2).')
 	clear Fh_m s1 s2
 	%purinto(s1_rc)
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
-    f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
+	close all
+    f_tau = linspace(-2*B, 2*B , 2^tau_nt2 ); 
 	t = eta.' * sqrt((f_0 + f_tau)/f_0);
-	Fs1_1 = zeros(2*floor(t(end,end)*PRF),2^tau_nt2);
+	Fs1_1 = zeros(2*floor(t(end,end)*PRF)+1,2^tau_nt2);
 	Fs2_1 = Fs1_1;
 	add_ = floor(PRF*t(end,end))-PRF;
+	
 	for m = 1 : 2^tau_nt2
+		[~,ind] = min(unwrap(angle(Fs1_rc(:,m))));
 		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
 		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)];
 		Fs1_1(:, m) = Fs1_1(:, m) .* exp(j * [zeros(cou_,1); ...
-			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
-		%Fs1_1(:, m) = [zeros(10-temp_cou,1); ...
-		%	interp1(eta, Fs1_rc(:,m).', linspace(-1,1, 2000 + 2*temp_cou), 'spline', 0).'; zeros(10-temp_cou,1)];
+			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)]);
+		%Fs1_1(:, m) = [zeros(cou_,1); ...
+		%	interp1(eta, Fs1_rc(:,m).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
 		
 		Fs2_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
 		Fs2_1(:, m) = Fs2_1(:,m) .* exp(j * [zeros(cou_,1); ...
-			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)]);
+			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)]);
 	end
 	%s1_1 = ifft(Fs1_1.').';
 	s1_1 = ifft(Fs1_1, 2^(tau_nt2 + 2),2);
 	%s2_1 = ifft(Fs2_1.').';
 	s2_1 = ifft(Fs2_1, 2^(tau_nt2 + 2),2);
-	%{
+	%{051 + 89.726386081662950i
 	purinto(Fs1_rc)
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
@@ -101,15 +105,25 @@
 	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	caxis([0 160])
-	export_fig 1.jpg
+	%export_fig 1.jpg
 	
-	plot(angle(Fs1_1(430,:)),'Linewidth',2)
-	hold on 
-	plot(angle(Fs1_1(434,:)),'Linewidth',2)
-	hold on 
-	plot(angle(Fs1_1(433,:)),'Linewidth',2)
+	figure
+	plot(unwrap(angle(Fs1_1(:,48))),'k','Linewidth',2)
+	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
+	ylabel('phase', 'Interpreter', 'latex')
+	%plot_para(1,'1')
 	
+	figure
+	plot(diff(unwrap(angle(Fs1_1(:,48))),1),'k','Linewidth',2)
+	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
+	ylabel('$\Delta$phase', 'Interpreter', 'latex')
+	xlim([280 520])
+	%plot_para(1,'2') 
 	
+	[fit1,~,~] = fit(eta(427:end-1).',diff(unwrap(angle(Fs1_rc(427:end,48))),1) ,'poly1');
+	%v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
+	fit1.p1
+	2*pi*f_0/c * (v_y - v_p)^2 / R_0 
 	
 	purinto(s1_1)
 	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
