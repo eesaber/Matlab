@@ -33,12 +33,15 @@
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-    %% Signal 
+	fsamp = 1/4/B;
+	
+    % Signal 
     aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
-
+	
+	
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
-    tau =  2*(downran)/c: 1/4/B : 2*(upran)/c + T_p  ;  % fast time space
+    tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
 
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
@@ -49,21 +52,21 @@
     for k = 1 : length(eta)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
-		%s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
-		%s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
-		
+		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+		%{
 		zxc((tau>=td1 & tau-td1<=T_p)) = linspace(0, T_p, length(tau((tau>=td1 & tau-td1<=T_p))));
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td1 & tau-td1<=T_p);
 		zxc((tau>=td2 & tau-td2<=T_p)) = linspace(0, T_p, length(tau((tau>=td2 & tau-td2<=T_p))));
 		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td2 & tau-td2<=T_p) ;
-		%{%}
+		%}
 	end
 	%purinto(s1)
 	%purinto(s2)
 	clear R1 R2
 	
 	%% range compression 
-	ref_time = -T_p : 1/4/B : 0 ;
+	ref_time = -T_p : fsamp : 0 ;
 	h_m = repmat(exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
 
 	tau_nt2 = nextpow2(length(tau)) ;  % Make total number to power of 2
@@ -73,42 +76,45 @@
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
-	purinto(s1_rc)
-
-	%{
+	
+	
 	purinto(Fs1_rc)
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
 	caxis([0 160])
-	%export_fig 1.jpg
-	%}
+	export_fig 1.jpg
+	
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
 	close all
-    f_tau = linspace(-2*B, 2*B , 2^tau_nt2 ); 
+    f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 	t = eta.' * sqrt((f_0 + f_tau)/f_0);
+	%Fs1_1 = zeros(2*floor(t(end,end)*PRF)+4*PRF+1,2^tau_nt2);
 	Fs1_1 = zeros(2*floor(t(end,end)*PRF)+1,2^tau_nt2);
-	Fs2_1 = Fs1_1;
+	Fs2_1 = zeros(2*floor(t(end,end)*PRF)+1,2^tau_nt2);
 	add_ = floor(PRF*t(end,end))-PRF;
 	
 	for m = 1 : 2^tau_nt2
 		[~,ind] = min(unwrap(angle(Fs1_rc(:,m))));
 		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
-		
-		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) .* exp(j * [zeros(cou_,1); ...
-			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)]);
-		
 		%{
+		temp = interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 3*PRF*dur+1), 'spline').';
+		temp = temp .* exp(1j * interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 3*PRF*dur +1), 'spline').');
+		
 		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(eta, real(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) + 1j*[zeros(cou_,1); ...
-			interp1(eta, imag(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_), 'spline', 0).'; zeros(cou_,1)];
+			interp1(linspace(-1,1, 3*PRF*dur+1), abs(temp).', linspace(-1,1, 2*add_+ 3*PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) .* exp(1j * [zeros(cou_,1); ...
+			interp1(linspace(-1,1, 3*PRF*dur+1), unwrap(angle(temp)).', linspace(-1,1, 2*add_+ 3*PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)]);
 		%}
+		
+		Fs1_1(:, m) = [zeros(cou_,1); ...
+			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
+		Fs1_1(:, m) = Fs1_1(:, m) + exp(1j*[zeros(cou_,1); ...
+			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)]);
+		%{%}
 		Fs2_1(:, m) = [zeros(cou_,1); ...
 			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
-		Fs2_1(:, m) = Fs2_1(:,m) .* exp(j * [zeros(cou_,1); ...
+		Fs2_1(:, m) = Fs2_1(:,m) .* exp(1j * [zeros(cou_,1); ...
 			interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)]);
 	end
 
@@ -122,7 +128,7 @@
 	%export_fig 1.jpg
 
 	figure
-	plot(unwrap(angle(Fs1_1(:,48))),'k','Linewidth',2)
+	plot(unwrap(angle(Fs1_1(:,48))),'k','Linewidth',1)
 	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
 	ylabel('phase', 'Interpreter', 'latex')
 	%plot_para(1,'1')
@@ -131,13 +137,8 @@
 	plot(diff(unwrap(angle(Fs1_1(:,48))),1),'k','Linewidth',2)
 	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
 	ylabel('$\Delta$phase', 'Interpreter', 'latex')
-	xlim([280 520])
+	%xlim([280 520])
 	%plot_para(1,'2') 
-	
-	[fit1,~,~] = fit(eta(427:end-1).',diff(unwrap(angle(Fs1_rc(427:end,48))),1) ,'poly1');
-	%v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
-	fit1.p1
-	2*pi*f_0/c * (v_y - v_p)^2 / R_0 
 
 	purinto(s1_1)
 	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
@@ -149,7 +150,7 @@
 	%  Filter h_c - RCMC for range curveture 
     rcc_f = 0;
 	if rcc_f  
-		f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
+		f_tau = linspace(0, 1/fsamp, 2^tau_nt2 ); 
 			
 		H_c =  exp(  1j* (2* pi /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2 * f_tau); %range curveture filter
 		%Multiply H_c to Fs_r
@@ -164,8 +165,6 @@
 	end 
 	K_a = 2 * f_0/c * (v_y-v_p)^2 / R_0;
 		
-		
-
 	%% Radon transform to estimate the slop
 	% real v_r  and the Doppler frequency
 	v_r_real_ = v_x * (h/R_0/sqrt(1-y_0^2/R_0^2) );
