@@ -33,7 +33,7 @@
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-    %% Signal 
+    % Signal 
     aa = 0;
     eta = linspace( aa - dur/2, aa + dur/2,PRF*dur) ;  % Slow time -6
 
@@ -49,16 +49,21 @@
     for k = 1 : length(eta)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
-		%s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
-		%s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
-		
+		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + i* pi* K_r* (tau - td1).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + i* pi* K_r* (tau - td2).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+		zxc(k,:) = (pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p);
+	%{	
 		zxc((tau>=td1 & tau-td1<=T_p)) = linspace(0, T_p, length(tau((tau>=td1 & tau-td1<=T_p))));
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td1 & tau-td1<=T_p);
 		zxc((tau>=td2 & tau-td2<=T_p)) = linspace(0, T_p, length(tau((tau>=td2 & tau-td2<=T_p))));
 		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td2 & tau-td2<=T_p) ;
-		%{%}
+		%}
 	end
-	%purinto(s1)
+	purinto(s1)
+	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
+	caxis([0 1])
+	export_fig 1.jpg
 	%purinto(s2)
 	clear R1 R2
 	
@@ -73,15 +78,21 @@
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
-	purinto(s1_rc)
-
-	%{
+	
 	purinto(Fs1_rc)
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
-	caxis([0 160])
-	%export_fig 1.jpg
-	%}
+	xlim([0 50])
+	ylim([50 60])
+	caxis([0 150])
+	export_fig 2.jpg
+	
+	purinto(s1_rc)
+	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
+	caxis([0 20])
+	export_fig 3.jpg
+	
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
     f_tau = linspace(0, 4*B -1, 2^tau_nt2 ); 
@@ -154,6 +165,7 @@
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
 		theta = [170:0.01:190];
+		%[R,xp] = radon(gpuArray(abs(s1_1)),theta); % Use GPU to compute
 		[R,xp] = radon(abs(s1_1),theta);
 		figure
 
