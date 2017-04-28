@@ -1,4 +1,4 @@
-%function [v_yt] = DualRx(vx,vy,ax,ay)
+function [v_yt] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -11,15 +11,18 @@
         ax = 0; ay = 0;
     end
 %}
-
+	close all 
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
     y_0 = 400;
 	
     d = 100; % Length of the target area 
-    v_x = 9; a_x = 0; % rangecl -16
-    v_y = -10; a_y = 0; % azimuth 
+    v_x = vx; a_x = ax; % rangecl -16
+    v_y = vy; a_y = ay; % azimuth 
+
+	%v_x = -20; a_x = 0; % rangecl -16
+    %v_y = -20; a_y = 0; % azimuth 
 
     % Platform
     h = 2200;
@@ -29,11 +32,11 @@
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 1000; %%2.35e3
+    PRF = 2000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-	fsamp = 1/4/B;
+	fsamp = 1/16/B;
 	
     % Signal 
     aa = 0;
@@ -76,17 +79,22 @@
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
 	clear Fh_m s1 s2
+	%{
+	purinto(s1_rc)
+	xlabel('$\tau / \Delta \tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
+	export_fig src.jpg
 	
 	
 	purinto(Fs1_rc)
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
 	caxis([0 160])
-	export_fig 1.jpg
-	
+	export_fig src_f.jpg
+	%}
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
-	close all
+	
     f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 	t = eta.' * sqrt((f_0 + f_tau)/f_0);
 	%Fs1_1 = zeros(2*floor(t(end,end)*PRF)+4*PRF+1,2^tau_nt2);
@@ -109,7 +117,7 @@
 		
 		Fs1_1(:, m) = [zeros(cou_,1); ...
 			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) + exp(1j*[zeros(cou_,1); ...
+		Fs1_1(:, m) = Fs1_1(:, m) .* exp(1j*[zeros(cou_,1); ...
 			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)]);
 		%{%}
 		Fs2_1(:, m) = [zeros(cou_,1); ...
@@ -120,7 +128,7 @@
 
 	s1_1 = ifft(Fs1_1, [],2);
 	s2_1 = ifft(Fs2_1, [],2);
-
+	%{
 	purinto(Fs1_1)
 	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
 	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
@@ -139,14 +147,14 @@
 	ylabel('$\Delta$phase', 'Interpreter', 'latex')
 	%xlim([280 520])
 	%plot_para(1,'2') 
-
+	%}
 	purinto(s1_1)
-	xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
-	ylabel('$t/\Delta t$', 'Interpreter', 'latex')
-	%caxis([0 160])
-	%export_fig 3.jpg
-	%clear Fs1_rc Fs2_rc
-
+	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
+	xlabel('$\tau/ \Delta \tau$','Interpreter', 'latex')
+	ylabel('$ t / \Delta t $','Interpreter', 'latex')
+	export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rc.jpg'])
+	
+	clear Fs1_rc Fs2_rc
 	%  Filter h_c - RCMC for range curveture 
     rcc_f = 0;
 	if rcc_f  
@@ -158,10 +166,10 @@
 		Fs2_1 = Fs2_rc .* H_c ;
 		s1_1 = ifft( Fs1_1,[],2);
 		s2_1 = ifft( Fs2_1,[],2);
-		purinto(Fs1_1) 
-		purinto(s1_1) 
-		xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
-		ylabel('$t/\Delta t$', 'Interpreter', 'latex')
+		
+		%purinto(s1_1) 
+		%xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
+		%ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	end 
 	K_a = 2 * f_0/c * (v_y-v_p)^2 / R_0;
 		
@@ -176,16 +184,17 @@
 		iptsetpref('ImshowAxesVisible','on')
 		theta = [170:0.01:190];
 		[R,xp] = radon(abs(s1_1),theta);
+		%{
 		figure
-
 		imagesc(theta,xp/PRF,R)
 		colormap('jet'),colorbar
 		xlabel('$\theta$ (degrees)','Interpreter', 'latex')
 		ylabel('$t''$','Interpreter', 'latex')
 		%xlim([178 182]), ylim([0.32 0.4])
-		%plot_para('Maximize',1,'Filename','4')
+		plot_para('Maximize',true,'Filename','radon')
+		%}
 		[~,ind_c] = max(max(R));
-		ell = -1/(tand(theta(ind_c)+90)*4*B/PRF);
+		ell = -1/(tand(theta(ind_c)+90)*1/fsamp/PRF);
 	else
 		[~, down] = max(abs(s1_1(1,:)) );
 		[~, up] = max(abs(s1_1(length(s1_1(:,1)),:)));
@@ -204,7 +213,13 @@
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
+	
 	purinto(s1_2)
+	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
+	xlabel('$\tau/ \Delta \tau$','Interpreter', 'latex')
+	ylabel('$ t / \Delta t $','Interpreter', 'latex')
+	export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rw.jpg'])
+	%{%}
 	clear Fh_rw
 	%% Search the parameters by phase 
 	%f = fittype('a*x+b');	
@@ -230,7 +245,7 @@
 			t2fit = linspace(t(1,end), t(end,end), length(s1_1(:,1))) ;
 			[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
 			v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
-			fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
+			%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
 			
 			%figure
 			%plot(fit1,t(L:end,148),s_filter(L:end))
@@ -239,7 +254,7 @@
 			%plot_para('Maximize',1,'Filename','fit')
 			clear f fit1
 		end
-
+end
 %{	
 	%%
 	ind = 148;
