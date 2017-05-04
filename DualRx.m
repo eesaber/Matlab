@@ -21,8 +21,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     %v_x = vx; a_x = ax; % rangecl -16
     %v_y = vy; a_y = ay; % azimuth 
 
-	v_x = -20; a_x = 0; % rangecl -16
-    v_y = -20; a_y = 0; % azimuth 
+	v_x = -4; a_x = 0; % rangecl -16
+    v_y = -4; a_y = 0; % azimuth 
 
     % Platform
     h = 2200;
@@ -51,12 +51,12 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	
     s1 = zeros(length(eta), length(tau));
 	s2 = s1;
-	zxc = zeros(1,length(tau));
-    for k = 1 : length(eta)
-        td1 = 2* R1(k)/ c ;
+	%zxc = zeros(1,length(tau));
+	for k = 1 : length(eta)
+		td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
-		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - 2* R1(k)/ c).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
-		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - (R1(k) + R2(k) )/ c).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
+		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - td1).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - td2).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
 		%{
 		zxc((tau>=td1 & tau-td1<=T_p)) = linspace(0, T_p, length(tau((tau>=td1 & tau-td1<=T_p))));
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td1 & tau-td1<=T_p);
@@ -68,13 +68,13 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	purinto(s1)
 	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
-	caxis([0 1])
-	export_fig 1.jpg
+	%caxis([0 1])
+	%export_fig 1.jpg
 	%}
 	%purinto(s2)
 	clear R1 R2
 	
-	%% range compression 
+	%% Range compression 
 	ref_time = -T_p : fsamp : 0 ;
 	h_m = repmat(exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
 
@@ -84,8 +84,12 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     s1_rc = ifft( Fs1_rc,[], 2);
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
-	clear Fh_m s1 s2
-
+	%clear Fh_m s1 s2
+	figure, plot((atan2(imag(Fs1_rc(:,48)), real(Fs1_rc(:,48)))),'k')
+	xlim([0 PRF*dur])
+	xlabel('$\tau / \Delta \tau $', 'Interpreter', 'latex')
+	ylabel('Phase', 'Interpreter', 'latex')
+	plot_para('Maximize',true,'Filename','1')
 	%{
 	purinto(s1_rc)
 	xlabel('$\tau / \Delta \tau $', 'Interpreter', 'latex')
@@ -98,11 +102,16 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	export_fig 2.jpg
 	
 	purinto(s1_rc)
-	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	xlabel('$\tau / \Delta \tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
 	export_fig src_f.jpg
 	%}
-
+	figure
+	plot(-20:1:20,v_Est_Err_Vy_(17,:),'k','Linewidth',2)
+	xlabel('$v_y$', 'Interpreter', 'latex')
+	ylabel('$\tilde{v}_y - v_y $', 'Interpreter', 'latex')
+	plot_para('Maximize',true,'Filename','1')
+	
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
 	
@@ -114,22 +123,19 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	add_ = floor(PRF*t(end,end))-PRF;
 	
 	for m = 1 : 2^tau_nt2
-		[~,ind] = min(unwrap(angle(Fs1_rc(:,m))));
+		[min_p,ind] = min(unwrap(angle(Fs1_rc(:,m))));
+		if ~(ind == 1 || ind == length(Fs1_rc(:,m)))
+			 %Fs1_rc(ind+1:end,m) = Fs1_rc(ind+1:end,m) .* exp(-1j*2*unwrap(angle(Fs1_rc(ind+1:end,m))));
+			 Fs1_rc(1:ind,m) = Fs1_rc(1:ind,m) .* exp(-1j*2*unwrap(angle(Fs1_rc(1:ind,m))));
+		end
 		cou_ = floor(PRF*t(end,end))-floor(PRF*t(end,m));
-		%{
-		temp = interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 3*PRF*dur+1), 'spline').';
-		temp = temp .* exp(1j * interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 3*PRF*dur +1), 'spline').');
-		
-		Fs1_1(:, m) = [zeros(cou_,1); ...
-			interp1(linspace(-1,1, 3*PRF*dur+1), abs(temp).', linspace(-1,1, 2*add_+ 3*PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)];
-		Fs1_1(:, m) = Fs1_1(:, m) .* exp(1j * [zeros(cou_,1); ...
-			interp1(linspace(-1,1, 3*PRF*dur+1), unwrap(angle(temp)).', linspace(-1,1, 2*add_+ 3*PRF*dur - 2*cou_+1), 'spline').'; zeros(cou_,1)]);
-		%}
-		
 		Fs1_1(:, m) = [zeros(cou_,1); ...
 			interp1(eta, abs(Fs1_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
 		Fs1_1(:, m) = Fs1_1(:, m) .* exp(1j*[zeros(cou_,1); ...
 			interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)]);
+		[~,ind] = min(abs(unwrap(angle(Fs1_1(:,m)))-min_p));
+		Fs1_1(ind+1:end,m) = Fs1_1(ind+1:end,m) .* exp(-j*2*unwrap(angle(Fs1_1(ind+1:end,m))));
+		%Fs1_1(1:ind,m) = Fs1_1(1:ind,m) .* exp(-j*2*unwrap(angle(Fs1_1(1:ind,m))));
 		%{%}
 		Fs2_1(:, m) = [zeros(cou_,1); ...
 			interp1(eta, abs(Fs2_rc(:,m)).', linspace(-1,1, 2*add_+ PRF*dur - 2*cou_+1), 'spline', 0).'; zeros(cou_,1)];
@@ -139,6 +145,15 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 
 	s1_1 = ifft(Fs1_1, [],2);
 	s2_1 = ifft(Fs2_1, [],2);
+	
+	figure
+	plot(unwrap(angle(Fs1_1(:,48))),'k','linewidth',1)
+	hold on 
+	plot(unwrap(angle(Fs1_rc(:,48))),'k','linewidth',1)
+	xlim([0 length(Fs1_1(:,48))])
+	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
+	ylabel('phase', 'Interpreter', 'latex')
+	plot_para('Maximize',true,'Filename','1')
 	%{
 	purinto(Fs1_1)
 	xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
@@ -146,11 +161,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	caxis([0 160])
 	%export_fig 1.jpg
 
-	figure
-	plot(unwrap(angle(Fs1_1(:,48))),'k','Linewidth',1)
-	xlabel('$t/\Delta t$', 'Interpreter', 'latex')
-	ylabel('phase', 'Interpreter', 'latex')
-	%plot_para(1,'1')
+	
 	
 	figure
 	plot(diff(unwrap(angle(Fs1_1(:,48))),1),'k','Linewidth',2)
@@ -160,12 +171,12 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%plot_para(1,'2') 
 	%}
 	purinto(s1_1)
-	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
+	%title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
 	xlabel('$\tau/ \Delta \tau$','Interpreter', 'latex')
 	ylabel('$ t / \Delta t $','Interpreter', 'latex')
 	export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rc.jpg'])
 	
-	clear Fs1_rc Fs2_rc
+	%clear Fs1_rc Fs2_rc
 	%  Filter h_c - RCMC for range curveture 
     rcc_f = 0;
 	if rcc_f  
@@ -183,18 +194,18 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 		%ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	end 
 	K_a = 2 * f_0/c * (v_y-v_p)^2 / R_0;
-		
+	(v_x * x_0 + y_0*(v_p - v_y))/R_0 ;
+	plot((v_x * x_0 + y_0*(v_p - v_y))/R_0 * eta + 2 * f_0/c * (v_y-v_p)^2 / R_0 * eta.^2)
 	%% Radon transform to estimate the slop
 	% real v_r  and the Doppler frequency
 	v_r_real_ = v_x * (h/R_0/sqrt(1-y_0^2/R_0^2) );
-	f_dc = 2*v_r_real_ / lambda;
 	%fprintf('Doppler frequency %f\n',f_dc)
 	
 	do_radon = 1;
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
 		theta = [170:0.01:190];
-		parral = 1;
+		parral = 0;
 		if parral 
 			[R,xp] = radon(gpuArray(abs(s1_1)),theta); % Use GPU to compute
 			R = gather(R); xp = gather(xp);
@@ -235,7 +246,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
 	xlabel('$\tau/ \Delta \tau$','Interpreter', 'latex')
 	ylabel('$ t / \Delta t $','Interpreter', 'latex')
-	export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rw.jpg'])
+	%export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rw.jpg'])
 	%{%}
 	clear Fh_rw
 	%% Search the parameters by phase 
@@ -246,13 +257,13 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%clear f fit1
 		
 		L =31;
-		ind = 148;
+		ind = 588;
 		filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
 		for gg = 1 : 1
 			s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
 			
-			%figure
-			%plot(s_filter,'k','Linewidth',2)
+			figure
+			plot(s_filter,'k','Linewidth',2)
 			%hold on
 			%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
 			%xlabel('$\Delta t$', 'Interpreter', 'latex')

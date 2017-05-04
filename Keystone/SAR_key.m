@@ -17,18 +17,18 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
 		cd ~/Code/Matlab 
 	end
     %% Signal 
-    %s = Gen_signal(20,-10,5,0);
-	s = Gen_signal(vx, vy, ax, ay); 
+    s = Gen_signal(-4,-4,0,0);
+	%s = Gen_signal(vx, vy, ax, ay); 
     load('parameter.mat');
-    ref_time = -T_p : 1/4/B : 0 ;
-	R_m = sqrt(x_n^2 + (y_n - v_p * eta).^2 + h^2); % Static target range equation
+    ref_time = -T_p : fsamp : 0 ;
+	R_m = sqrt(x_0^2 + (y_0 - v_p * eta).^2 + h^2); % Static target range equation
     %plot(R_m,'k')
     %hold on 
     %plot(R)
     %% Range Compression
 	% Matched filter.
     for i = 1 : length(eta)
-        h_m(i,:) = exp(j * 4 * pi * f_0 * R_m(length(eta)/2) / c) *  exp(- j * pi * K_r * ref_time.^2) ; 
+        h_m(i,:) = exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2) ; 
     end
     %sprintf('?�是?�固定�?R_0 不是?�R(eta)')
 	%purinto(h_m)
@@ -38,7 +38,7 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
     Fs = fft(s.', 2^tau_nt2).'; 
     Fs_rc = Fs .* Fh_m; % Range compression
     s_rc = ifft( Fs_rc.' ).';
-    %purinto(s_rc); % Print the s_r
+    purinto(s_rc) % Print the s_r
     
     %% Key Stone transform - RCMC for range curveture 
     % Interpolation 
@@ -62,11 +62,11 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
     %purinto(s_1);
     [~, down] = max(abs(s_1(1,:)) );
     [~, up] = max(abs(s_1(length(s_1),:)));
-    x_sl = (up - down) / 4 / B / dur  ;    
+    x_sl = (up - down) *fsamp / dur  ;    
     v_rt = c * x_sl ;
     
     %% RCMC for range walk 
-    v_r = v_x * x_n / R_0; 
+    v_r = v_x * x_0 / R_0; 
     Fh_rw = exp(j * 4 * pi / c * t / 2 * v_r .* repmat(f_tau, length(eta), 1) );    
     Fs_2 = Fs_1 .* Fh_rw ; 
     if shift == 1
@@ -112,14 +112,14 @@ function [co_3, c_3, v_rt, v_yt, a_rt] = SAR_key(vx, vy, ax, ay)
 	c_3 = Ec(4);
 	fprintf('v_y: %f, t_vy: %f , error: %f \n',v_y, v_yt , v_y - v_yt );
 	a_rt = - Ec(3) -2 / lambda * (v_yt -v_p)^2 / R_0;
-	a_r = a_x * x_n / R_0;
+	a_r = a_x * x_0 / R_0;
 	fprintf('a_r: %f, t_ar: %f , error: %f \n', a_r, a_rt , a_r - a_rt );
 	fprintf('------------------------------------------\n');
 	
 	% Analyze the coefficient
     co_0 = -2 / lambda * R_0;
     co_1 = -2 / lambda * v_r; 
-    co_2 = -2 / lambda * ((v_y -v_p)^2 + a_x * x_n) / R_0;
+    co_2 = -2 / lambda * ((v_y -v_p)^2 + a_x * x_0) / R_0;
     co_3 = 1 / lambda * 6* v_r * (v_y - v_p)^2 / R_0^2 ;
 	%ahq = [co_0 co_1 co_2 co_3];
     %refSignal = exp(j * 2 * pi * ( co_0 + co_1 * eta + co_2 * eta.^2 / 2 + co_3 * eta.^3 / 6 ) );
