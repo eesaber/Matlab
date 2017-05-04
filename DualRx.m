@@ -16,11 +16,9 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     % Target
     x_0 = 2160;
     y_0 = 400;
-	
     d = 100; % Length of the target area 
     %v_x = vx; a_x = ax; % rangecl -16
     %v_y = vy; a_y = ay; % azimuth 
-
 	v_x = -4; a_x = 0; % rangecl -16
     v_y = -4; a_y = 0; % azimuth 
 
@@ -32,16 +30,15 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 2000; %%2.35e3
+    PRF = 3000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-	fsamp = 1/16/B;
+	fsamp = 1/8/B;
 	
     % Signal 
     aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
-	
 	
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
@@ -53,7 +50,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	s2 = s1;
 	%zxc = zeros(1,length(tau));
 	for k = 1 : length(eta)
-		td1 = 2* R1(k)/ c ;
+        td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - td1).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
 		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - td2).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
@@ -169,14 +166,14 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	ylabel('$\Delta$phase', 'Interpreter', 'latex')
 	%xlim([280 520])
 	%plot_para(1,'2') 
-	%}
+	
 	purinto(s1_1)
 	%title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
 	xlabel('$\tau/ \Delta \tau$','Interpreter', 'latex')
 	ylabel('$ t / \Delta t $','Interpreter', 'latex')
-	export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rc.jpg'])
+	%export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rc.jpg'])
+	%}
 	
-	%clear Fs1_rc Fs2_rc
 	%  Filter h_c - RCMC for range curveture 
     rcc_f = 0;
 	if rcc_f  
@@ -196,6 +193,9 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	K_a = 2 * f_0/c * (v_y-v_p)^2 / R_0;
 	(v_x * x_0 + y_0*(v_p - v_y))/R_0 ;
 	plot((v_x * x_0 + y_0*(v_p - v_y))/R_0 * eta + 2 * f_0/c * (v_y-v_p)^2 / R_0 * eta.^2)
+
+	clear Fs1_rc Fs2_rc
+
 	%% Radon transform to estimate the slop
 	% real v_r  and the Doppler frequency
 	v_r_real_ = v_x * (h/R_0/sqrt(1-y_0^2/R_0^2) );
@@ -204,7 +204,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	do_radon = 1;
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
-		theta = [170:0.01:190];
+		theta = [177:0.005:181];
 		parral = 0;
 		if parral 
 			[R,xp] = radon(gpuArray(abs(s1_1)),theta); % Use GPU to compute
@@ -256,8 +256,9 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%fprintf('Method 0, Actual: %f, Estimate: %f\n', v_y, v_yt)
 	%clear f fit1
 		
-		L =31;
-		ind = 588;
+
+		L =201;
+		ind = 295; %588; 148; 
 		filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
 		for gg = 1 : 1
 			s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
