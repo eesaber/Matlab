@@ -19,7 +19,10 @@ imagesc(v,v,v_Est_Err_Vy_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([-5 5])
+	caxis([-1 4])
+%hold on 
+%[C,h] = contour(v,v,v_Est_Err_Vy_,'-k','linewidth',1.5,'ShowText','on');
+%clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
 	plot_para('Maximize',true,'Filename','errmap')
 
 %%
