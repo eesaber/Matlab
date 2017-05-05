@@ -22,7 +22,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     v_y = vy; a_y = ay; % azimuth 
 
 	%v_x = -20; a_x = 0; % rangecl -16
-    %v_y = -20; a_y = 0; % azimuth 
+    %v_y = 12; a_y = 0; % azimuth 
 
     % Platform
     h = 2200;
@@ -32,7 +32,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 3000; %%2.35e3
+    PRF = 4000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
