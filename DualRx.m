@@ -1,4 +1,4 @@
-%function [v_yt] = DualRx(vx,vy,ax,ay)
+function [v_yt] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -17,10 +17,10 @@
     x_0 = 2160;
     y_0 = 400;
     d = 100; % Length of the target area 
-    %v_x = vx; a_x = ax; % rangecl -16
-    %v_y = vy; a_y = ay; % azimuth 
-	v_x = -4; a_x = 0; % rangecl -16
-    v_y = -4; a_y = 0; % azimuth 
+    v_x = vx; a_x = ax; % rangecl -16
+    v_y = vy; a_y = ay; % azimuth 
+	%v_x = -4; a_x = 0; % rangecl -16
+    %v_y = -4; a_y = 0; % azimuth 
 
     % Platform
     h = 2200;
@@ -98,16 +98,10 @@
 	xlabel('$f_\tau / \Delta f_\tau $', 'Interpreter', 'latex')
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
 	%export_fig 2.jpg
-	
-	figure
-	plot(-20:1:20,v_Est_Err_Vy_(17,:),'k','Linewidth',2)
-	xlabel('$v_y$', 'Interpreter', 'latex')
-	ylabel('$\tilde{v}_y - v_y $', 'Interpreter', 'latex')
-	plot_para('Maximize',true,'Filename','1')
 	%}
+
 	%% Key Stone transform - RCMC for range curveture 
 	% Interpolation 
-	
     f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 	t = eta.' * sqrt((f_0 + f_tau)/f_0);
 	t = [t(1,:); t(end,:)];
@@ -278,17 +272,8 @@
 		%plot_para('Maximize',1,'Filename','fit')
 		clear f fit1
 	end
-%end
+end
 %{	
-	%%
-	ind = 148;
-	plot(ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(eta)).'  ),'Linewidth',1)
-	hold on 
-	plot(ifft(fft(unwrap(angle(s1_2(:,ind+1).*conj(s2_2(:,ind+1))))) .*  fft(filt_(gg,:),length(eta)).'  ),'Linewidth',1)
-	hold on
-	plot(ifft(fft(unwrap(angle(s1_2(:,ind+2).*conj(s2_2(:,ind+2))))) .*  fft(filt_(gg,:),length(eta)).'  ),'Linewidth',1)
-	plot_para(1,1,'fit')
-
 %%
 close all
 rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
