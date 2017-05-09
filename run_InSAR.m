@@ -3,7 +3,6 @@ v_Est_Vy_ = zeros(length(v),length(v));
 v_Est_Err_Vy_ = v_Est_Vy_;
 
 for vx = 1 : length(v)
-	
 	for vy = 1 : length(v)
 		v_Est_Vy_(vx,vy) = DualRx(v(vx),v(vy),0,0);
 		v_Est_Err_Vy_(vx,vy) =  v_Est_Vy_(vx,vy) - v(vy);
@@ -19,7 +18,7 @@ imagesc(v,v,v_Est_Err_Vy_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([-1 4])
+	caxis([-1 1])
 %hold on 
 %[C,h] = contour(v,v,v_Est_Err_Vy_,'-k','linewidth',1.5,'ShowText','on');
 %clabel(C,h,'FontSize',40,'Color','black','LabelSpacing',1000)
