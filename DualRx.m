@@ -1,4 +1,4 @@
-function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
+function [v_yt] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -13,8 +13,8 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = 0; a_x = 0; % rangecl -16
-    %v_y = 5; a_y = 0; % azimuth 
+	%v_x = 20; a_x = 0; % rangecl -16
+    %v_y = 10; a_y = 0; % azimuth 
 
 
     % Platform
@@ -41,15 +41,13 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 	else 
 		aa = -1;
 	end
-	aa = 0;
+	aa = 0.5;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
 	
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
-
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation 
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
-	
 	
     s1 = zeros(length(eta), length(tau));
 	s2 = s1;
@@ -68,7 +66,6 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 		s1 = s1 + w_noise;
 		s2 = s2 + w_noise;
 	end
-
 	
 	%{
 	purinto(s1) xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
@@ -286,20 +283,24 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 					s_sample = exp(-1j * (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *	t_temp.^2 ...
 						+ -1j * 0 * pi *ell);
 				else
-					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta'.^2 ...
-						+ -1j * 0 * pi *ell); 
+					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta.^2 ...
+						+ 1j * 0* pi /ell* eta); 
+					s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 1 * pi /ell * eta);
 				end
-				rr = max(abs(conv(s1_2(:,ind), conj(s_sample))));
+				%rr = max(abs(conv(s1_2(:,ind), conj(s_sample))));
+				rr = max(abs(conv(s1_2_Fdc, conj(s_sample))));
 				qq(i) = rr;
 				if  rr > temp
 					temp = rr;
-					%v_yt = v_ySpace(i);
-					v_ycrr = v_ySpace(i);
+					v_yt = v_ySpace(i);
+					%v_ycrr = v_ySpace(i);
 				end 
 			end
-			%plot(qq)
-			%plot(real(s1_2(:,ind)))
-		%case 'WVD'  % WVD
+			%figure 
+			%plot(real(s1_2_Fdc))
+			%figure
+			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
+		case 'WVD'  % WVD
 			temp= spectrogram(s1_2(:,ind),128,120,8196,PRF,'centered','yaxis');
 			if do_key 
 				x = [t(1,end), t(end,end)];
@@ -315,8 +316,8 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 				t_K_a = (dwf - upf) * PRF / 8196 / dur ;
 			end
 				y = [-PRF/2 PRF/2];				
-				%v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
-				v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				%v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
 				%figure
 				%imagesc(x, y, abs(temp))
 			
