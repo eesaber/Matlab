@@ -13,8 +13,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = 20; a_x = 0; % rangecl -16
-    %v_y = 10; a_y = 0; % azimuth 
+	%v_x = -10; a_x = 0; % rangecl -16
+    %v_y = -20; a_y = 0; % azimuth 
 
 
     % Platform
@@ -270,7 +270,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	ind = floor(sum(ind)/length(s1_2(:,1)));
 	
 	method = string({'Corr filter', 'WVD', 'Phase Slope'}); 
-	method = method(1);
+	method = method(2);
 	switch method 
 		case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
@@ -301,7 +301,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
 		case 'WVD'  % WVD
-			temp= spectrogram(s1_2(:,ind),128,120,8196,PRF,'centered','yaxis');
+			temp= spectrogram(s1_2(:,ind).* exp(1j * 1 * pi /ell * eta).',128,120,8196,PRF,'centered','yaxis');
 			if do_key 
 				x = [t(1,end), t(end,end)];
 				t_len_ = length(temp(1,:));
@@ -311,15 +311,16 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 				t_K_a = (dwf - upf) * PRF / 8196 / delta_t ;
 			else
 				x = [(aa - dur/2) ,(aa + dur/2)];
-				[~ , upf] = max(temp(:,1));
-				[~ , dwf] = max(temp(:,end));
-				t_K_a = (dwf - upf) * PRF / 8196 / dur ;
+				t_len_ = length(temp(1,:));
+				[~ , upf] = max(temp(:,int16(t_len_/4)) );
+				[~ , dwf] = max(temp(:,int16(3*t_len_/4)) );
+				t_K_a = (dwf - upf) * PRF / 8196 / dur * 2;
 			end
 				y = [-PRF/2 PRF/2];				
 				v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
 				%v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
-				%figure
-				%imagesc(x, y, abs(temp))
+				figure
+				imagesc(x, y, abs(temp))
 			
 		case 'Phase Slope' % Search the parameters by phase slope
 			%ind = 200; %588; 148; 
@@ -352,6 +353,6 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 				clear f fit1
 			end			
 	end
-	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
+	fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 
 end
