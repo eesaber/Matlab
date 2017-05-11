@@ -1,17 +1,10 @@
-function [v_yt] = DualRx(vx,vy,ax,ay)
+function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
 % to zero
 % Noth that the parameters of SAR need to be modified in the function.
-%{
-    delete parameter.mat
-    if nargin == 0
-        vx = 0; vy = 0; 
-        ax = 0; ay = 0;
-    end
-%}
-	close all 
+
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = 2160;
@@ -20,8 +13,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = -20; a_x = 0; % rangecl -16
-    %v_y = -20; a_y = 0; % azimuth 
+	%v_x = 0; a_x = 0; % rangecl -16
+    %v_y = 5; a_y = 0; % azimuth 
 
 
     % Platform
@@ -39,14 +32,24 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	fsamp = 1/8/B;
 	
     % Signal 
-    aa = 2;
+	if v_x > 15 
+		aa = 1.5;
+	elseif v_x > 5
+		aa = 1;
+	elseif v_x > -5
+		aa = 0;
+	else 
+		aa = -1;
+	end
+	aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
 	
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
 
-    R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+    R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation 
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+	
 	
     s1 = zeros(length(eta), length(tau));
 	s2 = s1;
@@ -55,21 +58,24 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
         td1 = 2* R1(k)/ c ;
 		td2 = (R1(k) + R2(k)) /c ;
 		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - td1).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
+		%s1(k,:) = s1(k,:) + [s1(k,151:300) zeros(1,length(tau) - 150)];
 		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - td2).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
-		%{
-		zxc((tau>=td1 & tau-td1<=T_p)) = linspace(0, T_p, length(tau((tau>=td1 & tau-td1<=T_p))));
-		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td1 & tau-td1<=T_p);
-		zxc((tau>=td2 & tau-td2<=T_p)) = linspace(0, T_p, length(tau((tau>=td2 & tau-td2<=T_p))));
-		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* zxc.^2) .*(tau>=td2 & tau-td2<=T_p) ;
-		%}
+		%s2(k,:) = s2(k,:) + [s2(k,151:300) zeros(1,length(tau) - 150)];
 	end
+	add_noise = 0;
+	if add_noise 
+		w_noise = wgn(length(eta), length(tau),-5,'complex');
+		s1 = s1 + w_noise;
+		s2 = s2 + w_noise;
+	end
+
+	
 	%{
-	purinto(s1)
-	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
-	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex')
-	%caxis([0 1])
+	purinto(s1) xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex') %caxis([0 1])
 	%export_fig 1.jpg
 	%}
+
 	%figure,plot(R1)
 	clear R1 R2
 	
@@ -84,6 +90,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
 	%clear Fh_m s1 s2
+	
+
 	%{
 	figure, plot((atan2(imag(Fs1_rc(:,48)), real(Fs1_rc(:,48)))),'k')
 	xlim([0 PRF*dur])
@@ -102,7 +110,11 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%export_fig 2.jpg
 	%}
 
-	%% Key Stone transform - RCMC for range curveture 
+	%% RCMC for range curveture 
+	%-----------------------%
+	%  Key Stone transform  %
+	%-----------------------%
+	
 	%Interpolation 
 	do_key = 0;
 	if do_key
@@ -126,14 +138,13 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 			lo_ = floor(PRF * t(2,m)) - floor(PRF * low_bound) + 1;
 			Fs1_1(up_:lo_, m) = ...
 				interp1(eta, abs(Fs1_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
-
 			Fs1_1(up_:lo_, m) = Fs1_1(up_:lo_, m) .* exp(1j* ...
 				interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(eta(1),eta(end), lo_  - up_ + 1), 'spline', 0).');
+		
 			Fs2_1(up_:lo_, m) = ...
 				interp1(eta, abs(Fs2_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
-
 			Fs2_1(up_:lo_, m) = Fs2_1(up_:lo_, m) .* exp(1j* ...
-				interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(eta(1),eta(end), lo_  - up_ + 1), 'spline', 0).');
+				interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).');
 			%[~,ind] = min(abs(unwrap(angle(Fs1_1(:,m)))-min_p));
 			%Fs1_1(ind+1:end,m) = Fs1_1(ind+1:end,m) .* exp(-j*2*unwrap(angle(Fs1_1(ind+1:end,m))));
 			%Fs1_1(1:ind,m) = Fs1_1(1:ind,m) .* exp(-j*2*unwrap(angle(Fs1_1(1:ind,m))));
@@ -141,6 +152,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 
 		s1_1 = ifft(Fs1_1, [],2);
 		s2_1 = ifft(Fs2_1, [],2);
+		
 	%{
 		purinto(Fs1_1)
 		xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
@@ -171,7 +183,10 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 		%export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rc.jpg'])
 		%}
 	end	
-	%%  Filter h_c - RCMC for range curveture 
+	
+	%------------------------%
+	% Range Curvature filter %
+	%------------------------%
     rcc_f = ~do_key;
 	if rcc_f  
 		f_tau = linspace(0, 1/fsamp, 2^tau_nt2 ); 
@@ -201,8 +216,8 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	do_radon = 1;
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
-		%theta = [175:0.01:181];
-		theta = [170:0.1:181];
+		%theta = [175:0.04:181];
+		theta = [170:0.05:181];
 		parral = 0;
 		if parral 
 			[R,xp] = radon(gpuArray(abs(s1_1)),theta); % Use GPU to compute
@@ -223,27 +238,28 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 		ell = -1/(tand(theta(ind_c)+90)*1/fsamp/PRF);
 	end
 	%% RCMC for range walk 
-	%t = repmat(linspace(-t(end,end),t(end,end),2*floor(PRF*t(end,end))),length(f_tau),1).';
-	close all
 	if do_key 
 		if do_radon 
 			Fh_rw = exp(j * 2 * pi  * ell * linspace(t(1,end), t(end,end), length(s1_1(:,1))).' * f_tau );    
 		else
-			Fh_rw = exp(j * 2 * pi / c * (v_x * x_0 - y_0*(v_p - v_y))/R_0 * ...
+			Fh_rw = exp(j * 4 * pi / c * (v_x * x_0 - y_0*(v_p - v_y))/R_0 * ...
 			linspace(t(1,end), t(end,end), length(s1_1(:,1))).' * f_tau);    
 		end
 	else 
 		if do_radon 
 			Fh_rw = exp(j * 2 * pi  * ell * eta.' * f_tau );    
 		else
-			Fh_rw = exp(j * 2 * pi / c * (v_x * x_0 - y_0*(v_p - v_y))/R_0 * eta.' * f_tau); 
+			Fh_rw = exp(j * 4 * pi / c * (v_x * x_0 - y_0*(v_p - v_y))/R_0 * eta.' * f_tau); 
 		end
 	end
     Fs1_2 = Fs1_1 .* Fh_rw ; 
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
-	
+
+	%purinto(abs(fft(s1_2 .* repmat( exp(  1j* (2* pi * f_0 /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2),1,length(s1_2(1,:)) ))))
+	%max(abs(conv(s1_2(:,295),exp(  1j* (2* pi * f_0 /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2))))
+	%max(abs(conv(s1_2(:,295),exp(  1j* (2* pi * f_0 /c )* ( (0-v_p)^2 / R_0) *eta'.^2))))
 	%{
 	purinto(s1_2)
 	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
@@ -252,134 +268,89 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	%export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rw.jpg'])
 	%}
 	clear Fh_rw
-	%% Search the parameters by phase 
-	%f = fittype('a*x+b');	
-	%[fit1,~,~] = fit(eta.', unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))), f,'StartPoint',[1 1]);
-	%v_yt = v_p + fit1.a * lambda / 2 / pi *R_0 / d_a;
-	%fprintf('Method 0, Actual: %f, Estimate: %f\n', v_y, v_yt)
-	%clear f fit1
-	
-	%ind = 200; %588; 148; 
+	%% Azimuth velocity Estimation
 	[~, ind] = max(abs(s1_2),[],2);
 	ind = floor(sum(ind)/length(s1_2(:,1)));
-	L =201;
-	filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
-	for gg = 1 : 1
-		s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
-		
-		%figure
-		%plot(s_filter,'k','Linewidth',2)
-		%hold on
-		%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
-		%xlabel('$\Delta t$', 'Interpreter', 'latex')
-		%ylabel('Phase', 'Interpreter', 'latex')
-		%plot_para('Maximize',1,'Filename',int2str(gg))
-		
-		if do_key  
-			t2fit = linspace(t(1,end), t(end,end), length(s1_1(:,1))) ;
-		else
-			t2fit = eta ;
-		end
-		[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
-		v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
-		%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
-		
-		%figure
-		%plot(fit1,t(L:end,148),s_filter(L:end))
-		%xlabel('$t$', 'Interpreter', 'latex')
-		%ylabel('Phase', 'Interpreter', 'latex')
-		%plot_para('Maximize',1,'Filename','fit')
-		clear f fit1
+	
+	method = string({'Corr filter', 'WVD', 'Phase Slope'}); 
+	method = method(1);
+	switch method 
+		case 'Corr filter'  % Matched Filter bank
+			v_ySpace = -20: 0.1: 20 ;
+			temp = 0 ;
+			v_yt = 0;
+			qq = v_ySpace;
+			for i = 1 : length(v_ySpace)
+				if do_key
+					t_temp = linspace(t(1,end), t(end,end), length(s1_1(:,1)));
+					s_sample = exp(-1j * (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *	t_temp.^2 ...
+						+ -1j * 0 * pi *ell);
+				else
+					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta'.^2 ...
+						+ -1j * 0 * pi *ell); 
+				end
+				rr = max(abs(conv(s1_2(:,ind), conj(s_sample))));
+				qq(i) = rr;
+				if  rr > temp
+					temp = rr;
+					%v_yt = v_ySpace(i);
+					v_ycrr = v_ySpace(i);
+				end 
+			end
+			%plot(qq)
+			%plot(real(s1_2(:,ind)))
+		%case 'WVD'  % WVD
+			temp= spectrogram(s1_2(:,ind),128,120,8196,PRF,'centered','yaxis');
+			if do_key 
+				x = [t(1,end), t(end,end)];
+				t_len_ = length(temp(1,:));
+				delta_t =  (x(2) - x(1))/2 ;
+				[~ , upf] = max(temp(:,int16(t_len_/4)));
+				[~ , dwf] = max(temp(:,int16(3*t_len_/4)));
+				t_K_a = (dwf - upf) * PRF / 8196 / delta_t ;
+			else
+				x = [(aa - dur/2) ,(aa + dur/2)];
+				[~ , upf] = max(temp(:,1));
+				[~ , dwf] = max(temp(:,end));
+				t_K_a = (dwf - upf) * PRF / 8196 / dur ;
+			end
+				y = [-PRF/2 PRF/2];				
+				%v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				%figure
+				%imagesc(x, y, abs(temp))
+			
+		case 'Phase Slope' % Search the parameters by phase slope
+			%ind = 200; %588; 148; 
+			L =201;
+			filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
+			for gg = 1 : 1
+				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
+				
+				%figure
+				%plot(s_filter,'k','Linewidth',2)
+				%hold on
+				%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
+				%xlabel('$\Delta t$', 'Interpreter', 'latex')
+				%ylabel('Phase', 'Interpreter', 'latex')
+				%plot_para('Maximize',1,'Filename',int2str(gg))
+				
+				if do_key  
+					t2fit = linspace(t(1,end), t(end,end), length(s1_1(:,1))) ;
+				else
+					t2fit = eta ;
+				end
+				[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
+				v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
+				%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
+				%figure
+				%plot(fit1,t(L:end,148),s_filter(L:end))
+				%xlabel('$t$', 'Interpreter', 'latex')
+				%ylabel('Phase', 'Interpreter', 'latex')
+				%plot_para('Maximize',1,'Filename','fit')
+				clear f fit1
+			end			
 	end
+	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
+
 end
-%{	
-%%
-close all
-rrr= exp(j*2*pi/lambda* (d_a * y_0 / R_0 - d_a*(v_p - v_y)/R_0 * t(:,148)));  
-I2 = exp(-j * 4* pi /lambda *(R_0 + d_a * y_0 / 2 / R_0 - d_a*(v_p - v_y)/ 2 / R_0 *t(:,148) ...
-        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
-I1 = exp(-j * 4* pi /lambda *(R_0 + ...
-        + (v_x * x_0 - y_0 *(v_p - v_y))/ R_0 * t(:,148) + ((v_y - v_p)^2 + a_x * x_0)/2/R_0 * t(:,148).^2 ));
-
-	
-figure 
-plot(angle(I1))
-hold on 
-plot(angle(I2))
-plot_para(1,1,'1')
-
-figure 
-plot(unwrap(angle(I1)))
-hold on 
-plot(unwrap(angle(I2)))
-plot_para(1,1,'2')
-
-figure
-yyaxis left
-plot(angle(I1) - angle(I2),'Linewidth',2)
-yyaxis right
-plot(unwrap(angle(I1)) - unwrap(angle(I2)),'Linewidth',2)
-plot_para(1,1,'3')
-
-
-close all
-temp = 1 : length(s1_2(:,148));
-
-figure
-plot(angle(s1_2(:,148)),'Linewidth',1)
-hold on 
-plot(angle(s2_2(:,148)),'r','Linewidth',1)
-plot_para(1,1,'4')
-
-figure
-plot(unwrap(angle(s1_2(:,148))),'Linewidth',1)
-hold on 
-plot(unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
-plot_para(1,1,'5')
-
-figure
-yyaxis left
-plot(angle(s1_2(:,148)) - angle(s2_2(:,148)),'Linewidth',1)
-yyaxis right
-plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'Linewidth',1)
-plot_para(1,1,'6')
-
-figure
-plot(angle(s1_2(:,148).*conj(s2_2(:,148))),'Linewidth',1)
-hold on 
-plot(unwrap(angle(s1_2(:,148))) - unwrap(angle(s2_2(:,148))),'r','Linewidth',1)
-plot_para(1,1,'7')
-
-	
-figure
-plot(t(:,148),angle(s1_2(:,148).*conj(s2_2(:,148))),'k','Linewidth',2)
-xlabel('t')
-ylabel('Phase')
-plot_para(1,1,'7')
-%}
-
-%{
-	%% Spectrum of the filter
-	L = 101;
-	lon = 2^10;
-	filter = [rectwin(L).'; triang(L).'; hamming(L).'];
-	f_spect = linspace(-0.5,0.5,lon);
-	figure 
-	plot(f_spect,10*log10(fftshift(abs(fft(filter(1,:),lon)  .* conj(fft(filter(1,:),lon))))/max(abs(fft(filter(1,:),lon) .* conj(fft(filter(1,:),lon))))) ,'Linewidth',2)
-	hold on 
-	plot(f_spect,10*log10(fftshift(abs(fft(filter(2,:),lon)  .* conj(fft(filter(2,:),lon))))/max(abs(fft(filter(2,:),lon) .* conj(fft(filter(2,:),lon))))) ,'Linewidth',2)
-	hold on 
-	plot(f_spect,10*log10(fftshift(abs(fft(filter(3,:),lon)  .* conj(fft(filter(3,:),lon))))/max(abs(fft(filter(3,:),lon) .* conj(fft(filter(3,:),lon))))) ,'k','Linewidth',2)
-	ylim([-50 0])
-	xlabel('Normalized frequency','Interpreter', 'latex')
-	ylabel('Spectrum (dB)','Interpreter', 'latex')
-	plot_para(1,1,'f_respon')
-	
-	f_spect = linspace(-0.5,0.5,length(eta));
-	plot(f_spect,10*log10(fftshift(abs(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148)))))  .* conj(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))))))/max(abs(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))) .* conj(fft(unwrap(angle(s1_2(:,148).*conj(s2_2(:,148))))))))),'k' ,'Linewidth',2)
-	xlabel('Normalized frequency','Interpreter', 'latex')
-	ylabel('Spectrum (dB)','Interpreter', 'latex')
-	plot_para(1,1,'ATI_Pha_f')
-	
-%}
-
