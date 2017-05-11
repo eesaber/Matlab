@@ -1,4 +1,4 @@
-function [v_yt] = DualRx(vx,vy,ax,ay)
+function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -270,7 +270,7 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 	ind = floor(sum(ind)/length(s1_2(:,1)));
 	
 	method = string({'Corr filter', 'WVD', 'Phase Slope'}); 
-	method = method(2);
+	method = method(1);
 	switch method 
 		case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
@@ -292,15 +292,15 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 				qq(i) = rr;
 				if  rr > temp
 					temp = rr;
-					v_yt = v_ySpace(i);
-					%v_ycrr = v_ySpace(i);
+					%v_yt = v_ySpace(i);
+					v_ycrr = v_ySpace(i);
 				end 
 			end
 			%figure 
 			%plot(real(s1_2_Fdc))
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
-		case 'WVD'  % WVD
+		%case 'WVD'  % WVD
 			temp= spectrogram(s1_2(:,ind).* exp(1j * 1 * pi /ell * eta).',128,120,8196,PRF,'centered','yaxis');
 			if do_key 
 				x = [t(1,end), t(end,end)];
@@ -317,10 +317,10 @@ function [v_yt] = DualRx(vx,vy,ax,ay)
 				t_K_a = (dwf - upf) * PRF / 8196 / dur * 2;
 			end
 				y = [-PRF/2 PRF/2];				
-				v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
-				%v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
-				figure
-				imagesc(x, y, abs(temp))
+				%v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				%figure
+				%imagesc(x, y, abs(temp))
 			
 		case 'Phase Slope' % Search the parameters by phase slope
 			%ind = 200; %588; 148; 

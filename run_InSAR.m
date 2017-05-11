@@ -11,11 +11,11 @@ v_Est_Err_Vy_crr = v_Est_Vy_wvd;
 
 for vx = 1 : length(v)
 	for vy = 1 : length(v)
-		v_Est_Vy_(vx,vy) = DualRx(v(vx),v(vy),0,0);
-		v_Est_Err_Vy_(vx,vy) =  v_Est_Vy_(vx,vy) - v(vy);
-		%[v_Est_Vy_wvd(vx,vy), v_Est_Vy_crr(vx,vy)]= DualRx(v(vx),v(vy),0,0);
-		%v_Est_Err_Vy_crr(vx,vy) = v_Est_Vy_crr(vx,vy) - v(vy);
-		%v_Est_Err_Vy_wvd(vx,vy) = v_Est_Vy_wvd(vx,vy) - v(vy);
+		%v_Est_Vy_(vx,vy) = DualRx(v(vx),v(vy),0,0);
+		%v_Est_Err_Vy_(vx,vy) =  v_Est_Vy_(vx,vy) - v(vy);
+		[v_Est_Vy_wvd(vx,vy), v_Est_Vy_crr(vx,vy)]= DualRx(v(vx),v(vy),0,0);
+		v_Est_Err_Vy_crr(vx,vy) = v_Est_Vy_crr(vx,vy) - v(vy);
+		v_Est_Err_Vy_wvd(vx,vy) = v_Est_Vy_wvd(vx,vy) - v(vy);
 	end
 	fprintf('.')
 	if mod(vx,10) == 0
