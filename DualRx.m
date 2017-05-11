@@ -1,4 +1,4 @@
-function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
+function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -13,8 +13,8 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = -10; a_x = 0; % rangecl -16
-    %v_y = -20; a_y = 0; % azimuth 
+	%v_x = 1; a_x = 0; % rangecl -16
+    %v_y = 1; a_y = 0; % azimuth 
 
 
     % Platform
@@ -25,11 +25,11 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 2000; %%2.35e3
+    PRF = 3000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-	fsamp = 1/8/B;
+	fsamp = 1/10/B;
 	
     % Signal 
 	if v_x > 15 
@@ -48,18 +48,16 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation 
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+	R1 = R1 * 2 ;
+	R2 = R1 + R2;
 	
-    s1 = zeros(length(eta), length(tau));
-	s2 = s1;
-	%zxc = zeros(1,length(tau));
-	for k = 1 : length(eta)
-        td1 = 2* R1(k)/ c ;
-		td2 = (R1(k) + R2(k)) /c ;
-		s1(k,:) = exp(-1i* 4* pi*R1(k)/ lambda + 1i* pi* K_r* (tau - td1).^2) .*(tau>=td1 & tau-td1<=T_p)  ;
-		%s1(k,:) = s1(k,:) + [s1(k,151:300) zeros(1,length(tau) - 150)];
-		s2(k,:) = exp(-1i* 2* pi*(R1(k) + R2(k))/ lambda + 1i* pi* K_r* (tau - td2).^2) .*(tau>=td2 & tau-td2<=T_p)  ;
-		%s2(k,:) = s2(k,:) + [s2(k,151:300) zeros(1,length(tau) - 150)];
-	end
+	temp = repmat(tau,length(eta),1);
+	w_r1 = ( temp >= repmat(R1.', 1, length(tau)) / c  & temp <= (repmat(R1.', 1, length(tau))/c + T_p)) ;
+	w_r2 = ( temp >= repmat(R2.', 1, length(tau)) / c  & temp <= (repmat(R2.', 1, length(tau))/c + T_p)) ;
+	s1 = exp(-1i*2*pi* repmat(R1.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R1.'/c, 1, length(tau)) ).^2)) .* w_r1;
+	s2 = exp(-1i*2*pi* repmat(R2.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R2.'/c, 1, length(tau)) ).^2)) .* w_r2;
+	
+	
 	add_noise = 0;
 	if add_noise 
 		w_noise = wgn(length(eta), length(tau),-5,'complex');
@@ -68,17 +66,19 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 	end
 	
 	%{
-	purinto(s1) xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
-	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex') %caxis([0 1])
+	purinto(s1) 
+	xlabel('$\tau / \Delta f_\tau $', 'Interpreter', 'latex')
+	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex') 
+	%caxis([0 1])
 	%export_fig 1.jpg
 	%}
 
 	%figure,plot(R1)
-	clear R1 R2
-	
+	%clear R1 R2
+
 	%% Range compression 
 	ref_time = -T_p : fsamp : 0 ;
-	h_m = repmat(exp(j * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
+	h_m = repmat(exp(1i * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
 
 	tau_nt2 = nextpow2(length(tau)) ;  % Make total number to power of 2
     Fh_m = fft( h_m, 2^tau_nt2, 2); 
@@ -137,14 +137,10 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 				interp1(eta, abs(Fs1_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
 			Fs1_1(up_:lo_, m) = Fs1_1(up_:lo_, m) .* exp(1j* ...
 				interp1(eta, unwrap(angle(Fs1_rc(:,m))).', linspace(eta(1),eta(end), lo_  - up_ + 1), 'spline', 0).');
-		
 			Fs2_1(up_:lo_, m) = ...
 				interp1(eta, abs(Fs2_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
 			Fs2_1(up_:lo_, m) = Fs2_1(up_:lo_, m) .* exp(1j* ...
 				interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).');
-			%[~,ind] = min(abs(unwrap(angle(Fs1_1(:,m)))-min_p));
-			%Fs1_1(ind+1:end,m) = Fs1_1(ind+1:end,m) .* exp(-j*2*unwrap(angle(Fs1_1(ind+1:end,m))));
-			%Fs1_1(1:ind,m) = Fs1_1(1:ind,m) .* exp(-j*2*unwrap(angle(Fs1_1(1:ind,m))));
 		end
 
 		s1_1 = ifft(Fs1_1, [],2);
@@ -268,14 +264,14 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 	%% Azimuth velocity Estimation
 	[~, ind] = max(abs(s1_2),[],2);
 	ind = floor(sum(ind)/length(s1_2(:,1)));
-	
-	method = string({'Corr filter', 'WVD', 'Phase Slope'}); 
-	method = method(1);
-	switch method 
-		case 'Corr filter'  % Matched Filter bank
+
+	method = string({'Corr filter', 'WVD', 'Phase Slope', 'GAF'}); 
+
+	%method = method(1);
+	%switch method 
+	%	case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
 			temp = 0 ;
-			v_yt = 0;
 			qq = v_ySpace;
 			for i = 1 : length(v_ySpace)
 				if do_key
@@ -283,24 +279,27 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 					s_sample = exp(-1j * (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *	t_temp.^2 ...
 						+ -1j * 0 * pi *ell);
 				else
-					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta.^2 ...
-						+ 1j * 0* pi /ell* eta); 
-					s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 1 * pi /ell * eta);
+					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta.^2);
+					if ell == 0
+						s1_2_Fdc = s1_2(:,ind).';
+					else
+						%s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 1 * pi /ell * eta);
+						s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 2 * pi * f_0 * ell * eta);
+					end
 				end
-				%rr = max(abs(conv(s1_2(:,ind), conj(s_sample))));
 				rr = max(abs(conv(s1_2_Fdc, conj(s_sample))));
 				qq(i) = rr;
 				if  rr > temp
 					temp = rr;
-					%v_yt = v_ySpace(i);
-					v_ycrr = v_ySpace(i);
+					v_yt = v_ySpace(i);
+					v_y_crr = v_yt;
 				end 
 			end
 			%figure 
 			%plot(real(s1_2_Fdc))
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
-		%case 'WVD'  % WVD
+	%	case 'WVD'  % WVD
 			temp= spectrogram(s1_2(:,ind).* exp(1j * 1 * pi /ell * eta).',128,120,8196,PRF,'centered','yaxis');
 			if do_key 
 				x = [t(1,end), t(end,end)];
@@ -317,11 +316,11 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 				t_K_a = (dwf - upf) * PRF / 8196 / dur * 2;
 			end
 				y = [-PRF/2 PRF/2];				
-				%v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
-				v_ywvd = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				v_yt = v_p - sqrt( - t_K_a * c * R_0 / f_0 / 2);
+				v_y_wvd = v_yt;
 				%figure
 				%imagesc(x, y, abs(temp))
-			
+	%{		
 		case 'Phase Slope' % Search the parameters by phase slope
 			%ind = 200; %588; 148; 
 			L =201;
@@ -329,8 +328,8 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 			for gg = 1 : 1
 				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
 				
-				%figure
-				%plot(s_filter,'k','Linewidth',2)
+				figure
+				plot(s_filter,'k','Linewidth',2)
 				%hold on
 				%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
 				%xlabel('$\Delta t$', 'Interpreter', 'latex')
@@ -344,6 +343,7 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 				end
 				[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
 				v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
+				v_yt_ps = v_yt;
 				%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
 				%figure
 				%plot(fit1,t(L:end,148),s_filter(L:end))
@@ -351,8 +351,20 @@ function [v_ywvd, v_ycrr] = DualRx(vx,vy,ax,ay)
 				%ylabel('Phase', 'Interpreter', 'latex')
 				%plot_para('Maximize',1,'Filename','fit')
 				clear f fit1
-			end			
-	end
-	fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
+			end
+		%}	
+		%case 'GAF'
+			temp = abs(GAF(s1_2(:, ind), 2, 2, 2));
+			[~,ind_f] = max(temp);
+			f_t = linspace(-PRF/2, PRF/2, length(temp));
+			if do_key
+				c_2 = f_t(ind_f) / abs(t(1,end) - t(end,end));
+			else 
+				c_2 = f_t(ind_f) / dur  ;
+			end
+			v_yt = v_p - sqrt(-c_2 * R_0 * lambda - a_x * x_0);
+			v_y_gaf = v_yt ;
+	%end
+	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 
 end
