@@ -46,7 +46,7 @@ imagesc(v,v,v_Est_Err_Vy_gaf)
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
 	%caxis([-1 1])
-	plot_para('Maximize',true,'Filename','errmap_crr')
+	plot_para('Maximize',true,'Filename','errmap_gaf')
 	
 	
 %{

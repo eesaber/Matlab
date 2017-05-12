@@ -209,8 +209,11 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	do_radon = 1;
 	if do_radon 
 		iptsetpref('ImshowAxesVisible','on')
-		%theta = [175:0.04:181];
-		theta = [170:0.05:181];
+		if do_key 
+			theta = [175:0.025:181];
+		else
+			theta = [170:0.05:181];
+		end
 		parral = 0;
 		if parral 
 			[R,xp] = radon(gpuArray(abs(s1_1)),theta); % Use GPU to compute
