@@ -10,11 +10,11 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
     x_0 = 2160;
     y_0 = 400;
     d = 100; % Length of the target area 
-    %v_x = vx; a_x = ax; % rangecl -16
-    %v_y = vy; a_y = ay; % azimuth 
+    v_x = vx; a_x = ax; % rangecl -16
+    v_y = vy; a_y = ay; % azimuth 
 
-	v_x = 16; a_x = 0; % rangecl -16
-    v_y = -10; a_y = 0; % azimuth 
+	%v_x = 16; a_x = 0; % rangecl -16
+    %v_y = -10; a_y = 0; % azimuth 
 
 
     % Platform
@@ -25,7 +25,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
     v_p = 90; 
     f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 3000; %%2.35e3
+    PRF = 4000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
@@ -113,7 +113,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%-----------------------%
 	
 	%Interpolation 
-	do_key = 0;
+	do_key = 1;
 	if do_key
 		f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 		t = eta.' * sqrt((f_0 + f_tau)/f_0);
@@ -271,21 +271,15 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%switch method 
 		%case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
-			temp = 0 ;
 			qq = v_ySpace;
+			t_temp = linspace(t(1,end), t(end, end), length(s1_2(:,ind)));
 			for i = 1 : length(v_ySpace)
 				if do_key
-					t_temp = linspace(t(1,end), t(end,end), length(s1_1(:,1)));
-					s_sample = exp(-1j * (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *	t_temp.^2 ...
-						+ -1j * 0 * pi *ell);
+					s_sample = exp(-1j * (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *	t_temp.^2);
+					s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 2 * pi * f_0 * ell * t_temp);
 				else
 					s_sample = exp(-1j* (2* pi * f_0 / c)* ((v_ySpace(i) - v_p)^2 / R_0) *eta.^2);
-					if ell == 0
-						s1_2_Fdc = s1_2(:,ind).';
-					else
-						%s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 1 * pi /ell * eta);
-						s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 2 * pi * f_0 * ell * eta);
-					end
+					s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 2 * pi * f_0 * ell * eta);
 				end
 				rr = max(abs(ifft(fft(s1_2_Fdc).*fft(conj(s_sample)))));
 				qq(i) = rr;
@@ -300,8 +294,9 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
 		%case 'WVD'  % WVD 
-			temp= spectrogram(s1_2(:,ind).* exp(1j * 2 * pi * f_0 * ell * eta).',128,120,8196,PRF,'centered','yaxis');
+			t_temp = linspace(t(1,end), t(end, end), length(s1_2(:,ind)));
 			if do_key 
+				temp= spectrogram(s1_2(:,ind).* exp(1j * 2 * pi * f_0 * ell * t_temp).',128,120,8196,PRF,'centered','yaxis');
 				x = [t(1,end), t(end,end)];
 				t_len_ = length(temp(1,:));
 				delta_t =  (x(2) - x(1))/2 ;
@@ -309,6 +304,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				[~ , dwf] = max(temp(:,int16(3*t_len_/4)));
 				t_K_a = (dwf - upf) * PRF / 8196 / delta_t ;
 			else
+				temp= spectrogram(s1_2(:,ind).* exp(1j * 2 * pi * f_0 * ell * eta).',128,120,8196,PRF,'centered','yaxis');
 				x = [(aa - dur/2) ,(aa + dur/2)];
 				t_len_ = length(temp(1,:));
 				[~ , upf] = max(temp(:,int16(t_len_/4)) );
@@ -353,7 +349,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				clear f fit1
 			end
 		%}	
-		case 'GAF'
+		%case 'GAF'
 			temp = abs(GAF(s1_2(:, ind), 2, 2, 2));
 			[~,ind_f] = max(temp);
 			f_t = linspace(-PRF/2, PRF/2, length(temp));
@@ -364,7 +360,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			end
 			v_yt = v_p - sqrt(-c_2 * R_0 * lambda - a_x * x_0);
 			v_y_gaf = v_yt ;
-	end
+	%end
 	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 
 end
