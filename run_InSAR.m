@@ -1,4 +1,4 @@
-v = 10 ;-20:2:20;
+v = -20:2:20;
 %v_Est_Vy_ = zeros(length(v),length(v));
 %v_Est_Err_Vy_ = v_Est_Vy_;
 

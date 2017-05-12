@@ -10,11 +10,11 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
     x_0 = 2160;
     y_0 = 400;
     d = 100; % Length of the target area 
-    v_x = vx; a_x = ax; % rangecl -16
-    v_y = vy; a_y = ay; % azimuth 
+    %v_x = vx; a_x = ax; % rangecl -16
+    %v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = 1; a_x = 0; % rangecl -16
-    %v_y = 1; a_y = 0; % azimuth 
+	v_x = 16; a_x = 0; % rangecl -16
+    v_y = -10; a_y = 0; % azimuth 
 
 
     % Platform
@@ -267,9 +267,9 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 
 	method = string({'Corr filter', 'WVD', 'Phase Slope', 'GAF'}); 
 
-	%method = method(1);
+	%method = method(2);
 	%switch method 
-	%	case 'Corr filter'  % Matched Filter bank
+		%case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
 			temp = 0 ;
 			qq = v_ySpace;
@@ -287,7 +287,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 						s1_2_Fdc = s1_2(:,ind).' .* exp(1j * 2 * pi * f_0 * ell * eta);
 					end
 				end
-				rr = max(abs(conv(s1_2_Fdc, conj(s_sample))));
+				rr = max(abs(ifft(fft(s1_2_Fdc).*fft(conj(s_sample)))));
 				qq(i) = rr;
 				if  rr > temp
 					temp = rr;
@@ -299,8 +299,8 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			%plot(real(s1_2_Fdc))
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
-	%	case 'WVD'  % WVD
-			temp= spectrogram(s1_2(:,ind).* exp(1j * 1 * pi /ell * eta).',128,120,8196,PRF,'centered','yaxis');
+		%case 'WVD'  % WVD 
+			temp= spectrogram(s1_2(:,ind).* exp(1j * 2 * pi * f_0 * ell * eta).',128,120,8196,PRF,'centered','yaxis');
 			if do_key 
 				x = [t(1,end), t(end,end)];
 				t_len_ = length(temp(1,:));
@@ -353,7 +353,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				clear f fit1
 			end
 		%}	
-		%case 'GAF'
+		case 'GAF'
 			temp = abs(GAF(s1_2(:, ind), 2, 2, 2));
 			[~,ind_f] = max(temp);
 			f_t = linspace(-PRF/2, PRF/2, length(temp));
@@ -364,7 +364,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			end
 			v_yt = v_p - sqrt(-c_2 * R_0 * lambda - a_x * x_0);
 			v_y_gaf = v_yt ;
-	%end
+	end
 	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 
 end
