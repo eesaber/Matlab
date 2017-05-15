@@ -7,25 +7,26 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 
     %% Parameters - C Band airborne SAR parameters
     % Target
-    x_0 = 2160;
-    y_0 = 400;
+    x_0 = [2199.6, 2196, 2185, 2166]; % Squint angle: 0, 3, 6.5, 10
+    y_0 = [0, 116, 249, 382];
+    x_0 = x_0(3);
+    y_0 = y_0(3);
     d = 100; % Length of the target area 
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = 16; a_x = 0; % rangecl -16
-    %v_y = -10; a_y = 0; % azimuth 
+	%v_x = 10; a_x = 0; % rangecl -16
+    %v_y = -1; a_y = 0; % azimuth 
 
 
     % Platform
     h = 2200;
 	R_0 = sqrt(x_0^2 + y_0^2 + h^2);
-	l_0 = sqrt( y_0^2 + h^2);
     d_a = 0.2;     
     v_p = 90; 
-    f_0 = 9.6e9; c = 3e8 ; lambda = c/f_0 ;
+    f_0 = 9.6e9; c = 299792458 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 4000; %%2.35e3
+    PRF = 3000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
@@ -41,22 +42,22 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	else 
 		aa = -1;
 	end
-	aa = 0.5;
+	aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
-	
+	%dd = 20;
+	%eta = (aa - dd): 1/10: (aa + dd);  % Slow time -6
     upran = sqrt( (x_0 + d)^2 + h^2) ; downran =  sqrt( (x_0 - d)^2 + h^2); %Set upper limit and down limit 
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation 
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+	R2 = R2 + R1;
 	R1 = R1 * 2 ;
-	R2 = R1 + R2;
 	
 	temp = repmat(tau,length(eta),1);
 	w_r1 = ( temp >= repmat(R1.', 1, length(tau)) / c  & temp <= (repmat(R1.', 1, length(tau))/c + T_p)) ;
 	w_r2 = ( temp >= repmat(R2.', 1, length(tau)) / c  & temp <= (repmat(R2.', 1, length(tau))/c + T_p)) ;
 	s1 = exp(-1i*2*pi* repmat(R1.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R1.'/c, 1, length(tau)) ).^2)) .* w_r1;
 	s2 = exp(-1i*2*pi* repmat(R2.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R2.'/c, 1, length(tau)) ).^2)) .* w_r2;
-	
 	
 	add_noise = 0;
 	if add_noise 
@@ -113,7 +114,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%-----------------------%
 	
 	%Interpolation 
-	do_key = 1;
+	do_key = 0;
 	if do_key
 		f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 		t = eta.' * sqrt((f_0 + f_tau)/f_0);
@@ -182,7 +183,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%------------------------%
     rcc_f = ~do_key;
 	if rcc_f  
-		f_tau = linspace(0, 1/fsamp, 2^tau_nt2 ); 
+		f_tau = [linspace(0, 1/fsamp/2, 2^(tau_nt2-1) ) linspace(0, 1/fsamp/2, 2^(tau_nt2-1))]; 
 			
 		H_c =  exp(  1j* (2* pi /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2 * f_tau); %range curveture filter
 		%Multiply H_c to Fs_r
@@ -208,7 +209,6 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	
 	do_radon = 1;
 	if do_radon 
-		iptsetpref('ImshowAxesVisible','on')
 		if do_key 
 			theta = [175:0.025:181];
 		else
@@ -270,9 +270,9 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 
 	method = string({'Corr filter', 'WVD', 'Phase Slope', 'GAF'}); 
 
-	%method = method(2);
-	%switch method 
-		%case 'Corr filter'  % Matched Filter bank
+	method = method(3);
+	switch method 
+		case 'Corr filter'  % Matched Filter bank
 			v_ySpace = -20: 0.1: 20 ;
 			qq = v_ySpace;
 			t_temp = linspace(t(1,end), t(end, end), length(s1_2(:,ind)));
@@ -296,9 +296,9 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			%plot(real(s1_2_Fdc))
 			%figure
 			%spectrogram(s1_2_Fdc,128,120,8196,PRF,'centered','yaxis')
-		%case 'WVD'  % WVD 
-			t_temp = linspace(t(1,end), t(end, end), length(s1_2(:,ind)));
+		case 'WVD'  % WVD 
 			if do_key 
+				t_temp = linspace(t(1,end), t(end, end), length(s1_2(:,ind)));
 				temp= spectrogram(s1_2(:,ind).* exp(1j * 2 * pi * f_0 * ell * t_temp).',128,120,8196,PRF,'centered','yaxis');
 				x = [t(1,end), t(end,end)];
 				t_len_ = length(temp(1,:));
@@ -319,7 +319,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				v_y_wvd = v_yt;
 				%figure
 				%imagesc(x, y, abs(temp))
-	%{		
+		
 		case 'Phase Slope' % Search the parameters by phase slope
 			%ind = 200; %588; 148; 
 			L =201;
@@ -328,9 +328,9 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
 				
 				figure
-				plot(s_filter,'k','Linewidth',2)
-				%hold on
-				%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',2)
+				plot(s_filter,'k','Linewidth',1.5)
+				hold on
+				plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',1.5)
 				%xlabel('$\Delta t$', 'Interpreter', 'latex')
 				%ylabel('Phase', 'Interpreter', 'latex')
 				%plot_para('Maximize',1,'Filename',int2str(gg))
@@ -351,8 +351,8 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 				%plot_para('Maximize',1,'Filename','fit')
 				clear f fit1
 			end
-		%}	
-		%case 'GAF'
+			
+		case 'GAF'
 			temp = abs(GAF(s1_2(:, ind), 2, 2, 2));
 			[~,ind_f] = max(temp);
 			f_t = linspace(-PRF/2, PRF/2, length(temp));
@@ -363,7 +363,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			end
 			v_yt = v_p - sqrt(-c_2 * R_0 * lambda - a_x * x_0);
 			v_y_gaf = v_yt ;
-	%end
-	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
+	end
+	fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 
 end
