@@ -15,8 +15,8 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = -20; a_x = 5; % rangecl -16
-    %v_y = -20; a_y = 0; % azimuth 
+	%v_x = -15; a_x = 0; % rangecl -16
+    %v_y = -15; a_y = 0; % azimuth 
 
 
     % Platform
@@ -33,15 +33,6 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	fsamp = 1/8/B;
 	
     % Signal 
-	if v_x > 15 
-		aa = 1.5;
-	elseif v_x > 5
-		aa = 1;
-	elseif v_x > -5
-		aa = 0;
-	else 
-		aa = -1;
-	end
 	aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
 	%dd = 20;
@@ -72,11 +63,16 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	ylabel('$\eta / \Delta \eta$', 'Interpreter', 'latex') 
 	%caxis([0 1])
 	%export_fig 1.jpg
+	
+	figure
+	plot(R2 - R1,'k','Linewidth',1.5)
+	hold
+	plot(d_a*(y_0/R_0 - (v_p-v_y)/R_0 *eta ),'k-.','Linewidth',1.5)
+	xlim([0 8000])
+	xlabel('$\eta / \Delta \eta $', 'Interpreter', 'latex')
+	ylabel('$\Delta R(\eta)$', 'Interpreter', 'latex') 
+	plot_para('Maximize',true,'Filename','1')
 	%}
-
-	%figure,plot(R1)
-	%clear R1 R2
-
 	%% Range compression 
 	ref_time = -T_p : fsamp : 0 ;
 	h_m = repmat(exp(1i * 4 * pi * f_0 * R_0 / c) *  exp(- j * pi * K_r * ref_time.^2),length(eta),1 ) ; 
@@ -323,6 +319,9 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 			filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
 			for gg = 1 : 1
 				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
+				temp = unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))));
+				y_0t = temp(length(s2_2(:,ind))/2) / (2*pi/lambda*d_a/R_0);
+				%fprintf('Actual y_0: %f, Estimate y_0: %f\n', y_0, y_0t)
 				
 				%figure
 				%plot(s_filter,'k','Linewidth',1.5)
@@ -364,7 +363,7 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 	%% Range velocity Estimation
 	v_rt = ell * c ;
-	v_xt = v_rt * R_0t / sqrt(R_0t^2 - h^2);
+	v_xt = (ell * c * R_0t + y_0t*(v_p - v_y)) / sqrt(R_0t^2 - h^2 - y_0t)  ;
 	%fprintf('Actual v_x: %f, Estimate v_x: %f\n',v_x, v_xt)
 	%% Range acceleration Estimation
 	f_eta = [linspace(0,PRF/2,length(Fs1_2)/2) linspace(-PRF/2,0-1/PRF,length(Fs1_2)/2)];
@@ -392,4 +391,4 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	s_a = ifft(Fs_a,[],1);
 	%purinto(s_a)
 	%}
-%end
+end
