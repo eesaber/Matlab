@@ -1,4 +1,4 @@
-function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
+function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -9,14 +9,14 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
     % Target
     x_0 = [2199.6, 2196, 2185, 2166]; % Squint angle: 0, 3, 6.5, 10
     y_0 = [0, 116, 249, 382];
-    x_0 = x_0(3);
-    y_0 = y_0(3);
+    x_0 = x_0(1);
+    y_0 = y_0(1);
     d = 100; % Length of the target area 
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = 10; a_x = 0; % rangecl -16
-    %v_y = -1; a_y = 0; % azimuth 
+	%v_x = -20; a_x = 5; % rangecl -16
+    %v_y = -20; a_y = 0; % azimuth 
 
 
     % Platform
@@ -26,11 +26,11 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
     v_p = 90; 
     f_0 = 9.6e9; c = 299792458 ; lambda = c/f_0 ;
     dur = 2 ; %
-    PRF = 3000; %%2.35e3
+    PRF = 4000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
-	fsamp = 1/10/B;
+	fsamp = 1/8/B;
 	
     % Signal 
 	if v_x > 15 
@@ -114,7 +114,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%-----------------------%
 	
 	%Interpolation 
-	do_key = 0;
+	do_key = 1;
 	if do_key
 		f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
 		t = eta.' * sqrt((f_0 + f_tau)/f_0);
@@ -196,10 +196,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 		%xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
 		%ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	end 
-	K_a = 2 * f_0/c * (v_y-v_p)^2 / R_0;
-	(v_x * x_0 + y_0*(v_p - v_y))/R_0 ;
-	%plot(cos(v_x * x_0 + y_0*(v_p - v_y))/R_0 * eta + 2 * f_0/c * (v_y-v_p)^2 / R_0 * eta.^2)
-
+	
 	%clear Fs1_rc Fs2_rc
 
 	%% Radon transform to estimate the slop
@@ -232,6 +229,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 		end
 		[~,ind_c] = max(max(R));
 		ell = -1/(tand(theta(ind_c)+90)*1/fsamp/PRF);
+		
 	end
 	%% RCMC for range walk 
 	if do_key 
@@ -252,10 +250,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
-
-	%purinto(abs(fft(s1_2 .* repmat( exp(  1j* (2* pi * f_0 /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2),1,length(s1_2(1,:)) ))))
-	%max(abs(conv(s1_2(:,295),exp(  1j* (2* pi * f_0 /c )* ( (v_y-v_p)^2 / R_0) *eta'.^2))))
-	%max(abs(conv(s1_2(:,295),exp(  1j* (2* pi * f_0 /c )* ( (0-v_p)^2 / R_0) *eta'.^2))))
+	
 	%{
 	purinto(s1_2)
 	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
@@ -264,10 +259,12 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 	%export_fig(['(' int2str(v_x) '_' int2str(v_y) ')_rw.jpg'])
 	%}
 	clear Fh_rw
+	
+	
 	%% Azimuth velocity Estimation
 	[~, ind] = max(abs(s1_2),[],2);
 	ind = floor(sum(ind)/length(s1_2(:,1)));
-
+	R_0t = tau(ind)*c/2;
 	method = string({'Corr filter', 'WVD', 'Phase Slope', 'GAF'}); 
 
 	method = method(3);
@@ -327,10 +324,10 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			for gg = 1 : 1
 				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
 				
-				figure
-				plot(s_filter,'k','Linewidth',1.5)
-				hold on
-				plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',1.5)
+				%figure
+				%plot(s_filter,'k','Linewidth',1.5)
+				%hold on
+				%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',1.5)
 				%xlabel('$\Delta t$', 'Interpreter', 'latex')
 				%ylabel('Phase', 'Interpreter', 'latex')
 				%plot_para('Maximize',1,'Filename',int2str(gg))
@@ -341,7 +338,7 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 					t2fit = eta ;
 				end
 				[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
-				v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0 / d_a;
+				v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0t / d_a;
 				v_yt_ps = v_yt;
 				%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
 				%figure
@@ -364,6 +361,35 @@ function [v_y_wvd, v_y_crr, v_y_gaf] = DualRx(vx,vy,ax,ay)
 			v_yt = v_p - sqrt(-c_2 * R_0 * lambda - a_x * x_0);
 			v_y_gaf = v_yt ;
 	end
-	fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
-
-end
+	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
+	%% Range velocity Estimation
+	v_rt = ell * c ;
+	v_xt = v_rt * R_0t / sqrt(R_0t^2 - h^2);
+	%fprintf('Actual v_x: %f, Estimate v_x: %f\n',v_x, v_xt)
+	%% Range acceleration Estimation
+	f_eta = [linspace(0,PRF/2,length(Fs1_2)/2) linspace(-PRF/2,0-1/PRF,length(Fs1_2)/2)];
+	a_xSpace = -10: 0.1: 10 ;
+		temp = -1;
+		for i = 1 : length(a_xSpace)		
+			if do_key
+				K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xSpace(i)*x_0)/ R_0t;
+				H_ac = exp(j*pi*v_rt/lambda*f_eta + j*pi*f_eta.^2/K_a).';
+			else
+				fprintf('If not keystone it is impossible to correct range curvature\n')
+			end 
+			rr = max(abs(ifft(fft(s1_2(:,ind)) .* H_ac)));
+			if  rr > temp
+				temp = rr;
+				a_xt = a_xSpace(i);
+			end
+		end
+	%fprintf('Actual a_x: %f, Estimate a_x: %f\n',a_x, a_xt)
+	%{
+	%% Azimuth compression
+	K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xt*x_0)/ R_0t;
+	H_ac = exp(j*pi*v_rt/lambda*f_eta + j*pi*f_eta.^2/K_a).';
+	Fs_a = fft(s1_2) .* repmat(H_ac,1,length(s1_2(1,:)));
+	s_a = ifft(Fs_a,[],1);
+	%purinto(s_a)
+	%}
+%end
