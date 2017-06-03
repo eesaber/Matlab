@@ -7,16 +7,17 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 
     %% Parameters - C Band airborne SAR parameters
     % Target
-    x_0 = [2199.6, 2196, 2185, 2166]; % Squint angle: 0, 3, 6.5, 10
+    x_0 = [2199.6, 2196, 2185, 2166]; % Squint angle: 0, 2.3, 4.5, 7.0
     y_0 = [0, 116, 249, 382];
-    x_0 = x_0(1);
-    y_0 = y_0(1);
+	
+    x_0 = x_0(4);
+    y_0 = y_0(4);
     d = 100; % Length of the target area 
-    v_x = vx; a_x = ax; % rangecl -16
-    v_y = vy; a_y = ay; % azimuth 
+    %v_x = vx; a_x = ax; % rangecl -16
+    %v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = -15; a_x = 0; % rangecl -16
-    %v_y = -15; a_y = 0; % azimuth 
+	v_x = -15; a_x = 0; % rangecl -16
+    v_y = -15; a_y = 0; % azimuth 
 
 
     % Platform
@@ -25,13 +26,13 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
     d_a = 0.2;     
     v_p = 90; 
     f_0 = 9.6e9; c = 299792458 ; lambda = c/f_0 ;
-    dur = 2 ; %
+    dur = 4 ; %
     PRF = 4000; %%2.35e3
     K_r = 5e14 ;
     T_p = 0.1e-6; % Pulse width
     B =  K_r*T_p;
 	fsamp = 1/8/B;
-	
+	%%
     % Signal 
 	aa = 0;
     eta = (aa - dur/2): 1/PRF: (aa + dur/2);  % Slow time -6
@@ -41,20 +42,24 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
     tau =  2*(downran)/c: fsamp : 2*(upran)/c + T_p  ;  % fast time space
     R1 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation 
     R2 = sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ; % range equation
+	R3 =  sqrt(h^2 + (x_0 + v_x* eta + 0.5* a_x* eta.^2).^2 + (2*d_a + y_0 + v_y* eta + 0.5* a_y * eta.^2 - v_p* eta).^2 ) ;
 	R2 = R2 + R1;
+	R3 = R3 + R1;
 	R1 = R1 * 2 ;
 	
 	temp = repmat(tau,length(eta),1);
 	w_r1 = ( temp >= repmat(R1.', 1, length(tau)) / c  & temp <= (repmat(R1.', 1, length(tau))/c + T_p)) ;
 	w_r2 = ( temp >= repmat(R2.', 1, length(tau)) / c  & temp <= (repmat(R2.', 1, length(tau))/c + T_p)) ;
+	w_r3 = ( temp >= repmat(R3.', 1, length(tau)) / c  & temp <= (repmat(R3.', 1, length(tau))/c + T_p)) ;
 	s1 = exp(-1i*2*pi* repmat(R1.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R1.'/c, 1, length(tau)) ).^2)) .* w_r1;
 	s2 = exp(-1i*2*pi* repmat(R2.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R2.'/c, 1, length(tau)) ).^2)) .* w_r2;
-	
+	s3 = exp(-1i*2*pi* repmat(R3.', 1, length(tau)) / lambda + 1i*pi*K_r*((temp - repmat(R3.'/c, 1, length(tau)) ).^2)) .* w_r3;
 	add_noise = 0;
 	if add_noise 
 		w_noise = wgn(length(eta), length(tau),-5,'complex');
 		s1 = s1 + w_noise;
 		s2 = s2 + w_noise;
+		s3 = s3 + w_noise;
 	end
 	
 	%{
@@ -71,7 +76,7 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	xlim([0 8000])
 	xlabel('$\eta / \Delta \eta $', 'Interpreter', 'latex')
 	ylabel('$\Delta R(\eta)$', 'Interpreter', 'latex') 
-	plot_para('Maximize',true,'Filename','1')
+	%plot_para('Maximize',true,'Filename','1')
 	%}
 	%% Range compression 
 	ref_time = -T_p : fsamp : 0 ;
@@ -83,6 +88,8 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
     s1_rc = ifft( Fs1_rc,[], 2);
     Fs2_rc = fft(s2, 2^tau_nt2, 2) .* Fh_m; % Range compression
 	s2_rc = ifft( Fs2_rc,[], 2);
+	Fs3_rc = fft(s3, 2^tau_nt2, 2) .* Fh_m; % Range compression
+	s3_rc = ifft( Fs3_rc,[], 2);
 	%clear Fh_m s1 s2
 	
 
@@ -110,16 +117,17 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	%-----------------------%
 	
 	%Interpolation 
-	do_key = 1;
+	do_key = 0;
 	if do_key
-		f_tau = linspace(0, 1/fsamp , 2^tau_nt2 ); 
+		%f_tau = [linspace(0, 1/fsamp/2 , 2^tau_nt2/2 ) linspace(-1/fsamp/2 ,0-1/fsamp,2^tau_nt2/2 )] ;
+		f_tau = linspace(0, 1/fsamp/2 , 2^tau_nt2 ) ;
 		t = eta.' * sqrt((f_0 + f_tau)/f_0);
 		t = [t(1,:); t(end,:)];
 		up_bound = max(max(t)) ;
 		low_bound = min(min(t));
 		Fs1_1 = zeros(floor( PRF * up_bound) - floor(PRF * low_bound) + 1, 2^tau_nt2);
 		Fs2_1 = Fs1_1;
-
+		Fs3_1 = Fs1_1;
 		for m = 1 : 2^tau_nt2
 			%{
 			[min_p,ind] = min(unwrap(angle(Fs1_rc(:,m))));
@@ -138,11 +146,15 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 				interp1(eta, abs(Fs2_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
 			Fs2_1(up_:lo_, m) = Fs2_1(up_:lo_, m) .* exp(1j* ...
 				interp1(eta, unwrap(angle(Fs2_rc(:,m))).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).');
+			Fs3_1(up_:lo_, m) = ...
+				interp1(eta, abs(Fs3_rc(:,m)).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).';
+			Fs3_1(up_:lo_, m) = Fs3_1(up_:lo_, m) .* exp(1j* ...
+				interp1(eta, unwrap(angle(Fs3_rc(:,m))).', linspace(eta(1),eta(end), lo_ - up_ + 1), 'spline', 0).');
 		end
 
 		s1_1 = ifft(Fs1_1, [],2);
 		s2_1 = ifft(Fs2_1, [],2);
-		
+		s3_1 = ifft(Fs3_1, [],2);
 	%{
 		purinto(Fs1_1)
 		xlabel('$f_\tau / \Delta f_\tau$', 'Interpreter', 'latex')
@@ -185,14 +197,15 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 		%Multiply H_c to Fs_r
 		Fs1_1 = Fs1_rc .* H_c ;
 		Fs2_1 = Fs2_rc .* H_c ;
+		Fs3_1 = Fs3_rc .* H_c ;
 		s1_1 = ifft( Fs1_1,[],2);
 		s2_1 = ifft( Fs2_1,[],2);
-		
+		s3_1 = ifft( Fs3_1,[],2);
 		%purinto(s1_1) 
 		%xlabel('$\tau /\Delta \tau$', 'Interpreter', 'latex')
 		%ylabel('$t/\Delta t$', 'Interpreter', 'latex')
 	end 
-	
+	purinto(s1_1) 
 	%clear Fs1_rc Fs2_rc
 
 	%% Radon transform to estimate the slop
@@ -244,9 +257,11 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	end
     Fs1_2 = Fs1_1 .* Fh_rw ; 
 	Fs2_2 = Fs2_1 .* Fh_rw ; 
+	Fs3_2 = Fs3_1 .* Fh_rw ; 
     s1_2 = ifft(Fs1_2.').';
 	s2_2 = ifft(Fs2_2.').';
-	
+	s3_2 = ifft(Fs3_2.').';
+	purinto(s1_2)
 	%{
 	purinto(s1_2)
 	title(['$(v_x,v_y)= ($' int2str(v_x) ',' int2str(v_y) '$)$'],'Interpreter', 'latex')
@@ -318,30 +333,52 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 			L =201;
 			filt_ = [hamming(L).'/sum(hamming(L)); rectwin(L).'/L];
 			for gg = 1 : 1
-				s_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
-				temp = unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))));
-				y_0t = temp(length(s2_2(:,ind))/2) / (2*pi/lambda*d_a/R_0);
+				s12_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
+				s13_filter = ifft(fft(unwrap(angle(s1_2(:,ind).*conj(s3_2(:,ind))))) .*  fft(filt_(gg,:),length(s1_2(:,ind))).' );
+				%temp = angle(s1_2(:,ind).*conj(s2_2(:,ind)));
+				temp = unwrap(angle(s1_2(:,ind).*conj(s3_2(:,ind)))) - unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))) ;
+				y_0t = temp(floor(length(s2_2(:,ind))/2)+1) / (2*pi/lambda*d_a/R_0t);
 				%fprintf('Actual y_0: %f, Estimate y_0: %f\n', y_0, y_0t)
+				%{
+				figure
+				plot(s12_filter,'k','Linewidth',1.5)
+				hold on
+				plot(s13_filter,'Linewidth',1.5)
+				xlim([1 16000])
+				xlabel('$t / \Delta t$', 'Interpreter', 'latex')
+				ylabel('Phase', 'Interpreter', 'latex')
+				%}
 				
-				%figure
-				%plot(s_filter,'k','Linewidth',1.5)
-				%hold on
-				%plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'Linewidth',1.5)
-				%xlabel('$\Delta t$', 'Interpreter', 'latex')
-				%ylabel('Phase', 'Interpreter', 'latex')
-				%plot_para('Maximize',1,'Filename',int2str(gg))
+				 
+				figure
+				plot(unwrap(angle(s1_2(8001:end,ind).*conj(s2_2(8001:end,ind)))),'k','Linewidth',1.5)
+				hold on
+				plot(unwrap(angle(s1_2(8001:end,ind).*conj(s3_2(8001:end,ind)))),'Linewidth',1.5)
+				
+				
+				figure
+				plot(unwrap(angle(s1_2(:,ind).*conj(s2_2(:,ind)))),'k','Linewidth',1.5)
+				hold on
+				plot(unwrap(angle(s1_2(:,ind).*conj(s3_2(:,ind)))),'Linewidth',1.5)
+				xlim([1 16000])
+				xlabel('$t / \Delta t$', 'Interpreter', 'latex')
+				ylabel('Phase', 'Interpreter', 'latex')
+				
+				
+				
+				%plot_para('Maximize',true,'Filename','1')
 				
 				if do_key  
 					t2fit = linspace(t(1,end), t(end,end), length(s1_1(:,1))) ;
 				else
 					t2fit = eta ;
 				end
-				[fit1,~,~] = fit(t2fit(L:end).',s_filter(L:end) ,'poly1');
+				[fit1,~,~] = fit(t2fit(L:end).',s12_filter(L:end) ,'poly1');
 				v_yt = v_p + fit1.p1 * lambda / 2 / pi *R_0t / d_a;
 				v_yt_ps = v_yt;
 				%fprintf('Method %d, Actual: %f, Estimate: %f\n', gg, v_y, v_yt)
 				%figure
-				%plot(fit1,t(L:end,148),s_filter(L:end))
+				%plot(fit1,t(L:end,148),s12_filter(L:end))
 				%xlabel('$t$', 'Interpreter', 'latex')
 				%ylabel('Phase', 'Interpreter', 'latex')
 				%plot_para('Maximize',1,'Filename','fit')
@@ -363,15 +400,17 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 	%% Range velocity Estimation
 	v_rt = ell * c ;
-	v_xt = (ell * c * R_0t + y_0t*(v_p - v_y)) / sqrt(R_0t^2 - h^2 - y_0t)  ;
-	%fprintf('Actual v_x: %f, Estimate v_x: %f\n',v_x, v_xt)
+	(v_x*x_0 - y_0*(v_p - v_y))/R_0t;
+	x_0t = sqrt(R_0t^2 - h^2 - y_0t^2);
+	v_xt = (ell * c * R_0t + y_0t*(v_p - v_y)) / x_0t  ;
+	fprintf('Actual v_x: %f, Estimate v_x: %f\n',v_x, v_xt)
 	%% Range acceleration Estimation
 	f_eta = [linspace(0,PRF/2,length(Fs1_2)/2) linspace(-PRF/2,0-1/PRF,length(Fs1_2)/2)];
 	a_xSpace = -10: 0.1: 10 ;
 		temp = -1;
 		for i = 1 : length(a_xSpace)		
 			if do_key
-				K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xSpace(i)*x_0)/ R_0t;
+				K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xSpace(i)*x_0t)/ R_0t;
 				H_ac = exp(j*pi*v_rt/lambda*f_eta + j*pi*f_eta.^2/K_a).';
 			else
 				fprintf('If not keystone it is impossible to correct range curvature\n')
@@ -382,13 +421,13 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 				a_xt = a_xSpace(i);
 			end
 		end
-	%fprintf('Actual a_x: %f, Estimate a_x: %f\n',a_x, a_xt)
-	%{
+	fprintf('Actual a_x: %f, Estimate a_x: %f\n',a_x, a_xt)
+	
 	%% Azimuth compression
-	K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xt*x_0)/ R_0t;
+	K_a = -2 * f_0/c * ( (v_yt-v_p)^2 + a_xt*x_0 )/ R_0t;
 	H_ac = exp(j*pi*v_rt/lambda*f_eta + j*pi*f_eta.^2/K_a).';
 	Fs_a = fft(s1_2) .* repmat(H_ac,1,length(s1_2(1,:)));
 	s_a = ifft(Fs_a,[],1);
-	%purinto(s_a)
-	%}
+	purinto(s_a)
+	
 end
