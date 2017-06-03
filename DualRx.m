@@ -1,4 +1,4 @@
-function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
+function [v_xt, v_yt, a_xt] = DualRx(vx,vy,ax,ay)
 % This function generate the SAR signal regarding to the input parameter.
 % Usage: Gen_signal(vx, vy, ax, ay), 'vx' is range velocity, 'vy' is azimuth
 % velocity, 'ax' is range accelaration and 'ay' is azimuth accelration. If no input parameters, the velocity in both direction are set
@@ -8,14 +8,14 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
     %% Parameters - C Band airborne SAR parameters
     % Target
     x_0 = [2199.6, 2196, 2185, 2166]; % Squint angle: 0, 3, 6.5, 10
-    y_0 = [0, 116, 249, 382];
-    x_0 = x_0(1);
-    y_0 = y_0(1);
+    y_0 = [0, 116, 249, -382];
+    x_0 = x_0(4);
+    y_0 = y_0(4);
     d = 100; % Length of the target area 
     v_x = vx; a_x = ax; % rangecl -16
     v_y = vy; a_y = ay; % azimuth 
 
-	%v_x = -15; a_x = 0; % rangecl -16
+	%v_x = 10; a_x = 10; % rangecl -16
     %v_y = -15; a_y = 0; % azimuth 
 
 
@@ -363,11 +363,11 @@ function [v_xt, v_yt, a_x] = DualRx(vx,vy,ax,ay)
 	%fprintf('Method: %s, Actual: %f, Estimate: %f\n', method, v_y, v_yt)
 	%% Range velocity Estimation
 	v_rt = ell * c ;
-	v_xt = (ell * c * R_0t + y_0t*(v_p - v_y)) / sqrt(R_0t^2 - h^2 - y_0t)  ;
+	v_xt = (ell * c * R_0t + y_0t*(v_p - v_yt)) / sqrt(R_0t^2 - h^2 - y_0t)  ;
 	%fprintf('Actual v_x: %f, Estimate v_x: %f\n',v_x, v_xt)
 	%% Range acceleration Estimation
 	f_eta = [linspace(0,PRF/2,length(Fs1_2)/2) linspace(-PRF/2,0-1/PRF,length(Fs1_2)/2)];
-	a_xSpace = -10: 0.1: 10 ;
+	a_xSpace = -10: 0.025: 10 ;
 		temp = -1;
 		for i = 1 : length(a_xSpace)		
 			if do_key
