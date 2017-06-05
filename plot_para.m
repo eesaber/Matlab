@@ -17,7 +17,7 @@ function plot_para(varargin)
 	end
 	set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
 	set(gcf,'color','w');
-	%pbaspect([7 5 1])
+	%pbaspect([16 1 1])
 
 	if parse_.Results.Maximize
 		pause(0.00001);
