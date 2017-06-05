@@ -1,42 +1,69 @@
-f1 = 1.57e10;
-f2 = 1.23e10;
-f3 = 1.3e10;
-%f_ = -sort(-[f1, f2, f3]) ;
-f_ = -sort(-[f1, f2, f1-f2, f1+f2]);
+%% DATA generate
+f1 = 9.6e10;
+f2 = 8.9e10;
+f3 = 1.27e10;
+f_ = -sort(-[f1, f2, f3]) ;
+%f_ = -sort(-[f1, f2, f1-f2, f1+f2]);
 lamda_ = c./f_;
-N = -100;
+N = -200;
 space = 2*pi*(0:N/abs(N):N);
 clear k k_bar temp b 
 temp = mod(4*pi./lamda_*(d_a*y_0/R_0), 2*pi) .* lamda_;
 k = repmat(temp.',1,length(space)) + lamda_.' * space ;
 k_bar = [k(:,1),  diff(k,1,2)];
 
-close all
+%% Plot the 
+x_l = 4;
 figure 
-%barh(k_bar,1,'stack','FaceColor','none','Linewidth',1);
-b = barh(k_bar(1:4,:),1,'stack','FaceColor','none','Linewidth',1.25,'EdgeColor','k');
-yes_color = 0;
-if yes_color 
-	c_num = 15;
-	c_map = colormap(copper(c_num));
-	for i = 2 : length(space)
-		b(i).FaceColor = c_map(mod(i,c_num)+1,:);
-	end
+%subplot('position',[0.1 0.45 0.8 0.15]);
+subplot('position',[0.1 0.45 0.8 0.1125]);
+barh(k_bar,1,'stack','FaceColor','none','Linewidth',1.25,'EdgeColor',[178,153,142]/256, 'ShowBaseLine', 'off');
+hold on 
+plot(4*pi*d_a*y_0/R_0*[1 1],[.5 4.5],'Color', [214,57,50]/256, 'Linewidth',3)
+set(gca,'xtick',[],'ytick',[]);
+ylim([0.5 numel(k)/length(k)+0.5])
+if N > 0
+	xlim([0,x_l])
+else 
+	xlim([-x_l,0])
 end
+%plot_para('Maximize',true)
+
+%subplot('position',[0.1 0.3 0.8 0.1125]);
+subplot('position',[0.1 0.3375 0.8 0.1125]);
+barh(k_bar,1,'stack','FaceColor',[255,197,108]/256,'Linewidth',1.25,'EdgeColor',[204, 158, 86]/256, 'ShowBaseLine', 'off');
+ylim([0.5 numel(k)/length(k)+0.5])
 if N > 0
 	xlabel(['$\lambda_\alpha b_{am} + 2 N \lambda_\alpha \pi$, $0 \leq N \leq $' int2str(N)],'Interpreter', 'latex')
-	xlim([0,7])
+	xlim([0,x_l])
 else 
 	xlabel(['$\lambda_\alpha b_{am} + 2 N \lambda_\alpha \pi$, ', int2str(N) ' $\leq N \leq 0$'],'Interpreter', 'latex')
-	xlim([-7,0])
+	xlim([-x_l,0])
 end
+hold all
+
+[temp, ind_] = sort(reshape(k,1,numel(k)));
+row_ = reshape( (1:numel(k)/length(k)).' *ones(1,length(space)), 1, numel(k)); 
+row_ = row_(ind_);
+for i = 1 : numel(k)- numel(k)/length(k)
+	if temp(i+numel(k)/length(k)-1) - temp(i) < 0.01 && sum(diff(sort(row_(i: i + numel(k)/length(k) - 1))) == 0) == 0
+		for j = 0 : 3
+			%animatedline([temp(i+j) temp(i+j)],[row_(i+j)-0.5 row_(i+j)+0.5],'Color',[ 2,65,226]/256,'Linewidth',2); 
+			%drawnow
+			plot([temp(i+j) temp(i+j)],[row_(i+j)-0.5 row_(i+j)+0.5],'Color',[ 2,65,226]/256,'Linewidth',2); 
+			
+		end
+	end
+end
+
 plot_para('Maximize',true,'Filename','1')
 
+%{
 track = 3;
 fprintf ('Real phase: %f\n', 4*pi/lamda_(track)*(d_a*y_0/R_0) )
 fprintf ('F band: %i, Amb number: %i, Real phase: %f\n', track, 2, mod(4*pi/lamda_(track)*(d_a*y_0/R_0), 2*pi) + 2 * 2*pi )
 fprintf ('For each interval, y_0 will differ %f\n', 10)
-%{
+
 figure
 plot(k(1,:), ones(length(space)),'ko', 'linewidth',1.5 )
 hold on 
