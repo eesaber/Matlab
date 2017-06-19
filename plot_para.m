@@ -11,13 +11,13 @@ function plot_para(varargin)
 	
 	get_size = get(0,'screensize');
 	if get_size(3:4) == [1920 1080]
-		font_size = 40;
+		font_size = 32;
 	else
 		font_size = 28;
 	end
 	set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
 	set(gcf,'color','w');
-	%pbaspect([16 1 1])
+	%pbaspect([7 5 1])
 
 	if parse_.Results.Maximize
 		pause(0.00001);
