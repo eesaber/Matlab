@@ -33,35 +33,35 @@ v_Est_Err_Vy_ = v_Est_Vy_ - ones(length(v),1) * v;
 a_Est_Err_Ax_ = a_Est_Ax_ - 3;
 y_Est_Err_Y0_ = y_Est_Y0_ - 382;
 
-save('axvy.mat')
+save('axvy_7.mat')
 %%
-figure
+figure(1)
 imagesc(v,v,v_Est_Err_Vx_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([-1 1.5])
+	caxis([-2 2])
 	plot_para('Maximize',true,'Filename','vxErra')
-figure
+figure(2)
 imagesc(v,v,v_Est_Err_Vy_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([-1 3])
-	plot_para('Maximize',true,'Filename','errmap_vyA')
-figure
+	caxis([-1 4])
+	plot_para('Maximize',true,'Filename','vyErra')
+figure(3)
 imagesc(v,v,a_Est_Err_Ax_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([0 3])
-	plot_para('Maximize',true,'Filename','errmap_axA')
-figure
+	caxis([0 0.2])
+	plot_para('Maximize',true,'Filename','axErr')
+figure(4)
 imagesc(v,v,y_Est_Err_Y0_)
 	xlabel('$v_y$', 'Interpreter', 'latex')
 	ylabel('$v_x$', 'Interpreter', 'latex')
 	set(gca,'Ydir','normal'),colorbar, colormap('Jet')
-	caxis([2.5 4])
+	caxis([0.6 1.2])
 	plot_para('Maximize',true,'Filename','y_0Erra')
 	
 %%

@@ -1,3 +1,16 @@
+
+eta = -1: 1/PRF: 1;
+l = d_a *(y_0/R_0 - (v_p - v_y)/R_0*eta );
+
+
+plot(l, 'linewidth', 2, 'k')
+hold on 
+plot()
+
+
+
+
+%{
 %% DATA generate
 f1 = 9.6e9;
 f2 = 1.9e9;
@@ -52,7 +65,7 @@ plot(4*pi*d_a*y_0/2/R_0*[1 1],[.5 4.5],'Color', 'k', 'Linewidth',2.5)
 plot_para('Maximize',true,'Filename','AmbiGene1')
 
 
-%{
+
 track = 3;
 fprintf ('Real phase: %f\n', 4*pi/lamda_(track)*(d_a*y_0/2/R_0) )
 fprintf ('F band: %i, Amb number: %i, Real phase: %f\n', track, 2, mod(4*pi/lamda_(track)*(d_a*y_0/2/R_0), 2*pi) + 2 * 2*pi )

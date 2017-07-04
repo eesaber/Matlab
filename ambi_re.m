@@ -44,14 +44,14 @@ function [phase_] = ambi_re(qq, lamda_, para_)
 				sa_ = temp(i+numel(k)/length(k)-1) - temp(i) ;
 				phase_ = mean(temp(i: i+numel(k)/length(k)-1));
 				amb_flag = true;
-				for j = 0 : 3
-					plot([temp(i+j) temp(i+j)],[row_(i+j)-0.5 row_(i+j)+0.5],'Color','r','Linewidth',2); 
-				end
+				%for j = 0 : 3
+				%	plot([temp(i+j) temp(i+j)],[row_(i+j)-0.5 row_(i+j)+0.5],'Color','r','Linewidth',2); 
+				%end
 			end
 		end
 	end
 	%annotation('arrow', (0.5+ 0.8*(4*pi*d_a*y_0/2/R_0 / 2 / x_l ))*ones(1,2), [.69 .7],'Color','k')
 	%plot(4*pi*d_a*y_0/2/R_0*[1 1],[.5 4.5],'--k', 'Linewidth',2.5)
-	plot_para('Maximize',true,'Filename','AmbiGene1')
+	%plot_para('Maximize',true,'Filename','AmbiGene1')
 
 end
