@@ -26,7 +26,7 @@ if(read)
 else
 	load('Covariance.mat');
 end	
-%%
+
 if(0)
 	figure(1)
 		imagesc(10*log10(hh_hh))
@@ -63,42 +63,40 @@ end
 [row, col] = size(hh_hh);
 non_z_ind = (hh_hh ~= 0);
 are_z = ~non_z_ind;
-n_std = 1.1;
-if(0)
-	Pauli = ones(row, col, 3);
-	temp = sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv));	% |S_vv - S_hh|^2 -> double bounce scattering 
-	m = mean(mean(temp(non_z_ind))) + n_std*std2(temp(non_z_ind));
-	Pauli(:,:,1) = temp/m;
-	
-	temp = sqrt(hv_hv);									% |S_hv|^2 -> volume scattering
-	qq = reshape(temp,[1,row*col]);
-	m = mean(mean(temp(non_z_ind))) + n_std*std2(temp(non_z_ind));
-	Pauli(:,:,2) = temp/m;
-	
-	temp = sqrt(hh_hh + vv_vv + hh_vv + conj(hh_vv));	% |S_vv + S_hh|^2 -> single scattering
-	qq = reshape(temp,[1,row*col]);
-	m = mean(mean(temp(non_z_ind))) + n_std*std2(temp(non_z_ind));
-	Pauli(:,:,3) = temp/m;
+
+if(1)	% Plot the Pauli-decomposition.
+	up_ = 10; low_ = -20;
+	Pauli = ones(row, col, 3);	
+	t_p = 10*log10(sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv)));	% |S_vv - S_hh|^2 -> double bounce scattering 
+	t_p(t_p < low_) = low_;
+	t_p(t_p > up_ ) = up_;
+	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
+	t_p= 10*log10(4*sqrt(hv_hv));									% |S_hv|^2 -> volume scattering
+	t_p(t_p < low_) = low_;
+	t_p(t_p > up_ ) = up_;
+	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
+	t_p = 10*log10(sqrt(hh_hh + vv_vv + hh_vv + conj(hh_vv)));	% |S_vv + S_hh|^2 -> single scattering
+	t_p(t_p < low_) = low_;
+	t_p(t_p > up_ ) = up_;
+	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
 	figure(6)
 		image(Pauli)
 		set(gca,'Ydir','normal')
+		%xlim([7500 8200])
+		%ylim([2000 2600])
 		xlabel('azimuth')
 		plot_para('Filename','My_pauli_c','Maximize',true)
-	clear Pauli
+	clear Pauli t_p
+	%{
 	figure(7)
 		image(imread([temp 'PiSAR2_07507_13170_009_131109_L090_CX_01_pauli.tif']))
 		plot_para('Maximize',true)
+	%}
 end
 
-%% Four-component decomposition
-%{
-% Covariance matrix 
-C_avg = zeros(3,3);
-C_avg(1,1) = mean(mean(hh_hh));	C_avg(1,2) = sqrt(2)*mean(mean(hh_hv));	C_avg(1,3) = mean(mean(hh_vv));
-C_avg(2,1)= conj(C_avg(1,2));	C_avg(2,2) = 2*mean(mean(hv_hv));	C_avg(2,3) = sqrt(2)*mean(mean(hv_vv));
-C_avg(3,1) = conj(C_avg(1,3));	C_avg(3,2) = conj(C_avg(2,3));	C_avg(3,3) = mean(mean(vv_vv));
-%}
 
+
+%% Four-component decomposition
 % f_ is the scattering matrix coefficient. The subscript
 % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
 f_c = 2 *abs(imag(hh_hv + hv_vv));
@@ -109,41 +107,34 @@ f_c = 2 *abs(imag(hh_hv + hv_vv));
 crit_fv = 10*log10(vv_vv./(hh_hh + are_z*0.001)); 
 f_v = (8*hv_hv - 2*f_c) .*(crit_fv > -2) .*(crit_fv < 2);
 f_v = f_v + 15/2*(hv_hv - f_c/4).*(f_v == 0);
-clear crit_fv;
 
 % Decide double scattering or single scattering domainate 
 B = vv_vv - 0.2*f_v - 0.25*f_c; C = hh_hh - 8/15*f_v - 0.25*f_c;
 D = hh_vv - 2/15*f_v - 0.25*f_c;
 
-figure
-imagesc((hh_hh<2*hv_hv).*(vv_vv<2*hv_hv))
-set(gca,'Ydir','normal'), colormap gray;
-
 % hh_hh + vv_vv - hh_vv - conj(hh_vv) > hh_hh + vv_vv + hh_vv + conj(hh_vv)
-	beta = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) > (hh_hh + vv_vv + hh_vv + conj(hh_vv));	
-	alpha = beta + beta.*conj((C-B)./(D-B+are_z));
-	%alpha = beta + beta.*conj(( hh_hh - 8/15*f_v - 0.25*f_c - (vv_vv - 0.2*f_v - 0.25*f_c) )./(hh_vv - 2/15*f_v - 0.25*f_c - (vv_vv - 0.2*f_v - 0.25*f_c) ));
+	%beta = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) > (hh_hh + vv_vv + hh_vv + conj(hh_vv));
+	beta = real(hh_vv < 0);
+	alpha = beta + beta.*abs( (C-B)./(D-B+are_z));
 	f_d = beta.*(C-B)./(abs(alpha).^2-1);
-	%f_d = beta.*(hh_vv - 2/15*f_v - 0.25*f_c - (vv_vv - 0.2*f_v - 0.25*f_c) )/(alpha-1);
 	f_s = beta.*(B - f_d);
-	%f_s = beta.*(vv_vv - 0.2*f_v - 0.25*f_c - f_d);
 % hh_hh + vv_vv - hh_vv - conj(hh_vv) > hh_hh + vv_vv + hh_vv + conj(hh_vv)
-	temp_a = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) < (hh_hh + vv_vv + hh_vv + conj(hh_vv));
-	temp_b = -temp_a + temp_a.*conj((C-B)./(B+D +are_z));
-	%temp_b = -temp_a + temp_a.*conj(( hh_hh - 8/15*f_v - 0.25*f_c - (vv_vv - 0.2*f_v - 0.25*f_c) )./(hh_vv - 2/15*f_v - 0.25*f_c + (vv_vv - 0.2*f_v - 0.25*f_c) ));
+	%temp_a = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) < (hh_hh + vv_vv + hh_vv + conj(hh_vv));
+	temp_a = real(hh_vv > 0);
+	temp_b = temp_a + real(temp_a.*(C-B)./(B+D +are_z));
 	temp_fs = temp_a.*(C-B)./(abs(temp_b).^2 -1);
-	%temp_fs = temp_a.*((hh_vv - 2/15*f_v - 0.25*f_c + (vv_vv - 0.2*f_v - 0.25*f_c) )./(1+temp_b));
-	
+
 	f_d = temp_a.*(B-temp_fs) + f_d;
 	f_s = temp_fs + f_s; 
 	clear temp_fs;
-	alpha = alpha + temp_a;
+	alpha = alpha - temp_a;
 	clear temp_a
 	beta = beta + temp_b;
 	clear temp_b;
 % The contribution from each scattering mechanism
 P_s = f_s.*(1+abs(beta).^2); P_d = f_d.*(1+abs(alpha).^2);
 P_t = P_s+P_d+f_s+f_v;
+% The power contribution should be positive. Let the negative power be zero.
 P_s(P_s < 0) = 0; P_d( P_d < 0) = 0; f_v(f_v < 0) = 0;
 clear alpha beta B C D;
 if(0)
@@ -161,35 +152,34 @@ if(0)
 		plot_para('Maximize',true)
 end
 
-%%
-n_std = 1;
-FourCompo = single(zeros(row, col, 3));
-up_ = 15; low_ = -30;
-t_p = 10*log10(P_d);
-t_p(t_p < low_) = low_;
-t_p(t_p > up_ ) = up_;
-FourCompo(:,:,1) = (t_p-low_)/(up_-low_);
-%clear P_d
-t_p = 10*log10(f_v);
-t_p(t_p < low_) = low_;
-t_p(t_p > up_ ) = up_;
-FourCompo(:,:,2) = (t_p-low_)/(up_-low_);
-%clear f_v
-t_p = 10*log10(P_s);
-t_p(t_p < low_) = low_;
-t_p(t_p > up_ ) = up_;
-FourCompo(:,:,3) = (t_p-low_)/(up_-low_);
-close all
-%clear P_s;
-if(1)
+if(1)	% Plot the 4-component decomposition.
+	FourCompo = single(zeros(row, col, 3));
+	up_ = 20; low_ = -30;
+	FourCompo(:,:,1) = 10*log10(P_d);
+	FourCompo(:,:,2) = 10*log10(f_v);
+	FourCompo(:,:,3) = 10*log10(P_s);
+	clear P_d  f_v P_s f_c f_d f_s;
+	FourCompo(FourCompo < low_) = low_;
+	FourCompo(FourCompo > up_) = up_;
+	FourCompo = (FourCompo-low_)/(up_-low_);
 	figure(10)
-	image(FourCompo)
+		image(FourCompo)
 		set(gca,'Ydir','normal')
 		xlabel('azimuth')
-		plot_para('Filename','Four_compo','Maximize',true)
+		%plot_para('Filename','Four_compo','Maximize',true)
+		plot_para('Maximize',true)
 	clear FourCompo
 end
 
+%% Non-negative eigenvalue model-based decomposition
+% Decide which volume scattering model is used.
+% With three interval (-infty,-2dB) [-2dB, 2dB) [2dB, infty)hh_hh + vv_vv - hh
+xi = 8; zet = 3; eta = 4; rho = 2;
+Z = (hh_hh*zet + vv_vv*xi - hh_vv*conj(rho) - conj(hh_vv)*rho);
+a = min( 2*hv_hv/eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv<-2);
 
-	
-	
+xi = 3; zet = 3; eta = 2; rho = 1;
+a = a + min( 2*hv_hv./ eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv>-2).*(crit_fv<2);
+xi = 3; zet = 8; eta = 4; rho = 2;
+a = a + min( 2*hv_hv./ eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv>2);
+clear Z xi zet eta rho;
