@@ -1,6 +1,7 @@
 % Data size: 8735*23499, no header
 % Data IO
 clear,clc
+cd /home/akb/Code/Matlab
 read = 0;
 temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
 if(read)
@@ -64,7 +65,7 @@ end
 non_z_ind = (hh_hh ~= 0);
 are_z = ~non_z_ind;
 
-if(1)	% Plot the Pauli-decomposition.
+if(0)	% Plot the Pauli-decomposition.
 	up_ = 10; low_ = -20;
 	Pauli = ones(row, col, 3);	
 	t_p = 10*log10(sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv)));	% |S_vv - S_hh|^2 -> double bounce scattering 
@@ -93,10 +94,76 @@ if(1)	% Plot the Pauli-decomposition.
 		plot_para('Maximize',true)
 	%}
 end
-
-
-
-%% Four-component decomposition
+																																																													
+%% Four-component decomposition (option: compensate the orientation)
+fprintf('Compensate the oriented angel or not?\n')
+if(1)
+	fprintf('Yes. CAUTION! THIS WILL CHANGE hh_hh, vv_vv, ETC PERMANENTLY. \n')
+	filename = 'Four_compoR';
+	%R = [1, 0, 0; 0, cos(2*x), sin(2*x); 0, -sin(2*x), cos(2*x)];
+	%R = 0.5*[1+cos(2*x), sqrt(2)*sin(2*x), 1-cos(2*x); -sqrt(2)*sin(2*x), 2*cos(2*x), sqrt(2)*sin(2*x); 1-cos(2*x), -sqrt(2)*sin(2*x), 1+cos(2*x)];
+	x = -0.5*atan((2*sqrt(2)*real(hv_vv-hh_hv))./(are_z+hh_hh+vv_vv-2*real(hh_vv)-2*hv_hv)).*non_z_ind;
+	x(x>pi/2) = x(x>pi/2)-pi;
+	x(x<-pi/2) = x(x<-pi/2)+pi;
+	%temp = R*[hh_hh, hh_hv, hh_vv; conj(hh_vv), hv_hv, hv_vv; conj(hh_vv), conj(hv_vv), vv_vv]*R.';
+	C = cell(3); R = cell(3); C_n = cell(3);
+	C{1,1} = hh_hh; C{1,2} = hh_hv; C{1,3} = hh_vv;
+	C{2,2} = hv_hv; C{2,3} = hv_vv; C{3,3} = vv_vv;
+	clear hh_hh hh_hv hh_vv hv_hv hv_vv vv_vv 
+	R{1,1} = 0.5*(1+cos(2*x)); R{1,2} = -0.5*sqrt(2)*sin(2*x); R{1,3} = 0.5*(1-cos(2*x));
+	R{2,2} = cos(2*x); R{2,3} = -0.5*sqrt(2)*sin(2*x); R{3,3} = 0.5*(1+cos(2*x));
+	clear x
+	for n = 1 : 3
+		for m = n : 3
+			C_n{n,m} = single(zeros(row,col));
+		end
+	end
+	
+	for n = 1 : 3
+		for m = n : 3
+			for q = 1 : 3
+				if n>q && q>m
+					C_n{n,m} = C_n{n,m} + conj(C{q,n})*(1-mod(m+q,2)).*R{m,q};
+				elseif n>q
+					C_n{n,m} = C_n{n,m} + conj(C{q,n}).*R{q,m};
+				elseif q>m
+					C_n{n,m} = C_n{n,m} + C{n,q}*(1-mod(m+q,2)).*R{m,q};
+				else
+					C_n{n,m} = C_n{n,m} + C{n,q}.*R{q,m};
+				end
+			end
+		end
+	end
+	for n = 1 : 3
+		for m = n : 3
+			C{n,m} = single(zeros(row,col));
+		end
+	end
+	
+	R{1,2} = -R{1,2}; R{2,3} = -R{2,3};
+	for n = 1 : 3
+		for m = n : 3
+			for q = 1 : 3
+				if n>q && q>m
+					C{n,m} = C{n,m} + (1-2*mod((q+n),2))*R{q,n}.*conj(C_n{m,q});
+				elseif q>m
+					C{n,m} = C{n,m} + R{n,q}.*conj(C_n{m,q});
+				elseif n>q
+					C{n,m} = C{n,m} + (1-2*mod((q+n),2))*R{q,n}.*C_n{q,m};
+				else
+					C{n,m} = C{n,m} + R{n,q}.*C_n{q,m};
+				end
+			end
+		end
+	end
+	hh_hh = real(C{1,1}); hh_hv = C{1,2}; hh_vv = C{1,3};
+	hv_hv = real(C{2,2}); hv_vv = C{2,3}; vv_vv = real(C{3,3});
+	clear C C_n R x
+else
+	filename = 'Four_compo';
+	fprintf('No. \n')
+end
+%%
 % f_ is the scattering matrix coefficient. The subscript
 % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
 f_c = 2 *abs(imag(hh_hv + hv_vv));
@@ -105,38 +172,49 @@ f_c = 2 *abs(imag(hh_hv + hv_vv));
 % With three interval (-infty,-2dB) [-2dB, 2dB) [2dB, infty)
 
 crit_fv = 10*log10(vv_vv./(hh_hh + are_z*0.001)); 
-f_v = (8*hv_hv - 2*f_c) .*(crit_fv > -2) .*(crit_fv < 2);
-f_v = f_v + 15/2*(hv_hv - f_c/4).*(f_v == 0);
+temp_domain = (crit_fv >= -2) .*(crit_fv <= 2);
+f_v = (8*hv_hv - 2*f_c) .*temp_domain;
+temp = f_v<0;
+f_v(temp) = f_v(temp) + 2*f_c(temp);
+f_temp = 15/2*(hv_hv - f_c/4).*(f_v == 0);
+temp = f_temp < 0;
+f_temp(temp) = f_temp(temp) + 15/8*f_c(temp);
+f_v = f_temp + f_v;
+clear f_temp temp
 
 % Decide double scattering or single scattering domainate 
-B = vv_vv - 0.2*f_v - 0.25*f_c; C = hh_hh - 8/15*f_v - 0.25*f_c;
-D = hh_vv - 2/15*f_v - 0.25*f_c;
+S = hh_hh + vv_vv + hh_vv + conj(hh_vv) - 0.5*f_v;
+D = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) - 2*hv_hv.*temp_domain ......
+	-(7/30*f_v+0.5*f_c).*(~temp_domain); 
+C = vv_vv - hh_hh + hh_vv - conj(hh_vv) - 1/6*f_v.*(crit_fv<-2) + 1/6*f_v.*(crit_fv>2);
+clear temp_domain crit_fv
 
-% hh_hh + vv_vv - hh_vv - conj(hh_vv) > hh_hh + vv_vv + hh_vv + conj(hh_vv)
-	%beta = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) > (hh_hh + vv_vv + hh_vv + conj(hh_vv));
-	beta = real(hh_vv < 0);
-	alpha = beta + beta.*abs( (C-B)./(D-B+are_z));
-	f_d = beta.*(C-B)./(abs(alpha).^2-1);
-	f_s = beta.*(B - f_d);
-% hh_hh + vv_vv - hh_vv - conj(hh_vv) > hh_hh + vv_vv + hh_vv + conj(hh_vv)
-	%temp_a = (hh_hh + vv_vv - hh_vv - conj(hh_vv)) < (hh_hh + vv_vv + hh_vv + conj(hh_vv));
-	temp_a = real(hh_vv > 0);
-	temp_b = temp_a + real(temp_a.*(C-B)./(B+D +are_z));
-	temp_fs = temp_a.*(C-B)./(abs(temp_b).^2 -1);
-
-	f_d = temp_a.*(B-temp_fs) + f_d;
-	f_s = temp_fs + f_s; 
-	clear temp_fs;
-	alpha = alpha - temp_a;
-	clear temp_a
-	beta = beta + temp_b;
-	clear temp_b;
+% surface dominates alpha = -1
+temp_dom = 4*real(hh_vv) - 2* hv_hv - f_c > 0;
+P_s = (S + abs(C).^2./S).*temp_dom;
+P_d = (D - abs(C).^2./S).*temp_dom;
+% Double-dominates beta = 1
+temp_dom = 4*real(hh_vv) - 2* hv_hv - f_c < 0;
+P_s = P_s + (D+abs(C).^2./D).*temp_dom;
+P_d = P_d + (S-abs(C).^2./D).*temp_dom;
+clear S D C
 % The contribution from each scattering mechanism
-P_s = f_s.*(1+abs(beta).^2); P_d = f_d.*(1+abs(alpha).^2);
-P_t = P_s+P_d+f_s+f_v;
+
 % The power contribution should be positive. Let the negative power be zero.
-P_s(P_s < 0) = 0; P_d( P_d < 0) = 0; f_v(f_v < 0) = 0;
-clear alpha beta B C D;
+P_t = hh_hh + vv_vv + 2*hv_hv;
+temp_dom = P_s < 0;
+P_s(temp_dom) = 0; 
+P_d(temp_dom) = P_t(temp_dom) - f_c(temp_dom) - f_v(temp_dom);
+temp_dom = P_d < 0;
+P_d(temp_dom) = 0;
+P_s(temp_dom) = P_t(temp_dom) - f_c(temp_dom) - f_v(temp_dom);
+
+temp_dom = f_c+f_v > P_t;
+P_s(temp_dom) = 0; P_d(temp_dom) = 0;
+f_v(temp_dom) = P_t(temp_dom) - f_c(temp_dom);
+f_v(f_v<0) = 0;
+clear temp_dom
+
 if(0)
 	figure(8)
 		imagesc(10*log10(P_t))
@@ -158,7 +236,7 @@ if(1)	% Plot the 4-component decomposition.
 	FourCompo(:,:,1) = 10*log10(P_d);
 	FourCompo(:,:,2) = 10*log10(f_v);
 	FourCompo(:,:,3) = 10*log10(P_s);
-	clear P_d  f_v P_s f_c f_d f_s;
+	clear P_d  f_v P_s f_c f_d f_s P_t
 	FourCompo(FourCompo < low_) = low_;
 	FourCompo(FourCompo > up_) = up_;
 	FourCompo = (FourCompo-low_)/(up_-low_);
@@ -166,20 +244,15 @@ if(1)	% Plot the 4-component decomposition.
 		image(FourCompo)
 		set(gca,'Ydir','normal')
 		xlabel('azimuth')
-		%plot_para('Filename','Four_compo','Maximize',true)
-		plot_para('Maximize',true)
-	clear FourCompo
+		%xlim([8100 8900])
+		%ylim([2800 3100])
+		plot_para('Filename',filename,'Maximize',true)
+		%plot_para('Maximize',true)
+	%clear FourCompo
 end
 
-%% Non-negative eigenvalue model-based decomposition
-% Decide which volume scattering model is used.
-% With three interval (-infty,-2dB) [-2dB, 2dB) [2dB, infty)hh_hh + vv_vv - hh
-xi = 8; zet = 3; eta = 4; rho = 2;
-Z = (hh_hh*zet + vv_vv*xi - hh_vv*conj(rho) - conj(hh_vv)*rho);
-a = min( 2*hv_hv/eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv<-2);
+%% eigenvalue model-based 4-component decomposition
+% Build table 
 
-xi = 3; zet = 3; eta = 2; rho = 1;
-a = a + min( 2*hv_hv./ eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv>-2).*(crit_fv<2);
-xi = 3; zet = 8; eta = 4; rho = 2;
-a = a + min( 2*hv_hv./ eta, 1/2/(xi*zet - rho^2)*(Z - sqrt(Z.^2 - 4*(xi*zet - rho^2)*(hh_hh.*vv_vv - abs(hh_vv).^2))) ).*(crit_fv>2);
-clear Z xi zet eta rho;
+% Query
+

@@ -2,9 +2,11 @@ function plot_para(varargin)
 	
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'}); 
-	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+	validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'positive'});
 	addParameter(parse_,'Filename','None',validationFcn_1_);
 	addParameter(parse_,'Maximize',0,validationFcn_2_);
+	addParameter(parse_,'Ratio',[0, 0, 0],validationFcn_3_);
 	parse(parse_,varargin{:})
 
 	%%
@@ -16,7 +18,9 @@ function plot_para(varargin)
 	end
 	set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
 	set(gcf,'color','w');
-	%pbaspect([7 5 1])
+	if parse_.Results.Ratio(1)
+		pbaspect(parse_.Results.Ratio)
+	end
 
 	if parse_.Results.Maximize
 		pause(0.00001);
