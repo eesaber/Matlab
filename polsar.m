@@ -2,32 +2,41 @@
 % Data IO
 clear,clc
 cd /home/akb/Code/Matlab
-read = 0;
 temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
-if(read)
+if(0)
+	fprintf('Parsing input file...')
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHH_CX_01.grd'],'r','ieee-le'); 
-	hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
+	%hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
+	hh_hh = sparse(rot90(fread(fid,[23499,8735],'real*4')));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVHV_CX_01.grd'],'r','ieee-le'); 
-	hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	%hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	hv_hv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090VVVV_CX_01.grd'],'r','ieee-le'); 
-	vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	%vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	vv_vv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
 
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVVV_CX_01.grd'],'r','ieee-le'); 
 	hv_vv = fread(fid,[23499*2,8735],'real*4');
-	hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+	%hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+	hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHVV_CX_01.grd'],'r','ieee-le'); 
 	hh_vv = fread(fid,[23499*2,8735],'real*4');
-	hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+	%hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+	hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHV_CX_01.grd'],'r','ieee-le'); 
 	hh_hv = fread(fid,[23499*2,8735],'real*4');
-	hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+	%hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+	hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
 	fclose(fid) ;
 	clear fid
-	save('Covariance.mat', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
+	save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
 else
-	load('Covariance.mat');
+	fprintf('Loading...')
+	load([temp 'Covariance.mat']);
+	%load([temp 'Covariance_d.mat']);
+	%load([temp 'Covariance_ds.mat']);
 end	
-
+fprintf('\n')
 if(0)
 	figure(1)
 		imagesc(10*log10(hh_hh))
@@ -96,9 +105,10 @@ if(0)	% Plot the Pauli-decomposition.
 end
 																																																													
 %% Four-component decomposition (option: compensate the orientation)
-fprintf('Compensate the oriented angel or not?\n')
-if(1)
-	fprintf('Yes. CAUTION! THIS WILL CHANGE hh_hh, vv_vv, ETC PERMANENTLY. \n')
+fprintf('Compensate the oriented angle or not? CAUTION! THIS WILL CHANGE hh_hh, vv_vv, etc PERMANENTLY. \n')
+P_t = hh_hh + vv_vv + 2*hv_hv;
+if(0)
+	fprintf('Yes.  \n')
 	filename = 'Four_compoR';
 	%R = [1, 0, 0; 0, cos(2*x), sin(2*x); 0, -sin(2*x), cos(2*x)];
 	%R = 0.5*[1+cos(2*x), sqrt(2)*sin(2*x), 1-cos(2*x); -sqrt(2)*sin(2*x), 2*cos(2*x), sqrt(2)*sin(2*x); 1-cos(2*x), -sqrt(2)*sin(2*x), 1+cos(2*x)];
@@ -201,7 +211,7 @@ clear S D C
 % The contribution from each scattering mechanism
 
 % The power contribution should be positive. Let the negative power be zero.
-P_t = hh_hh + vv_vv + 2*hv_hv;
+%P_t = hh_hh + vv_vv + 2*hv_hv
 temp_dom = P_s < 0;
 P_s(temp_dom) = 0; 
 P_d(temp_dom) = P_t(temp_dom) - f_c(temp_dom) - f_v(temp_dom);
@@ -236,7 +246,7 @@ if(1)	% Plot the 4-component decomposition.
 	FourCompo(:,:,1) = 10*log10(P_d);
 	FourCompo(:,:,2) = 10*log10(f_v);
 	FourCompo(:,:,3) = 10*log10(P_s);
-	clear P_d  f_v P_s f_c f_d f_s P_t
+	clear P_d  f_v P_s f_c f_d f_s 
 	FourCompo(FourCompo < low_) = low_;
 	FourCompo(FourCompo > up_) = up_;
 	FourCompo = (FourCompo-low_)/(up_-low_);
@@ -248,11 +258,154 @@ if(1)	% Plot the 4-component decomposition.
 		%ylim([2800 3100])
 		plot_para('Filename',filename,'Maximize',true)
 		%plot_para('Maximize',true)
-	%clear FourCompo
+	clear FourCompo filename
 end
 
 %% eigenvalue model-based 4-component decomposition
-% Build table 
+% Build table
+if(0) 
+	fprintf('Building table...')
+	f_s = 0:0.1:1; f_d = 0:0.1:1; theta = 0:pi/12:pi/4;
+	beta = 0.2:0.2:1; 
+	chi = [];
+	for n = -1 : 0.2: -0.2
+		for m = 0.8: -0.2: 0
+			if abs(n + 1j*m)<=1 
+				chi = [chi, n + 1j*m];
+			end
+		end
+	end
 
-% Query
+	C_v(:,:,1) = 1/8*[3, 0, 1; 0, 2, 0; 1, 0, 3];
+	C_v(:,:,2) = 1/15*[8, 0, 2; 0, 4, 0; 2, 0, 3];
+	C_v(:,:,3) = 1/8*[3, 0, 2; 0, 4, 0; 2, 0, 8];
+	table = [];
+	for k = 1 : numel(theta)
+		for n = 1 : numel(f_s)
+			for m = 1 : numel(f_d)
+				if f_s(n) + f_d(m) > 1
+					continue
+				else
+					f_v = 1 - f_s(n) - f_s(m);
+				end
+				R = 0.5*[1+cos(2*theta(k)), sqrt(2)*sin(2*theta(k)), 1-cos(2*theta(k)); -sqrt(2)*sin(2*theta(k)), 2*cos(2*theta(k)), sqrt(2)*sin(2*theta(k));......
+					1-cos(2*theta(k)), -sqrt(2)*sin(2*theta(k)), 1+cos(2*theta(k))];
+				for beta_it = 1: numel(beta)
+					for chi_it = 1: numel(chi)
+						for cv_it = 1 : 3
+							% template = [x^2, 0, x; 0,0,0; x^*,0,1];
+							C_s = 1/(abs(chi(chi_it))^2 + 1)*[abs(chi(chi_it))^2, 0, chi(chi_it); 0,0,0; conj(chi(chi_it)),0,1];
+							C_d = 1/(abs(beta(beta_it)^2) + 1)*[beta(beta_it)^2, 0, beta(beta_it); 0,0,0; conj(beta(beta_it)),0,1];
+							C = f_s(n)*C_s + f_d(m)*R*C_d*R.' + f_v*C_v(:,:,cv_it);
+							[V, p] = eig(C);
+							alpha = acos(sqrt(abs(V(:,1) + V(:,3)).^2/2));
+							p = p/sum(p);
+							table = [table; f_s(n), f_d(m), f_v, p(3:-1:2).', alpha.'];
+							%table(cv_it,:) = [f_s(n), f_d(m), f_v, p(3:2).', alpha.'];
+						end
+					end
+				end
+			end
+		end
+		fprintf('.')
+	end
+	save('4comp_table.mat', 'table')
+	clear chi_it beta_it cv_it k n m 
+else
+	fprintf('Loading table...')
+	load('4comp_table.mat')
+end
+fprintf('\n')
+%% Query	 
+P_h = single(zeros(row, col));
+P_s = P_h; P_d = P_h; P_v = P_h;
 
+[r_n, c_n] = find(non_z_ind);
+temp = size(r_n);
+% 2780 : 2880
+% 8300 : 8500		%xlim([8100 8900])
+		%ylim([2800 3100])
+parfor m = 2800 : 3100
+	for n = 8100 : 8900
+	C = [hh_hh(m,n), sqrt(2)*hh_hv(m,n), hh_vv(m,n); sqrt(2)*conj(hh_hv(m,n)), 2*hv_hv(m,n), sqrt(2)*hv_vv(m,n);......
+		conj(hh_vv(m,n)), sqrt(2)*conj(hv_vv(m,n)), vv_vv(m,n)];
+	[V, p] = eig(C);
+	alpha = acos(sqrt(abs(V(:,1) + V(:,3)).^2/2));
+	delta = acos(abs((V(:,3)-V(:,1)+1j*sqrt(2)*V(:,2))/2)./sin(alpha));
+	hel = sin(alpha.^2).*(cos(delta.^2)- sin(delta.^2));
+	% f_s(n), f_d(m), f_v, p(3:-1:2).', alpha.'
+	P_h(m,n) = abs(sum(p*hel));
+	p = real(p/sum(p));
+	P_r = P_t(m,n) - P_h(m,n);
+
+	eta = 0.25*atan((-2*sqrt(2)*real(V(:,3)-V(:,1).*conj(V(:,2))))/abs(V(:,3)-V(:,1)).^2 - abs(V(:,2)).^2);
+	eta(eta>pi/4) = eta(eta>pi/4) - pi/2;
+	d_theta = abs(eta(3)-eta(2));
+
+	if d_theta > pi/4
+		d_theta = -d_theta + pi/2;
+	end
+	if d_theta <= pi/24
+		u = [1,19800];
+	elseif pi/24 < d_theta <= pi/8
+		u = [19801,39600];
+	elseif pi/8 < d_theta <= 5*pi/24
+		u = [39601,59400];
+	elseif 5*pi/24 < d_theta <= pi/4
+		u = [59401,79200];
+	end
+
+	diff = realmax('single');
+	diff_t = 0;
+	for t = u(1) : u(2)
+		temp = 0.5*(p(3)-table(t,4))^2 + 0.5*(p(2)-table(t, 5))^2 + sum([table(t,4:5), 1-sum(table(t,4:5))].*((table(t,6:8)-alpha.')*2/pi).^2);
+		if(diff>temp)
+			diff = temp;
+			diff_t = t
+		end
+	end
+	P_d(m,n) = P_r*table(diff_t,2); 
+	P_s(m,n) = P_r*table(diff_t,1); 
+	P_v(m,n) = P_r*table(diff_t,3);
+	end
+	if ~mod(m,20)
+		fprintf('.') 
+	end
+end
+
+clear a b 
+
+if(1)	% Plot the 4-component + eigenvalue decomposition.
+	FourCompo = single(zeros(row, col, 3));
+	up_ = 20; low_ = -30;
+	FourCompo(:,:,1) = 10*log10(P_d);
+	FourCompo(:,:,2) = 10*log10(P_v);
+	FourCompo(:,:,3) = 10*log10(P_s);
+	%clear P_d  P_v P_s 
+	FourCompo(FourCompo < low_) = low_;
+	FourCompo(FourCompo > up_) = up_;
+	FourCompo = (FourCompo-low_)/(up_-low_);
+	figure(12)
+		image(FourCompo)
+		set(gca,'Ydir','normal')
+		xlabel('azimuth')
+		xlim([8300 8500])
+		ylim([2780 2880])
+		plot_para('Filename','4com_eigen','Maximize',true,'Ratio', [7 5 1])
+		%plot_para('Maximize',true)
+	clear FourCompo
+end
+%%
+%{
+m = 2900; n = 8500;
+C = [hh_hh(m,n),hh_hv(m,n),hh_vv(m,n); conj(hh_hv(m,n)), hv_hv(m,n),hv_vv(m,n);......
+		conj(hh_vv(m,n)), conj(hv_vv(m,n)), vv_vv(m,n)];
+m = 2901; n = 8501;
+D = [hh_hh(m,n),hh_hv(m,n),hh_vv(m,n); conj(hh_hv(m,n)), hv_hv(m,n),hv_vv(m,n);......
+		conj(hh_vv(m,n)), conj(hv_vv(m,n)), vv_vv(m,n)];
+[V, p] = eig(C)
+[V, p] = eig(D)
+C = [C zeros(3,3); zeros(3,3) D];
+[V, p] = eig(C)
+eigs(sparse(double(C)))
+%}
