@@ -1,3 +1,5 @@
+clc
+%{
 % Data size: 8735*23499, no header
 % Data IO
 clear,clc
@@ -103,10 +105,11 @@ if(0)	% Plot the Pauli-decomposition.
 		plot_para('Maximize',true)
 	%}
 end
-																																																													
+%}																																																													
 %% Four-component decomposition (option: compensate the orientation)
 fprintf('Compensate the oriented angle or not? CAUTION! THIS WILL CHANGE hh_hh, vv_vv, etc PERMANENTLY. \n')
 P_t = hh_hh + vv_vv + 2*hv_hv;
+%{
 if(0)
 	fprintf('Yes.  \n')
 	filename = 'Four_compoR';
@@ -240,7 +243,7 @@ if(0)
 		plot_para('Maximize',true)
 end
 
-if(1)	% Plot the 4-component decomposition.
+if(0)	% Plot the 4-component decomposition.
 	FourCompo = single(zeros(row, col, 3));
 	up_ = 20; low_ = -30;
 	FourCompo(:,:,1) = 10*log10(P_d);
@@ -260,7 +263,7 @@ if(1)	% Plot the 4-component decomposition.
 		%plot_para('Maximize',true)
 	clear FourCompo filename
 end
-
+%}
 %% eigenvalue model-based 4-component decomposition
 % Build table
 if(0) 
@@ -271,15 +274,21 @@ if(0)
 	for n = -1 : 0.2: -0.2
 		for m = 0.8: -0.2: 0
 			if abs(n + 1j*m)<=1 
-				chi = [chi, n + 1j*m];
+				if m~=0
+					chi = [chi, n + 1j*m, n - 1j*m];
+				else
+					chi = [chi, n + 1j*m];
+				end
 			end
+			
 		end
 	end
 
 	C_v(:,:,1) = 1/8*[3, 0, 1; 0, 2, 0; 1, 0, 3];
 	C_v(:,:,2) = 1/15*[8, 0, 2; 0, 4, 0; 2, 0, 3];
 	C_v(:,:,3) = 1/8*[3, 0, 2; 0, 4, 0; 2, 0, 8];
-	table = [];
+	table = zeros(138600,9); 
+	qq = 1;
 	for k = 1 : numel(theta)
 		for n = 1 : numel(f_s)
 			for m = 1 : numel(f_d)
@@ -298,10 +307,10 @@ if(0)
 							C_d = 1/(abs(beta(beta_it)^2) + 1)*[beta(beta_it)^2, 0, beta(beta_it); 0,0,0; conj(beta(beta_it)),0,1];
 							C = f_s(n)*C_s + f_d(m)*R*C_d*R.' + f_v*C_v(:,:,cv_it);
 							[V, p] = eig(C);
-							alpha = acos(sqrt(abs(V(:,1) + V(:,3)).^2/2));
-							p = p/sum(p);
-							table = [table; f_s(n), f_d(m), f_v, p(3:-1:2).', alpha.'];
-							%table(cv_it,:) = [f_s(n), f_d(m), f_v, p(3:2).', alpha.'];
+							alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+							p = diag(p)/sum(diag(p));
+							table(qq,:) = [f_s(n), f_d(m), f_v, p.', alpha];
+							qq=qq+1;
 						end
 					end
 				end
@@ -309,8 +318,15 @@ if(0)
 		end
 		fprintf('.')
 	end
+	[r_,~]= size(table);
+	r_ = r_/4;
+	temp = zeros(r_,9,4);
+	for n = 1 : 4
+		temp(:,:,n) = table(1+(n-1)*r_: n*r_,:);
+	end
+	table = single(temp);
 	save('4comp_table.mat', 'table')
-	clear chi_it beta_it cv_it k n m 
+	clear 
 else
 	fprintf('Loading table...')
 	load('4comp_table.mat')
@@ -320,25 +336,33 @@ fprintf('\n')
 P_h = single(zeros(row, col));
 P_s = P_h; P_d = P_h; P_v = P_h;
 
-[r_n, c_n] = find(non_z_ind);
-temp = size(r_n);
+[t_row,~,~] = size(table);
+
 % 2780 : 2880
 % 8300 : 8500		%xlim([8100 8900])
 		%ylim([2800 3100])
-parfor m = 2800 : 3100
-	for n = 8100 : 8900
+% 9 elements in entry: f_s(n), f_d(m), f_v, p(3), p(2), p(1), alpha3, alpha2, alpha1
+D_1 = table(:,:,1);
+D_2 = table(:,:,2);
+D_3 = table(:,:,3);
+D_4 = table(:,:,4);
+co_1 = repmat([zeros(1,3), 0.5, 0.5, zeros(1,4)], t_row, 1); 
+left = [5800 6100];
+down = [14100 14700];
+parfor m = 5800 : 6100
+	for n = 14100: 14700
 	C = [hh_hh(m,n), sqrt(2)*hh_hv(m,n), hh_vv(m,n); sqrt(2)*conj(hh_hv(m,n)), 2*hv_hv(m,n), sqrt(2)*hv_vv(m,n);......
 		conj(hh_vv(m,n)), sqrt(2)*conj(hv_vv(m,n)), vv_vv(m,n)];
 	[V, p] = eig(C);
-	alpha = acos(sqrt(abs(V(:,1) + V(:,3)).^2/2));
-	delta = acos(abs((V(:,3)-V(:,1)+1j*sqrt(2)*V(:,2))/2)./sin(alpha));
+	alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+	delta = acos(abs((V(3,:)-V(1,:)+1j*sqrt(2)*V(2,:))/2)./sin(alpha));
 	hel = sin(alpha.^2).*(cos(delta.^2)- sin(delta.^2));
 	% f_s(n), f_d(m), f_v, p(3:-1:2).', alpha.'
-	P_h(m,n) = abs(sum(p*hel));
-	p = real(p/sum(p));
+	P_h(m,n) = abs(sum(hel*p));
+	p = diag(p)/sum(diag(p));
 	P_r = P_t(m,n) - P_h(m,n);
 
-	eta = 0.25*atan((-2*sqrt(2)*real(V(:,3)-V(:,1).*conj(V(:,2))))/abs(V(:,3)-V(:,1)).^2 - abs(V(:,2)).^2);
+	eta = 0.25*atan((-2*sqrt(2)*real(V(3,:)-V(1,:).*conj(V(2,:))))/abs(V(3,:)-V(1,:)).^2 - abs(V(2,:)).^2);
 	eta(eta>pi/4) = eta(eta>pi/4) - pi/2;
 	d_theta = abs(eta(3)-eta(2));
 
@@ -346,42 +370,49 @@ parfor m = 2800 : 3100
 		d_theta = -d_theta + pi/2;
 	end
 	if d_theta <= pi/24
-		u = [1,19800];
+		u = 1;
+		D = D_1;
 	elseif pi/24 < d_theta <= pi/8
-		u = [19801,39600];
+		u = 2;
+		D = D_2;
 	elseif pi/8 < d_theta <= 5*pi/24
-		u = [39601,59400];
+		u = 3;
+		D = D_3;
 	elseif 5*pi/24 < d_theta <= pi/4
-		u = [59401,79200];
+		u = 4;
+		D = D_4;
 	end
-
-	diff = realmax('single');
-	diff_t = 0;
-	for t = u(1) : u(2)
-		temp = 0.5*(p(3)-table(t,4))^2 + 0.5*(p(2)-table(t, 5))^2 + sum([table(t,4:5), 1-sum(table(t,4:5))].*((table(t,6:8)-alpha.')*2/pi).^2);
-		if(diff>temp)
-			diff = temp;
-			diff_t = t
-		end
+	S = sum(0.5*(ones(t_row,1)*p(3:-1:2).' - D(:,4:5)).^2, 2);
+	[~, ind_] = min(S + sum(D(:,4:6).*((ones(t_row,1)*alpha - D(:,7:9))*2/pi).^2, 2));
+	P_d(m,n) = P_r*D(ind_, 2); 
+	P_s(m,n) = P_r*D(ind_, 1); 
+	P_v(m,n) = P_r*D(ind_, 3);
+	%{
+	%para_ = repmat([zeros(3,1), p(3), p(2), zeros(4,1)], t_row, 1);
+	%S = ((para_ - table(:,:,u)).*co_).^2 ;
+	%para_ =  ones(t_row,1)*[zeros(5), alpha.']*2/pi;
+	%co_ = [zeros(t_row, 5), table(: ,4:5, u), 1-table(:, 4:5, u)];
+	%[~,ind_] = min(sum( S + ((table(:,:,u)-para_).*co_).^2, 2));
+	P_d(m,n) = P_r*table(ind_, 2, u); 
+	P_s(m,n) = P_r*table(ind_, 1, u); 
+	P_v(m,n) = P_r*table(ind_, 3, u);
+	%}
 	end
-	P_d(m,n) = P_r*table(diff_t,2); 
-	P_s(m,n) = P_r*table(diff_t,1); 
-	P_v(m,n) = P_r*table(diff_t,3);
-	end
+	%{
 	if ~mod(m,20)
 		fprintf('.') 
 	end
+	%}
 end
-
-clear a b 
-
+clear table D_1 D_2 D_3 D_4
+%%
 if(1)	% Plot the 4-component + eigenvalue decomposition.
 	FourCompo = single(zeros(row, col, 3));
 	up_ = 20; low_ = -30;
 	FourCompo(:,:,1) = 10*log10(P_d);
 	FourCompo(:,:,2) = 10*log10(P_v);
 	FourCompo(:,:,3) = 10*log10(P_s);
-	%clear P_d  P_v P_s 
+	clear P_d  P_v P_s P_v P_h
 	FourCompo(FourCompo < low_) = low_;
 	FourCompo(FourCompo > up_) = up_;
 	FourCompo = (FourCompo-low_)/(up_-low_);
@@ -389,23 +420,9 @@ if(1)	% Plot the 4-component + eigenvalue decomposition.
 		image(FourCompo)
 		set(gca,'Ydir','normal')
 		xlabel('azimuth')
-		xlim([8300 8500])
-		ylim([2780 2880])
+		xlim(down)
+		ylim(left)
 		plot_para('Filename','4com_eigen','Maximize',true,'Ratio', [7 5 1])
 		%plot_para('Maximize',true)
-	clear FourCompo
+	%clear FourCompo
 end
-%%
-%{
-m = 2900; n = 8500;
-C = [hh_hh(m,n),hh_hv(m,n),hh_vv(m,n); conj(hh_hv(m,n)), hv_hv(m,n),hv_vv(m,n);......
-		conj(hh_vv(m,n)), conj(hv_vv(m,n)), vv_vv(m,n)];
-m = 2901; n = 8501;
-D = [hh_hh(m,n),hh_hv(m,n),hh_vv(m,n); conj(hh_hv(m,n)), hv_hv(m,n),hv_vv(m,n);......
-		conj(hh_vv(m,n)), conj(hv_vv(m,n)), vv_vv(m,n)];
-[V, p] = eig(C)
-[V, p] = eig(D)
-C = [C zeros(3,3); zeros(3,3) D];
-[V, p] = eig(C)
-eigs(sparse(double(C)))
-%}
