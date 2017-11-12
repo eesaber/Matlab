@@ -1,35 +1,45 @@
-% Data size: 8735*23499, no header
+% Data spec:
+% [row, col]: 8735*23499, without header 
+% mlc_mag.row_mult (m/pixel) = 4.99654098 (7.2) ; MLC S (azimuth) Slant Post Spacing
+% mlc_mag.col_mult (m/pixel) = 7.2 (4.99654098) ; MLC C (range) Slant Post Spacing
+% NOTICE! The data is rotated for 90 degree ! 
 % Data IO
 clear,clc
 cd /home/akb/Code/Matlab
 temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
-if(0)
+if(1)
 	fprintf('Parsing input file...')
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHH_CX_01.grd'],'r','ieee-le'); 
-	%hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
-	hh_hh = sparse(rot90(fread(fid,[23499,8735],'real*4')));
+	hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
+	
+	%hh_hh = sparse(rot90(fread(fid,[23499,8735],'real*4')));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVHV_CX_01.grd'],'r','ieee-le'); 
-	%hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
-	hv_hv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
+	hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	%hv_hv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090VVVV_CX_01.grd'],'r','ieee-le'); 
-	%vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
-	vv_vv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-
+	vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
+	%vv_vv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
+	
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVVV_CX_01.grd'],'r','ieee-le'); 
 	hv_vv = fread(fid,[23499*2,8735],'real*4');
-	%hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
-	hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
+	hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+	%hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
+	
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHVV_CX_01.grd'],'r','ieee-le'); 
 	hh_vv = fread(fid,[23499*2,8735],'real*4');
-	%hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
-	hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+	hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+	%hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+	
 	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHV_CX_01.grd'],'r','ieee-le'); 
 	hh_hv = fread(fid,[23499*2,8735],'real*4');
-	%hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
-	hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+	hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+	%hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+	
 	fclose(fid) ;
 	clear fid
 	save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
+	
+	%save([temp 'test.mat'],'-v7.3', 'hh_hh')
 else
 	fprintf('Loading...')
 	load([temp 'Covariance.mat']);
@@ -41,13 +51,13 @@ if(0)
 	figure(1)
 		imagesc(10*log10(hh_hh))
 		set(gca,'Ydir','normal')
-		title('$10 log |S_{hh}|^2$', 'Interpreter', 'latex'), colorbar, colormap gray;
+		title('$10 log |S_{hh}|^2$', 'Interpreter', 'latex'), colorbar, colormap jet;
 		caxis([-30 20])
 	figure(2)
 		imagesc(10*log10(hv_hv))
 		set(gca,'Ydir','normal')
-		title('$10 \log |S_{hv}|^2$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		caxis([-30 20])
+		title('$10 \log |S_{hv}|^2$', 'Interpreter', 'latex'), colorbar, colormap jet;
+		caxis([-30 10])
 	figure(3)
 		imagesc(10*log10(vv_vv))
 		set(gca,'Ydir','normal')
@@ -62,7 +72,7 @@ if(0)
 	Pauli_g = 10*log10(hh_hh+2*hv_hv+vv_vv);
 	figure(5)
 		imagesc(Pauli_g)
-		xlabel('azimuth')
+		xlabel('Azimuth')
 		set(gca,'Ydir','normal'), colorbar, colormap gray;
 		caxis([-30 20])
 		plot_para('Filename','My_pauli_g','Maximize',true)
@@ -74,14 +84,14 @@ end
 non_z_ind = (hh_hh ~= 0);
 are_z = ~non_z_ind;
 
-if(0)	% Plot the Pauli-decomposition.
+if(1)	% Plot the Pauli-decomposition.
 	up_ = 10; low_ = -20;
 	Pauli = ones(row, col, 3);	
 	t_p = 10*log10(sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv)));	% |S_vv - S_hh|^2 -> double bounce scattering 
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
-	t_p= 10*log10(4*sqrt(hv_hv));									% |S_hv|^2 -> volume scattering
+	t_p= 10*log10(sqrt(4*hv_hv));									% |S_hv|^2 -> volume scattering
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
@@ -89,14 +99,17 @@ if(0)	% Plot the Pauli-decomposition.
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
-	figure(6)
+	figure(7)
+		%image(Pauli(2800:3400, 8300:8855,:))
 		image(Pauli)
 		set(gca,'Ydir','normal')
-		%xlim([7500 8200])
-		%ylim([2000 2600])
-		xlabel('azimuth')
-		plot_para('Filename','My_pauli_c','Maximize',true)
-	clear Pauli t_p
+		%xlim([8300 8855])
+		%ylim([2800 3400])
+		%set(gca,'xtick',0:111:555,'ytick',0:150:600,'XTickLabel', 0:800:4000, 'YTickLabel', [0:800:2400 3000] );
+		xlabel('Azimuth (m)', 'Fontsize', 40)
+		ylabel('Range (m)', 'Fontsize', 40)
+		plot_para('Filename','My_pauli_c','Maximize',true, 'Ratio', [4 3 1]);
+	%clear Pauli t_p
 	%{
 	figure(7)
 		image(imread([temp 'PiSAR2_07507_13170_009_131109_L090_CX_01_pauli.tif']))
@@ -106,14 +119,12 @@ end
 																																																									
 %% Four-component decomposition (option: compensate the orientation)
 fprintf('Compensate the oriented angle or not? CAUTION! THIS WILL CHANGE hh_hh, vv_vv, etc PERMANENTLY. \n')
-P_t = hh_hh + vv_vv + 2*hv_hv;
-
-if(0)
+if(1)
 	fprintf('Yes.  \n')
 	filename = 'Four_compoR';
 	%R = [1, 0, 0; 0, cos(2*x), sin(2*x); 0, -sin(2*x), cos(2*x)];
 	%R = 0.5*[1+cos(2*x), sqrt(2)*sin(2*x), 1-cos(2*x); -sqrt(2)*sin(2*x), 2*cos(2*x), sqrt(2)*sin(2*x); 1-cos(2*x), -sqrt(2)*sin(2*x), 1+cos(2*x)];
-	x = -0.5*atan((2*sqrt(2)*real(hv_vv-hh_hv))./(are_z+hh_hh+vv_vv-2*real(hh_vv)-2*hv_hv)).*non_z_ind;
+	x = 0.5*atan((4*real(hv_vv - hh_hv))./(are_z + 4*hv_hv - hh_hh - vv_vv + 2*real(hh_vv)));
 	x(x>pi/2) = x(x>pi/2)-pi;
 	x(x<-pi/2) = x(x<-pi/2)+pi;
 	%temp = R*[hh_hh, hh_hv, hh_vv; conj(hh_vv), hv_hv, hv_vv; conj(hh_vv), conj(hv_vv), vv_vv]*R.';
@@ -174,7 +185,7 @@ else
 	filename = 'Four_compo';
 	fprintf('No. \n')
 end
-%%
+
 % f_ is the scattering matrix coefficient. The subscript
 % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
 f_c = 2 *abs(imag(hh_hv + hv_vv));
@@ -212,7 +223,7 @@ clear S D C
 % The contribution from each scattering mechanism
 
 % The power contribution should be positive. Let the negative power be zero.
-%P_t = hh_hh + vv_vv + 2*hv_hv
+P_t = hh_hh + vv_vv + 2*hv_hv;
 temp_dom = P_s < 0;
 P_s(temp_dom) = 0; 
 P_d(temp_dom) = P_t(temp_dom) - f_c(temp_dom) - f_v(temp_dom);
@@ -229,39 +240,41 @@ clear temp_dom
 if(0)
 	figure(8)
 		imagesc(10*log10(P_t))
-		xlabel('azimuth')
-		set(gca,'Ydir','normal'), colorbar, colormap gray;
+		xlabel('Azimuth')
+		set(gca,'Ydir','normal'), colorbar, colormap jet;
 		caxis([-30 20])
 		plot_para('Maximize',true)
 	figure(9)
 		imagesc(10*log10(f_c))
-		xlabel('azimuth')
-		set(gca,'Ydir','normal'), colorbar, colormap gray;
-		caxis([-30 20])
+		title('$P_h$ (dB)', 'Interpreter', 'latex')
+		set(gca,'Ydir','normal'), colorbar, colormap jet;
+		caxis([-30 10])
 		plot_para('Maximize',true)
 end
 
-if(0)	% Plot the 4-component decomposition.
+if(1)	% Plot the 4-component decomposition.
 	FourCompo = single(zeros(row, col, 3));
 	up_ = 20; low_ = -30;
 	FourCompo(:,:,1) = 10*log10(P_d);
 	FourCompo(:,:,2) = 10*log10(f_v);
 	FourCompo(:,:,3) = 10*log10(P_s);
-	
+	%%clear P_d  f_v P_s f_c f_d f_s 
+	f_d = P_d; f_s = P_s; 
+	clear P_d  P_s   
 	FourCompo(FourCompo < low_) = low_;
 	FourCompo(FourCompo > up_) = up_;
 	FourCompo = (FourCompo-low_)/(up_-low_);
 	figure(10)
-		image(FourCompo)
+		image(FourCompo(2800:3400, 8300:8855,:))
 		set(gca,'Ydir','normal')
-		xlabel('azimuth')
-		%xlim([8100 8900])
-		%ylim([2800 3100])
-		plot_para('Filename',filename,'Maximize',true)
+		set(gca,'xtick',0:111:555,'ytick',0:150:600,'XTickLabel', 0:800:4000, 'YTickLabel', [0:800:2400 3000] );
+		xlabel('Azimuth (m)', 'Fontsize', 40)
+		ylabel('Range (m)', 'Fontsize', 40)
+		plot_para('Filename',filename,'Maximize',true,'Ratio', [4 3 1]);
 		%plot_para('Maximize',true)
 	clear FourCompo filename
 end
-clear P_d  f_v P_s f_c f_d f_s 
+
 %% eigenvalue model-based 4-component decomposition
 % Build table
 if(0) 
@@ -304,7 +317,8 @@ if(0)
 							C_d = 1/(abs(beta(beta_it)^2) + 1)*[beta(beta_it)^2, 0, beta(beta_it); 0,0,0; conj(beta(beta_it)),0,1];
 							C = f_s(n)*C_s + f_d(m)*R*C_d*R.' + f_v*C_v(:,:,cv_it);
 							[V, p] = eig(C);
-							alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+							%alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+							alpha = acos(abs(V(3,:)));
 							p = diag(p)/sum(diag(p));
 							table(qq,:) = [f_s(n), f_d(m), f_v, p.', alpha];
 							qq=qq+1;
@@ -329,7 +343,8 @@ else
 	load('4comp_table.mat')
 end
 fprintf('\n')
-%% Query	 
+%% Query
+P_t = hh_hh + vv_vv + 2*hv_hv;
 P_h = single(zeros(row, col));
 P_s = P_h; P_d = P_h; P_v = P_h;
 [t_row,~,~] = size(table);
@@ -339,14 +354,15 @@ D_2 = table(:,:,2);
 D_3 = table(:,:,3);
 D_4 = table(:,:,4);
 co_1 = repmat([zeros(1,3), 0.5, 0.5, zeros(1,4)], t_row, 1); 
-left = [2800 3100];
-down = [8100 8900];
+left = [2800 3400];
+down = [8300 8855]; down_1 = down(1); down_2 = down(2);
 parfor m = left(1) : left(2)
-	for n = 14100: 14700
+	for n = down_1: down_2
 		C = [hh_hh(m,n), sqrt(2)*hh_hv(m,n), hh_vv(m,n); sqrt(2)*conj(hh_hv(m,n)), 2*hv_hv(m,n), sqrt(2)*hv_vv(m,n);......
 			conj(hh_vv(m,n)), sqrt(2)*conj(hv_vv(m,n)), vv_vv(m,n)];
 		[V, p] = eig(C);
-		alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+		%alpha = acos(abs(V(1,:) + V(3,:))/sqrt(2));
+		alpha = acos(abs(V(3,:)));
 		delta = acos(abs((V(3,:)-V(1,:)+1j*sqrt(2)*V(2,:))/2)./sin(alpha));
 		hel = sin(alpha.^2).*(cos(delta.^2)- sin(delta.^2));
 		% f_s(n), f_d(m), f_v, p(3:-1:2).', alpha.'
@@ -354,76 +370,89 @@ parfor m = left(1) : left(2)
 		p = diag(p)/sum(diag(p));
 		P_r = P_t(m,n) - P_h(m,n);
 
-		eta = 0.25*atan((-2*sqrt(2)*real(V(3,:)-V(1,:).*conj(V(2,:))))/abs(V(3,:)-V(1,:)).^2 - abs(V(2,:)).^2)+pi/4;
+		eta = 0.25*atan((-2*sqrt(2)*real((V(3,:)-V(1,:)).*conj(V(2,:)))) ./ (abs(V(3,:)-V(1,:)).^2 - abs(V(2,:)).^2))+pi/4;
 		eta(eta>pi/4) = eta(eta>pi/4) - pi/2;
 		d_theta = abs(eta(3)-eta(2));
 
 		if d_theta > pi/4
 			d_theta = -d_theta + pi/2;
 		end
-		if d_theta <= pi/24
-			D = D_1;
-		elseif pi/24 < d_theta <= pi/8
-			D = D_2;
-		elseif pi/8 < d_theta <= 5*pi/24
-			D = D_3;
-		elseif 5*pi/24 < d_theta <= pi/4
-			D = D_4;
+		if d_theta < pi/24
+			Daba = D_1;
+		elseif pi/24 <= d_theta && d_theta < pi/8
+			Daba = D_2;
+		elseif pi/8 <= d_theta && d_theta < 5*pi/24
+			Daba = D_3;
+		elseif 5*pi/24 <= d_theta && d_theta <= pi/4
+			Daba = D_4;
 		end
-		S = sum(0.5*(ones(t_row,1)*p(2:3).' - D(:,5:6)).^2, 2);
-		[~, ind_] = min(S + sum(D(:,4:6).*((ones(t_row,1)*alpha - D(:,7:9))*2/pi).^2, 2));
+		S = sum(0.5*(ones(t_row,1)*p(2:3).' - Daba(:,5:6)).^2, 2);
+		[~, ind_] = min(S + sum(Daba(:,4:6).*((ones(t_row,1)*alpha - Daba(:,7:9))*2/pi).^2, 2));
 		if P_r > 0
-			P_s(m,n) = P_r*D(ind_, 1); 
-			P_d(m,n) = P_r*D(ind_, 2); 
-			P_v(m,n) = P_r*D(ind_, 3);
+			P_s(m,n) = P_r*Daba(ind_, 1); 
+			P_d(m,n) = P_r*Daba(ind_, 2); 
+			P_v(m,n) = P_r*Daba(ind_, 3);
 		end
 	end
 end
 clear table D_1 D_2 D_3 D_4
 %% Plot the 4-component + eigenvalue decomposition.
-if(0)	
-	FourCompo = single(zeros(row, col, 3));
+if(1)	
+	FourCompo_eig = single(zeros(row, col, 3));
 	up_ = 20; low_ = -30;
-	FourCompo(:,:,1) = 10*log10(P_s);
-	FourCompo(:,:,2) = 10*log10(P_v);
-	FourCompo(:,:,3) = 10*log10(P_d);
+	FourCompo_eig(:,:,1) = 10*log10(P_d);
+	FourCompo_eig(:,:,2) = 10*log10(P_v);
+	FourCompo_eig(:,:,3) = 10*log10(P_s);
 	%clear P_d  P_v P_s P_v P_h
-	FourCompo(FourCompo < low_) = low_;
-	FourCompo(FourCompo > up_) = up_;
-	FourCompo = (FourCompo-low_)/(up_-low_);
-	figure(12)
-		image(FourCompo)
+	FourCompo_eig(FourCompo_eig < low_) = low_;
+	FourCompo_eig(FourCompo_eig > up_) = up_;
+	FourCompo_eig = (FourCompo_eig-low_)/(up_-low_);
+	figure(18)
+		image(FourCompo_eig(left(1):left(2),down(1):down(2),:))
 		set(gca,'Ydir','normal')
-		xlabel('azimuth')
-		xlim(down)
-		ylim(left)
-		plot_para('Filename','4com_eigen','Maximize',true,'Ratio', [7 5 1])
+		set(gca,'xtick',0:111:555,'ytick',0:150:600,'XTickLabel', 0:800:4000, 'YTickLabel', [0:800:2400 3000] );
+		xlabel('Azimuth (m)', 'Fontsize', 40)
+		ylabel('Range (m)', 'Fontsize', 40)
+		plot_para('Filename','4com_eigen','Maximize',true,'Ratio', [4 3 1]);
 		%plot_para('Maximize',true)
-	clear FourCompo
+	clear FourCompo_eig
 end
-if(0)
+%%
+%{
+a = left(1)+317; b = down(1)+503;
+labels = {'surface','double','volume','helix'};
+Ceig_4 = double([P_s(a,b) P_d(a,b) P_v(a,b) P_h(a,b)]);
+Com_4 = double([f_s(a,b) f_d(a,b) f_v(a,b) f_c(a,b)]);
+figure(98)
+ax1 = subplot(1,2,1);
+p = pie(Ceig_4/sum(Ceig_4));
+legend(labels(Ceig_4>0),'Location','southoutside','Orientation','horizontal')
+set(gca,'FontSize',20)
+title(ax1,'4-comp. with eigen','Interpreter', 'latex')
+ax2 = subplot(1,2,2);
+pie(Com_4/sum(Com_4))
+title(ax2,'4-comp.','Interpreter', 'latex')
+legend(labels(Com_4>0),'Location','southoutside','Orientation','horizontal')
+set(gca,'FontSize',20)
+plot_para('Maximize',true)
+%}
+if(1)
 	figure(14)
-		imagesc(10*log10(P_s))
+		imagesc(10*log10(P_s(left(1):left(2),down(1):down(2),:)))
 		set(gca,'Ydir','normal')
-		title('$10 log P_{s}2$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		xlim(down)
-		ylim(left)
+		title('$P_{s}$ (dB)', 'Interpreter', 'latex'), colorbar, colormap jet, caxis([-30 10]), plot_para('Filename','a','Maximize',true,'Ratio', [7 5 1]);
 	figure(15)
-		imagesc(10*log10(P_d))
+		imagesc(10*log10(P_d(left(1):left(2),down(1):down(2),:)))
 		set(gca,'Ydir','normal')
-		title('$10 log P_{d}$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		xlim(down)
-		ylim(left)
+		title('$P_{d}$ (dB)', 'Interpreter', 'latex'), colorbar, colormap jet, caxis([-30 10]), plot_para('Filename','b','Maximize',true,'Ratio', [7 5 1]);
+		
 	figure(16)
-		imagesc(10*log10(abs(P_v)))
+		imagesc(10*log10(abs(P_v(left(1):left(2),down(1):down(2),:))))
 		set(gca,'Ydir','normal')
-		title('$10 log P_{v}$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		xlim(down)
-		ylim(left)
+		title('$P_{v}$ (dB)', 'Interpreter', 'latex'), colorbar, colormap jet, caxis([-30 10]), plot_para('Filename','c','Maximize',true,'Ratio', [7 5 1]);
+		
 	figure(17)
-		imagesc(10*log10(P_h))
+		imagesc(10*log10(P_h(left(1):left(2),down(1):down(2),:)))
 		set(gca,'Ydir','normal')
-		title('$10 log P_{h}$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		xlim(down)
-		ylim(left)
+		title('$P_{h}$ (dB)', 'Interpreter', 'latex'), colorbar, colormap jet, caxis([-30 10]), plot_para('Filename','d','Maximize',true,'Ratio', [7 5 1]);
 end

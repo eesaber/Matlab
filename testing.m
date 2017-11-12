@@ -1,14 +1,37 @@
 
-eta = -1: 1/PRF: 1;
-l = d_a *(y_0/R_0 - (v_p - v_y)/R_0*eta );
+%{
+phi = linspace(-pi,pi,1000);
+E = cos(0.6*pi*cos(phi))-cos(0.6*pi*sin(phi));
+E = abs(E)/max(abs(E));
+figure(1)
+plot(phi,E)
 
-
-plot(l, 'linewidth', 2, 'k')
-hold on 
-plot()
-
-
-
+L = linspace(0.1,30);
+a = 2*L.*tan(acos(L./(L+0.25))); 
+figure(2)
+	plot(L,a,'k','Linewidth',3)
+	xlabel('$L/\lambda$','Interpreter', 'latex')
+	ylabel('$a/\lambda$','Interpreter', 'latex')
+	plot_para('Maximize',true,'Filename','ant1')
+figure(3)
+	plot(L,10*log10(7.5*a.^2),'k','Linewidth',3)
+	xlabel('$L/\lambda$','Interpreter', 'latex')
+	ylabel('$D$ (dB)','Interpreter', 'latex')
+	plot_para('Maximize',true,'Filename','ant2')
+%}
+%{
+syms a b d co si;
+R_2 = [co, si; -si, co];
+R_3 = [1+co, sqrt(2)*si, 1-co; -sqrt(2)*si, 2*co, sqrt(2)*si; 1-co, -sqrt(2)*si, 1+co];
+S = [a -b; -b d];
+S = R_2*S*R_2.'
+rho = [co*(a*co + b*si) + si*(b*co + a*si); sqrt(2)*(co*(b*co + a*si) - si*(a*co + b*si)); co*(a*co - b*si) - si*(b*co - a*si)];
+rho*conj(rho).';
+%C = 2*[a^2, 0, a*conj(d); 0, 2*b^2, 0; conj(a)*d, 0, d^2];
+syms a11 a12 a13 a21 a22 a23 a31 a32 a33
+C = [a11, a12, a13; a21, a22, a23; a31, a32, a33];
+C = 1/4*R_3*C*R_3.';
+%}
 
 %{
 %% DATA generate
