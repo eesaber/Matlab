@@ -8,9 +8,9 @@ freq = 75e6;
 c = physconst('lightspeed');
 lambda = c/freq;
 N = 2;
-dx= 0.5*lambda;
+dx= 2*lambda;
 
-d = dipole('Length',lambda/10,'width',lambda/500);
+d = dipole('Length',1*lambda/10,'width',lambda/500);
 
 dipole_array = linearArray;
 dipole_array.Element = d;

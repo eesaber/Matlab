@@ -1,3 +1,3 @@
 #Open matalb
-cd /usr/local/MATLAB/R2016b/bin
+cd /usr/local/MATLAB/R2017a/bin
 ./matlab
