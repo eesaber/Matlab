@@ -1,3 +1,39 @@
+syms x y z a b c e f g r 
+r = 1;
+eqn1 = r*e*x + y + z == a;
+eqn2 = r*f*x + y - z == b;
+eqn3 = r*x + 1j*g*y + b*z == c;
+
+sol = solve([eqn1, eqn2, eqn3], [x, y, z]);
+xSol = sol.x
+ySol = sol.y
+zSol = sol.z
+%%
+clear
+syms U_x U_y U_z D_x D_y D_z 
+syms k_x k_y k_z kp_z k kp 
+syms h h_x h_y xi
+syms T R c_t c_i s_t x
+syms KEEP %  1: Keep partial derivative, 0: Drop it
+KEEP = 0;
+
+eqn1 = k_x*U_x + k_y*U_y + k_z*U_z == 0;
+eqn2 = -k_x*D_x - k_y*D_y + kp_z*D_z == 0;
+eqn3 = (1-1j*k_z*h)*U_x + KEEP*h_x*(1-1j*k_z*h)*U_z - (1+1j*kp_z*h)*D_x - KEEP*h_x*(1+1j*kp_z*h)*D_z == 0;
+eqn4 = (1-1j*k_z*h)*U_y + KEEP*h_y*(1-1j*k_z*h)*U_z - (1+1j*kp_z*h)*D_y - KEEP*h_y*(1+1j*kp_z*h)*D_z == 0;
+
+eqn5 = -1j*k_y*(1-1j*k_z*h)*KEEP*h_x*U_x + ( -1j*k_z - k_z^2*h + 1j*k_x*(1-1j*k_z*h)* KEEP*h_x)*U_y + 1j*k_y*(1-1j*k_z*h)*U_z ......
+		+ 1j*k_y*(1+1j*kp_z*h)*KEEP*h_x*D_x + (-1j*kp_z + kp_z^2*h - 1j*k_x*(1+1j*kp_z*h)*KEEP*h_x)*D_y - 1j*k_y*(1+1j*kp_z*h)*D_z ......
+        == -(T*kp^2*c_t^2 - (T-1)*k^2*c_i^2)*xi;
+%		== -(T*kp^2*c_t^2 - R*k^2*c_i^2)*xi;
+    
+eqn6 = (-1j*k_z - k_z^2*h - 1j*k_y*(1-1j*k_z*h)*KEEP*h_y)*U_x + 1j*k_x*(1-1j*k_z*h)*KEEP*h_y*U_y + 1j*k_x*(1-1j*k_z*h)*U_z ......
+        + (-1j*kp_z + kp_z^2*h + 1j*k_y*(1+1j*kp_z*h)*KEEP*h_y)*D_x - 1j*k_x*(1+1j*kp_z*h)*KEEP*h_y*D_y - 1j*k_x*(1+1j*kp_z*h)*D_z == 0;
+    
+sol = solve([eqn1, eqn2, eqn3, eqn4, eqn5, eqn6], [U_x, U_y, U_z, D_x, D_y, D_z]);
+
+sol.U_x
+sol.U_y
 
 
 
@@ -52,18 +88,20 @@ figure(3)
 	ylabel('$D$ (dB)','Interpreter', 'latex')
 	plot_para('Maximize',true,'Filename','ant2')
 %}
+
 %{
-syms a b d co si;
+syms a b c d co si;
 R_2 = [co, si; -si, co];
 R_3 = [1+co, sqrt(2)*si, 1-co; -sqrt(2)*si, 2*co, sqrt(2)*si; 1-co, -sqrt(2)*si, 1+co];
-S = [a -b; -b d];
-S = R_2*S*R_2.'
+S = [a c; c b];
+S = R_2.'*S*R_2
 rho = [co*(a*co + b*si) + si*(b*co + a*si); sqrt(2)*(co*(b*co + a*si) - si*(a*co + b*si)); co*(a*co - b*si) - si*(b*co - a*si)];
 rho*conj(rho).';
 %C = 2*[a^2, 0, a*conj(d); 0, 2*b^2, 0; conj(a)*d, 0, d^2];
 syms a11 a12 a13 a21 a22 a23 a31 a32 a33
 C = [a11, a12, a13; a21, a22, a23; a31, a32, a33];
 C = 1/4*R_3*C*R_3.';
+
 %}
 
 %{
