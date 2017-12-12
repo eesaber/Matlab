@@ -1,4 +1,37 @@
 
+
+
+%%
+%{
+s_p = 5;
+[x, y] = meshgrid(linspace(-1, 1, s_p), linspace(-1, 1, s_p))
+[a,b,c]=sphere(4)
+x(sqrt(x.^2 + y.^2)>1) = nan;
+y(sqrt(x.^2 + y.^2)>1) = nan;
+z = real(sqrt(1-x.^2-y.^2));
+surf(z,'FaceColor','w')
+
+syms U_x U_y U_z D_x D_y D_z 
+syms k_x k_y k_z kp_z k kp 
+
+syms h h_x h_y xi
+syms T R c_t c_i s_t
+
+
+eqn1 = k_x*U_x + k_y*U_y + k_z*U_z == 0;
+eqn2 = -k_x*D_x - k_y*D_y + kp_z*D_z == 0;
+eqn3 = (1-1j*k_z*h)*U_x + h_x*(1-1j*k_z*h)*U_z - (1+1j*kp_z*h)*D_x - h_x*(1+1j*kp_z*h)*D_z == 0;
+eqn4 = (1-1j*k_z*h)*U_y + h_x*(1-1j*k_z*h)*U_z - (1+1j*kp_z*h)*D_y - h_y*(1+1j*kp_z*h)*D_z == 0;
+eqn5 = -1j*k_y*(1-1j*k_z*h)*h_x*U_x + [(-1j*k_z - k_z^2*h) + 1j*k_x*(1-1j*k_z*h)*h_x]*U_y + 1j*k_y*(1-1j*k_z*h)*U_z ......
+	+ 1j*k_y*(1+1j*kp_z*h)*h_x*D_x +[-1j*kp_z + kp_z^2*h - 1j*k_x*(1+1j*kp_z*h)*h_x]*D_y - 1j*k_y*(1+1j*kp_z*h)*D_z == 0;
+eqn6 = [-1j*k_z - k_z^2*h -1j*k_y*(1-1j*k_z*h)*h_y]*U_x + 1j*k_x*(1-1j*k_z*h)*h_x*U_y + 1j*k_x*(1-1j*k_z*h)*U_z ......
+	+ [-1j*kp_z + kp_z^2*h + 1j*k_y*(1+1j*kp_z*h)*h_y]*D_x - 1j*k_x*(1+1j*kp_z*h)*h_y*D_y - 1j*k_y*(1+1j*kp_z*h)*D_z == 0;
+
+sol = solve([eqn1, eqn2, eqn3, eqn4, eqn5, eqn6], [U_x, U_y, U_z, D_x, D_y, D_z]);
+sol.U_x
+sol.U_y
+
+%}
 %{
 phi = linspace(-pi,pi,1000);
 E = cos(0.6*pi*cos(phi))-cos(0.6*pi*sin(phi));
