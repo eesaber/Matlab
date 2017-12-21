@@ -10,9 +10,10 @@ function plot_para(varargin)
 	parse(parse_,varargin{:})
 
 	%%
+    warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame')
 	get_size = get(0,'screensize');
 	if get_size(3:4) == [1920 1080]
-		font_size = 32;
+		font_size = 40;
 	else
 		font_size = 28;
 	end
