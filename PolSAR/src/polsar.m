@@ -1,101 +1,27 @@
-% Data spec:
-% [row, col]: 8735*23499, without header 
-% mlc_mag.row_mult (m/pixel) = 4.99654098 (7.2) ; MLC S (azimuth) Slant Post Spacing
-% mlc_mag.col_mult (m/pixel) = 7.2 (4.99654098) ; MLC C (range) Slant Post Spacing
-% NOTICE! The data is rotated for 90 degree ! 
-% Data IO
-clear,clc
-cd /home/akb/Code/Matlab
-temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
-if(1)
-	fprintf('Parsing input file...')
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHH_CX_01.grd'],'r','ieee-le'); 
-	hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
-	
-	%hh_hh = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVHV_CX_01.grd'],'r','ieee-le'); 
-	hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
-	%hv_hv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090VVVV_CX_01.grd'],'r','ieee-le'); 
-	vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
-	%vv_vv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-	
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVVV_CX_01.grd'],'r','ieee-le'); 
-	hv_vv = fread(fid,[23499*2,8735],'real*4');
-	hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
-	%hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
-	
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHVV_CX_01.grd'],'r','ieee-le'); 
-	hh_vv = fread(fid,[23499*2,8735],'real*4');
-	hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
-	%hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
-	
-	fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHV_CX_01.grd'],'r','ieee-le'); 
-	hh_hv = fread(fid,[23499*2,8735],'real*4');
-	hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
-	%hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
-	
-	fclose(fid) ;
-	clear fid
-	save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
-	
-	%save([temp 'test.mat'],'-v7.3', 'hh_hh')
-else
-	fprintf('Loading...')
-	load([temp 'Covariance.mat']);
-	%load([temp 'Covariance_d.mat']);
-	%load([temp 'Covariance_ds.mat']);
-end	
-fprintf('\n')
-if(0)
-	figure(1)
-		imagesc(10*log10(hh_hh))
-		set(gca,'Ydir','normal')
-		title('$10 log |S_{hh}|^2$', 'Interpreter', 'latex'), colorbar, colormap jet;
-		caxis([-30 20])
-	figure(2)
-		imagesc(10*log10(hv_hv))
-		set(gca,'Ydir','normal')
-		title('$10 \log |S_{hv}|^2$', 'Interpreter', 'latex'), colorbar, colormap jet;
-		caxis([-30 10])
-	figure(3)
-		imagesc(10*log10(vv_vv))
-		set(gca,'Ydir','normal')
-		title('$10 \log |S_{vv}|^2$', 'Interpreter', 'latex'), colorbar, colormap gray;
-		caxis([-30 20])
-	figure(4)
-		imagesc(10*log10(vv_vv./hh_hh))
-		set(gca,'Ydir','normal')
-		title('$10 \log \frac{|S_{vv}|^2}{|S_{hh}|^2}$', 'Interpreter', 'latex'), colorbar, colormap jet;
-		caxis([-8 4])
-		plot_para('Filename','criteria','Maximize',true)
-	Pauli_g = 10*log10(hh_hh+2*hv_hv+vv_vv);
-	figure(5)
-		imagesc(Pauli_g)
-		xlabel('Azimuth')
-		set(gca,'Ydir','normal'), colorbar, colormap gray;
-		caxis([-30 20])
-		plot_para('Filename','My_pauli_g','Maximize',true)
-	clear Pauli_g;
-end
+%% Data IO
+[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io();
 
 %% Pauli decomposition
 [row, col] = size(hh_hh);
 non_z_ind = (hh_hh ~= 0);
 are_z = ~non_z_ind;
 
-if(1)	% Plot the Pauli-decomposition.
+% Plot the Pauli-decomposition.
+if(1)	
 	up_ = 10; low_ = -20;
 	Pauli = ones(row, col, 3);	
-	t_p = 10*log10(sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv)));	% |S_vv - S_hh|^2 -> double bounce scattering 
+	% |S_vv - S_hh|^2 -> double bounce scattering 
+	t_p = 10*log10(sqrt(hh_hh + vv_vv - hh_vv - conj(hh_vv)));	
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
-	t_p= 10*log10(sqrt(4*hv_hv));									% |S_hv|^2 -> volume scattering
+	% |S_hv|^2 -> volume scattering
+	t_p= 10*log10(sqrt(4*hv_hv));
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
-	t_p = 10*log10(sqrt(hh_hh + vv_vv + hh_vv + conj(hh_vv)));	% |S_vv + S_hh|^2 -> single scattering
+	% |S_vv + S_hh|^2 -> single scattering
+	t_p = 10*log10(sqrt(hh_hh + vv_vv + hh_vv + conj(hh_vv)));	
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
