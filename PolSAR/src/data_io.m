@@ -1,9 +1,16 @@
-function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io()
+function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io(varargin)
 	% Data spec:
 	% [row, col]: 8735*23499, without header 
 	% mlc_mag.row_mult (m/pixel) = 4.99654098 (7.2) ; MLC S (azimuth) Slant Post Spacing
 	% mlc_mag.col_mult (m/pixel) = 7.2 (4.99654098) ; MLC C (range) Slant Post Spacing
 	% NOTICE! The data is rotated for 90 degree ! 
+	parse_ = inputParser;
+	validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+	addParameter(parse_,'CutBatch',[],validationFcn_1_);
+	addParameter(parse_,'Test',0,validationFcn_2_);
+	parse(parse_,varargin{:})
+
 	% Data IO
 	clear,clc
 	if isunix
@@ -37,19 +44,36 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io()
 		hh_hv = fread(fid,[23499*2,8735],'real*4');
 		hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
 		%hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
-		
 		fclose(fid) ;
 		clear fid
 		save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
-		
-		%save([temp 'test.mat'],'-v7.3', 'hh_hh')
 	else
-		fprintf('Loading...')
-		load([temp 'Covariance.mat']);
-		%load([temp 'Covariance_d.mat']);
-		%load([temp 'Covariance_ds.mat']);
+		if parse_.Results.Test 
+			if exist([temp 'test.mat'], 'file')
+				fprintf('Loading test.mat  ...')
+				load([temp 'test.mat']);
+			else
+				disp('You have to do CutBatch First.')	
+			end
+		else
+			fprintf('Loading image...')
+			load([temp 'Covariance.mat']);
+			%load([temp 'Covariance_d.mat']);
+			%load([temp 'Covariance_ds.mat']);
+		end
 	end	
 	fprintf('\n')
+	if numel(parse_.Results.CutBatch)
+		disp('This will replace test.mat\n')
+    	[r_1, r_2, c_1, c_2] = parse_.Results.CutBatch;
+		hh_hh = hh_hh(r_1:r_2, c_1:c_2);
+		hv_hv = hv_hv(r_1:r_2, c_1:c_2);
+		vv_vv = vv_vv(r_1:r_2, c_1:c_2);
+		hh_hv = hh_hv(r_1:r_2, c_1:c_2);
+		hh_vv = hh_vv(r_1:r_2, c_1:c_2);
+		hv_vv = hv_vv(r_1:r_2, c_1:c_2);
+		save([temp 'test.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
+	end
 	if(0)
 		figure(1)
 			imagesc(10*log10(hh_hh))
