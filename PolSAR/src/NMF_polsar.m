@@ -5,8 +5,9 @@ test = 1;
 q = 9; 
 M = 100;
 k = 8;
+%% Read Data
 if test 
-	%% Simulated data
+	% Simulated data
 	% declaration of variable
 	N_az = 100; N_ra = 100; % az==row, ran == col
 	N = N_az*N_ra; % Image with size (100x100) 
@@ -16,7 +17,7 @@ if test
 	D = 1;
 	Y = D*X;
 else
-	%% Real data import
+	% Real data import
 	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io();
 	n = numel(hh_hh);
 	Y = [reshape(hh_hh, [1, n]); reshape(hv_hv, [1, n]); reshape(vv_vv, [1, n]); ......

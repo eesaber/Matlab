@@ -45,10 +45,11 @@ function [map] = gen_map(varargin)
 	for rr = 1 : n_map
 		subplot(2, n_map/2, rr)
 		imagesc(~map(:, :, rr))
-        title(['# of ' num2str(rr)])
+        %title(['# of ' num2str(rr)])
 		set(gca, 'YDir','normal')
-		axis off
         colormap gray
+        plot_para('Fontsize', 24,'Ratio', [1 1 1])
 	end
 	axis on
+    plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','RR')
 end
