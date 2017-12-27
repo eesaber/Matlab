@@ -1,7 +1,7 @@
 %% Data IO
 [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io();
-
-k_p = 1/sqrt(2)*[hh_hh+vv_vv; hh_hh-vv_vv; sqrt(2)*hv_hv ];
+%a = data_io('Test',true);
+%k_p = 1/sqrt(2)*[hh_hh+vv_vv; hh_hh-vv_vv; sqrt(2)*hv_hv ];
 %% Pauli decomposition
 [row, col] = size(hh_hh);
 non_z_ind = (hh_hh ~= 0);

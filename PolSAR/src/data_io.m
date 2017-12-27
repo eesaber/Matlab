@@ -5,14 +5,13 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io(varargin)
 	% mlc_mag.col_mult (m/pixel) = 7.2 (4.99654098) ; MLC C (range) Slant Post Spacing
 	% NOTICE! The data is rotated for 90 degree ! 
 	parse_ = inputParser;
-	validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'}); 
+	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test',0,validationFcn_2_);
 	parse(parse_,varargin{:})
 
 	% Data IO
-	clear,clc
 	if isunix
 		cd /home/akb/Code/Matlab
 		temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
@@ -48,12 +47,12 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io(varargin)
 		clear fid
 		save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
 	else
-		if parse_.Results.Test 
+		if parse_.Results.Test
 			if exist([temp 'test.mat'], 'file')
 				fprintf('Loading test.mat  ...')
 				load([temp 'test.mat']);
 			else
-				disp('You have to do CutBatch First.')	
+				error('You have to do CutBatch First!')	
 			end
 		else
 			fprintf('Loading image...')
