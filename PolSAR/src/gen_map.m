@@ -1,8 +1,7 @@
 function [map] = gen_map(varargin)
-% GEN_MAP is used to generate a spatial distribution of scatterers for verification.
-% The return value of gen_map is an 3D matrix of size [channel, row, column].
+% GEN_MAP is used to generate a spatial distribution of scatterers for simulation.
+% The return of GEN_MAP is an 3D matrix of size [row, column, channel].
 % How to call? Variable are in order of (row size, coloumn size, number of channel).
-
     switch nargin 
     	case 0
 	        n_map = 8; 

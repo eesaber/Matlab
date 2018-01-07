@@ -13,7 +13,7 @@ function Vis_Co(k_p)
 	z = R.*cos(th);
    
     % Testing
-    test = 1;
+    test = 0;
     if test
         fprintf('Vis_Co IS IN TESTING MODE!\n')
         psi = 0*(pi/180);
@@ -76,7 +76,7 @@ function Vis_Co(k_p)
 	if isunix
 		cd /home/akb/Code/Matlab
 	end
-    
+    %{
 	figure
 	surf(x,y,z,F,'EdgeColor','none')
 	%surf(x,y,z,'FaceColor','w')
@@ -84,13 +84,13 @@ function Vis_Co(k_p)
 	xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
 	ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-	plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
-    
+	%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
+    %}
     figure    
     imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
     xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
 	ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
     set(gca,'Ydir','normal','XGrid','on','YGrid','on')
     colormap gray
-    plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
+    %plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
 end
