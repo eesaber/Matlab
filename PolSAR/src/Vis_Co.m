@@ -3,7 +3,7 @@ function Vis_Co(k_p)
 %	Vis_Co(k_p) is a function to visualize the scattering mechanism.
 
     % Generate hemisphere.
-	SP_NUM = 300;
+	SP_NUM = 500;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
 	phivec = linspace(0,2*pi,2*SP_NUM);
 	[th, ph] = meshgrid(thetavec,phivec);
@@ -18,15 +18,15 @@ function Vis_Co(k_p)
         fprintf('Vis_Co IS IN TESTING MODE!\n')
         psi = 0*(pi/180);
         R = [cos(psi), sin(psi); -sin(psi), cos(psi)]; % Rotate counter-clockwisely with psi.
-        S = R.'*[1, -1j; -1j, -1]*R;
-		%S = R.'*[1, 0; 0, 0]*R;
+        %S = R.'*[1, -1j; -1j, -1]*R;
+		S = R.'*[1, 0; 0, 0]*R;
 		if isreal(S)
 			fprintf('Scattering matrix is:\n %f %f\n %f %f \n',S)
 		else
 			fprintf('Scattering matrix is:\n %f%+fi, %f%+fi\n %f%+fi, %f%+fi \n',[real(S), imag(S)].')
 		end
         k_p = 1/sqrt(2)*[S(1,1)+S(2,2), S(1,1)-S(2,2), 2*S(1,2)].';    
-	end
+    end
     % Approach 1. Brute Force 
     n = 180;
     psi = linspace(0,pi,n);
@@ -59,9 +59,11 @@ function Vis_Co(k_p)
 	for n = 1 : numel(psi_p)
 		R = [1, 0, 0; 0, cos(2*psi_p(n)), -sin(2*psi_p(n)); 0, sin(2*psi_p(n)), cos(2*psi_p(n))];
 		k_pp = abs((R*k_p)).*[1, cos(2*psi_p(n)), sin(2*psi_p(n))].';  
-		k_pp = k_pp/sqrt(sum(abs(k_pp).^2));
+		%k_pp = k_pp/sqrt(sum(abs(k_pp).^2));
+        k_pp = k_pp/norm(k_pp, 2);
 		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-		sig = [0.0005, 0; 0, 0.0005];
+        %mu = [0.5 0]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
+		sig = [0.001, 0; 0 0.001];
 
 		temp_F = mvnpdf([x(:) y(:)],mu, sig);
 		F = F + reshape(temp_F,size(th));
@@ -82,12 +84,13 @@ function Vis_Co(k_p)
 	xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
 	ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-	plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph')
-    figure
+	plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
+    
+    figure    
     imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
     xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
 	ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
     set(gca,'Ydir','normal','XGrid','on','YGrid','on')
     colormap gray
-    plot_para('Ratio',[4 3 1],'Maximize', true)%'Filename', 'VisSph_Dipo')
+    plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
 end
