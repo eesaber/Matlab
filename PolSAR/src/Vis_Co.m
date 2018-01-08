@@ -86,7 +86,7 @@ function Vis_Co(k_p)
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
     %}
-    figure    
+
     imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
     xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
 	ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
