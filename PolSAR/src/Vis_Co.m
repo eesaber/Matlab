@@ -1,7 +1,16 @@
-function Vis_Co(k_p)
+function Vis_Co(k_p, varargin)
 %VIS_CO   Visualization of coherent target sphere.
 %	Vis_Co(k_p) is a function to visualize the scattering mechanism.
-
+	
+	% Parse input parameter
+	%{
+	parse_ = inputParser;
+	validationFcn_1_ = @(x) validateattributes(x,{'string','logical'},{'nonnegative'}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'string','logical'},{'scalar'});
+	addParameter(parse_,'xlabel',[],validationFcn_1_);
+	addParameter(parse_,'ylabel',0,validationFcn_2_);
+	parse(parse_,varargin{:})
+	%}
     % Generate hemisphere.
 	SP_NUM = 500;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
@@ -88,8 +97,8 @@ function Vis_Co(k_p)
     %}
 
     imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
-    xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-	ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
+    %xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
+	%ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
     set(gca,'Ydir','normal','XGrid','on','YGrid','on')
     colormap gray
     %plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
