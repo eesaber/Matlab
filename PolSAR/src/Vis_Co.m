@@ -3,14 +3,16 @@ function Vis_Co(k_p, varargin)
 %	Vis_Co(k_p) is a function to visualize the scattering mechanism.
 	
 	% Parse input parameter
-	%{
+	
 	parse_ = inputParser;
-	validationFcn_1_ = @(x) validateattributes(x,{'string','logical'},{'nonnegative'}); 
-	validationFcn_2_ = @(x) validateattributes(x,{'string','logical'},{'scalar'});
-	addParameter(parse_,'xlabel',[],validationFcn_1_);
-	addParameter(parse_,'ylabel',0,validationFcn_2_);
+	validationFcn_1_ = @(x) validateattributes(x,{'char'},{}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
+    validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'size',[2,2]});
+	addParameter(parse_,'xlabel','$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_1_);
+	addParameter(parse_,'ylabel','$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_2_);
+    addParameter(parse_,'Sigma',[0.0005, 0; 0 0.0005] ,validationFcn_3_);
 	parse(parse_,varargin{:})
-	%}
+	
     % Generate hemisphere.
 	SP_NUM = 500;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
@@ -72,7 +74,7 @@ function Vis_Co(k_p, varargin)
         k_pp = k_pp/norm(k_pp, 2);
 		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
         %mu = [0.5 0]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-		sig = [0.001, 0; 0 0.001];
+		sig = parse_.Results.Sigma;
 
 		temp_F = mvnpdf([x(:) y(:)],mu, sig);
 		F = F + reshape(temp_F,size(th));
@@ -95,11 +97,17 @@ function Vis_Co(k_p, varargin)
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
     %}
-
+    
     imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
-    %xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-	%ylabel('$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
+    %viscircles([0 0],1,'Color','k');
+    rectangle('Position',[-1,-1,2,2],'FaceColor',[0 .5 .5])
+    rectangle('Position',[-1,-1,2,2],'Curvature',[1 1],'FaceColor',[1 1 1])
+    
+    xlabel(parse_.Results.xlabel,'Interpreter', 'latex')
+    ylabel(parse_.Results.ylabel,'Interpreter', 'latex')
     set(gca,'Ydir','normal','XGrid','on','YGrid','on')
     colormap gray
+    
     %plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
+    
 end
