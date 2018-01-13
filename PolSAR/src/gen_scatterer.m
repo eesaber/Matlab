@@ -1,4 +1,4 @@
-%function gen_scatterer()
+function gen_scatterer()
 %function [S, Sigma] = gen_scatterer()
 % GEN_SCATTERER is used to generate dictionary matrix for simulation.
 % The return of GEN_SCATTERER is an 3D matrix of size [row, column, # of atom].
@@ -38,18 +38,18 @@
     label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
 	%%
     for qq = 1 : n_atom
-		Vis_Co(A(:,qq))
+		Vis_Co(A(:,qq),'Sigma',reshape(Sigma(qq,:),[2,2]),'Filename',num2str(qq))
 	end
-
     for qq = 1 : n_atom
 		subplot(2, n_atom/2, qq)
-		I = imread('1.jpg');
+		I = imread([num2str(qq),'.jpg']);
 		imshow(I)
 		q = size(I);
 		set(gca,'XTick',linspace(1,q(1),3), 'YTick',linspace(1,q(1),3),......
 			'XTickLabel',{'-1','0','1'},'YTickLabel',{'-1','0','1'})
+		xlabel(label(qq,:),'Interpreter', 'latex')
 		plot_para('Fontsize', 24)
 	end
 	plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimAtom')
 	
-%end
+end

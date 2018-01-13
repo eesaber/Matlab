@@ -1,7 +1,19 @@
-function Vis_Co(k_p)
+function Vis_Co(k_p, varargin)
 %VIS_CO   Visualization of coherent target sphere.
 %	Vis_Co(k_p) is a function to visualize the scattering mechanism.
-
+	
+	% Parse input parameter
+	
+	parse_ = inputParser;
+	validationFcn_1_ = @(x) validateattributes(x,{'char'},{}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
+    validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'size',[2,2]});
+	validationFcn_4_ = @(x) validateattributes(x,{'char'},{});
+	addParameter(parse_,'xlabel','$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_1_);
+	addParameter(parse_,'ylabel','$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_2_);
+    addParameter(parse_,'Sigma',[0.0005, 0; 0 0.0005] ,validationFcn_3_);
+	addParameter(parse_,'Filename','1', validationFcn_4_);
+	parse(parse_,varargin{:})
 	
     % Generate hemisphere.
 	SP_NUM = 700;
@@ -14,7 +26,7 @@ function Vis_Co(k_p)
 	z = R.*cos(th);
    
     % Testing
-    test = 1;
+    test = 0;
     if test
         fprintf('Vis_Co IS IN TESTING MODE!\n')
         psi = 0*(pi/180);
@@ -64,7 +76,7 @@ function Vis_Co(k_p)
         k_pp = k_pp/norm(k_pp, 2);
 		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
         %mu = [0.5 0]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-		sig = [1,0;0,1];
+		sig = parse_.Results.Sigma;
 
 		temp_F = mvnpdf([x(:) y(:)],mu, sig);
 		F = F + reshape(temp_F,size(th));
@@ -87,14 +99,14 @@ function Vis_Co(k_p)
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
     %}
-	%%
-	
+	figure(1)
 	ax_1 = axes;
 	imagesc(ax_1, x_plain(1,:), y_plain(:,1),F_plain/max(max(F_plain)));
 	ax_1.Visible = 'off';
 	ax_1.XTick = [];
 	ax_1.YTick = [];
 	plot_para('Ratio',[1 1 1])
+	
 	ax_2 = axes;
 	imagesc(ax_2, x_plain(1,:), y_plain(:,1),sqrt(x_plain.^2 + y_plain.^2)>1,.....
 		'AlphaData', sqrt(x_plain.^2 + y_plain.^2)>1);
@@ -104,12 +116,11 @@ function Vis_Co(k_p)
 	ax_2.YTick = [];
 	colormap(ax_1, 'jet')
 	colormap(ax_2, 'gray')
-	%xlabel(ax_2, parse_.Results.xlabel,'Interpreter', 'latex')
-    %ylabel(ax_2, parse_.Results.ylabel,'Interpreter', 'latex')
+	xlabel(ax_2, parse_.Results.xlabel,'Interpreter', 'latex')
+    ylabel(ax_2, parse_.Results.ylabel,'Interpreter', 'latex')
 	set(ax_1,'Ydir','normal','XGrid','on','YGrid','on','GridAlpha', .5, 'GridColor', 'w')
     set(ax_2,'Ydir','normal')
 	axis off
-    plot_para('Ratio',[1 1 1],'Maximize',true,'Filename','1') %
-	
-    
+    plot_para('Ratio',[1 1 1],'Maximize',true,'Filename',parse_.Results.Filename)
+	close all
 end

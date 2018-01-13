@@ -1,6 +1,7 @@
 *.jpg
 *.tif
 *.mat
+*.asv
 
 ASP/
 output/
