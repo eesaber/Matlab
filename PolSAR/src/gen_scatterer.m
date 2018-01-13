@@ -38,15 +38,17 @@
     label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
 	%%
     for qq = 1 : n_atom
-		figure
-		Vis_Co(A(:,qq),'Sigma',reshape(Sigma(qq,:),[2,2]),'xlabel',label(qq,:),'ylabel','')
+		Vis_Co(A(:,qq))
 	end
-	close all
-	figure
-	for qq = 1 : n_atom
+
+    for qq = 1 : n_atom
 		subplot(2, n_atom/2, qq)
-		imshow(imread([label(qq,:), '.jpg']))
-		axis off
+		I = imread('1.jpg');
+		imshow(I)
+		q = size(I);
+		set(gca,'XTick',linspace(1,q(1),3), 'YTick',linspace(1,q(1),3),......
+			'XTickLabel',{'-1','0','1'},'YTickLabel',{'-1','0','1'})
+		plot_para('Fontsize', 24)
 	end
 	plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimAtom')
 	
