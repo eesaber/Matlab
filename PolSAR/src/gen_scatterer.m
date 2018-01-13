@@ -36,12 +36,18 @@
     A(:,8) = 1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
 	Sigma(8,:) = 0.1*abs(randn([1, 4])).*[1, 0, 0, 1];
     label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
+	%%
     for qq = 1 : n_atom
-		subplot(2, n_atom/2, qq)
+		figure
 		Vis_Co(A(:,qq),'Sigma',reshape(Sigma(qq,:),[2,2]),'xlabel',label(qq,:),'ylabel','')
-		set(gca, 'YDir','normal')
-        plot_para('Fontsize', 24,'Ratio', [1 1 1])
-    end
-    plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimAtom')
+	end
+	close all
+	figure
+	for qq = 1 : n_atom
+		subplot(2, n_atom/2, qq)
+		imshow(imread([label(qq,:), '.jpg']))
+		axis off
+	end
+	plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimAtom')
 	
 %end

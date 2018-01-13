@@ -14,7 +14,7 @@ function Vis_Co(k_p, varargin)
 	parse(parse_,varargin{:})
 	
     % Generate hemisphere.
-	SP_NUM = 500;
+	SP_NUM = 700;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
 	phivec = linspace(0,2*pi,2*SP_NUM);
 	[th, ph] = meshgrid(thetavec,phivec);
@@ -97,17 +97,24 @@ function Vis_Co(k_p, varargin)
 	zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 	%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
     %}
-    
-    imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
-    %viscircles([0 0],1,'Color','k');
-    rectangle('Position',[-1,-1,2,2],'FaceColor',[0 .5 .5])
-    rectangle('Position',[-1,-1,2,2],'Curvature',[1 1],'FaceColor',[1 1 1])
-    
-    xlabel(parse_.Results.xlabel,'Interpreter', 'latex')
-    ylabel(parse_.Results.ylabel,'Interpreter', 'latex')
-    set(gca,'Ydir','normal','XGrid','on','YGrid','on')
-    colormap gray
-    
-    %plot_para('Ratio',[1 1 1],'Maximize', true,'Filename', 'VisSph_dipo','Fontsize',32)
+	ax_1 = axes;
+	imagesc(ax_1, x_plain(1,:), y_plain(:,1),F_plain/max(max(F_plain)));
+	xlabel(ax_1, parse_.Results.xlabel,'Interpreter', 'latex','Fontsize',32)
+    ylabel(ax_1, parse_.Results.ylabel,'Interpreter', 'latex','Fontsize',32)
+	set(gca,'FontSize',32,'Fontname','CMU Serif Roman','Linewidth',2)
+	ax_2 = axes;
+	imagesc(ax_2, x_plain(1,:), y_plain(:,1),sqrt(x_plain.^2 + y_plain.^2)>1,.....
+		'AlphaData', sqrt(x_plain.^2 + y_plain.^2)>1);
+	linkaxes([ax_1,ax_2])
+	ax_2.Visible = 'off';
+	ax_2.XTick = [];
+	ax_2.YTick = [];
+	colormap(ax_1, 'jet')
+	colormap(ax_2, 'gray')
+	xlabel(ax_1, parse_.Results.xlabel,'Interpreter', 'latex')
+    ylabel(ax_1, parse_.Results.ylabel,'Interpreter', 'latex')
+	set(ax_1,'Ydir','normal','XGrid','on','YGrid','on','GridAlpha', .5, 'GridColor', 'w')
+    set(ax_2,'Ydir','normal')
+    plot_para('Ratio',[1 1 1],'Filename', parse_.Results.xlabel) %
     
 end
