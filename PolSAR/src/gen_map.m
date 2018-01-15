@@ -43,13 +43,14 @@ function [map] = gen_map(varargin)
 	map(:,:, 8) = reshape(sum(map,3)<1, [row_size, col_size, 1]);
 	
 	map = map.*abs(mu + sqrt(sigma)*randn(size(map))); % Magnitude of scattering
-	
+	label_ = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
 	% Plot the sptial distribution 
 	figure(957)
 	for rr = 1 : n_map
 		subplot(2, n_map/2, rr)
 		imagesc(-map(:, :, rr))
         %title(['# of ' num2str(rr)])
+		xlabel(label_(rr,:),'Interpreter', 'latex')
 		set(gca, 'YDir','normal')
         colormap gray
         plot_para('Fontsize', 24,'Ratio', [1 1 1])

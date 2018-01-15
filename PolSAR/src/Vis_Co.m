@@ -76,8 +76,8 @@ function Vis_Co(k_p, varargin)
         k_pp = k_pp/norm(k_pp, 2);
 		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
         %mu = [0.5 0]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-		sig = parse_.Results.Sigma;
-
+		sig = k_pp*k_pp';
+		sig = sig(2:3,2:3);
 		temp_F = mvnpdf([x(:) y(:)],mu, sig);
 		F = F + reshape(temp_F,size(th));
 		temp_P = mvnpdf([x_plain(:) y_plain(:)],mu, sig);
