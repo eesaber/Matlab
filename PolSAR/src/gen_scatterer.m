@@ -8,22 +8,22 @@ function gen_scatterer()
 	phi = linspace(0,pi,180);
 	A = zeros(3,8);
 	I = [1, 0; 0, 1];
-    Sigma = zeros(8,4);
+    Sigma = zeros(8,9);
 	% surface 3 atoms
 	for k = 1 : 3
-		S = range*rand(2).*I;
+		S = abs(range*rand(2).*I);
 		theta = rand(1)*pi;
 		R_k = [1, 0, 0; 0, cos(2*theta), -sin(2*theta); 0, sin(2*theta), cos(2*theta)];
+        Sigma(k,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
 		A(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
-        %Sigma(k,:) = 0.1*abs(randn([1, 4])).*[1, 0, 0, 1];
 	end
 	% dihedral 2 big sigma 2 small sigma
 	for k = 4 : 7
 		S = range*(1-randn(2) + 1j-1j*randn(2)).*I;
 		theta = rand(1)*pi;
 		R_k = [1, 0, 0; 0, cos(2*theta), -sin(2*theta); 0, sin(2*theta), cos(2*theta)];
+        Sigma(k,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
 		A(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
-        %Sigma(k,:) = 0.1*abs(randn([1, 4])).*[1, 0, 0, 1];
 	end
 	% volume
     Base = [1, 0; 0, 0];
@@ -33,13 +33,17 @@ function gen_scatterer()
         S = S + sin(phi(k))*R_i*Base*R_i.'*(phi(2)-phi(1));
     end
     A(:,8) = 1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
-	%Sigma(8,:) = 0.1*abs(randn([1, 4])).*[1, 0, 0, 1];
-    label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
+	Sigma(8,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
+    temp = (abs(Sigma) < 0.0001).*repmat([1 0 0 0 1 0 0 0 1],[8,1]);
+    Sigma = Sigma + temp;
+ 
+   
 	%%
     for qq = 1 : n_atom
-		Vis_Co(A(:,qq),'Filename',num2str(qq))
+		Vis_Co(A(:,qq),'Sigma',0.01*reshape(abs(Sigma(qq,:)),[3 3]),'Subplot',true,'Filename',num2str(qq))
 	end
 	%%
+    label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
     for qq = 1 : n_atom
 		subplot(2, n_atom/2, qq)
 		I = imread([num2str(qq),'.jpg']);
