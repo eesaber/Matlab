@@ -34,7 +34,8 @@ theta = linspace(0,2*pi-0.001,360);
 kp_2 = reshape(1, numel(kp_2));
 kp_3 = reshape(1, numel(kp_3));
 kp_1 = sqrt(1 - kp_2.^2 - kp_3.^2);
-%} 
+%}
+rng(180);
 mu = 0;
 sigma = 1;
 size_K = 100;
@@ -47,6 +48,7 @@ for r = 1 : size_K
 	C(:,r) = [real(t(1,1)); real(t(2,2)); real(t(3,3)); sqrt(2)*real(t(1,2)); sqrt(2)*imag(t(1,2)); ...
 			sqrt(2)*real(t(1,3)); sqrt(2)*imag(t(1,3)); sqrt(2)*real(t(2,3)); sqrt(2)*imag(t(2,3))];
 end
+Vis_Co(k_p)
 
 %% Non-negative matrix factorization
 [A_sol, X_sol] = nnmf(Y, k, 'Display', 'iter', 'UseParallel', true);
