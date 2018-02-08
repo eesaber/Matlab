@@ -1,4 +1,4 @@
-function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io(varargin)
+function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	% Data spec:
 	% [row, col]: 8735*23499, without header 
 	% mlc_mag.row_mult (m/pixel) = 4.99654098 (7.2) ; MLC S (azimuth) Slant Post Spacing

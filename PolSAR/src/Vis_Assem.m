@@ -1,5 +1,8 @@
 function Vis_Assem(k_p, sigma, varargin)
 %VIS_ASSEM   Visualization of assembly matrix.
+% k_p is a two-dimensional matrix with size 3xN. sigma is a three-dimensional matrix 
+% with size 3x3xN
+
 	if isunix
 		cd /home/akb/Code/Matlab
 	else 
@@ -8,22 +11,16 @@ function Vis_Assem(k_p, sigma, varargin)
 
 	% Parse input parameter
 	parse_ = inputParser;
-	validationFcn_1_ = @(x) validateattributes(x,{'char'},{}); 
-	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
+	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
+	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{});
-	validationFcn_4_ = @(x) validateattributes(x,{'char'},{});
-    validationFcn_5_ = @(x) validateattributes(x,{'numeric'},{'size',[3, 3]});
-	validationFcn_6_ = @(x) validateattributes(x,{'char'},{});
-	addParameter(parse_,'xlabel','$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_1_);
-	addParameter(parse_,'ylabel','$|k''_{p3}| \sin (2 \psi_m) / \|\bar{k}_p\|_2$', validationFcn_2_);
-    addParameter(parse_,'Subplot',0 ,validationFcn_3_);
-	addParameter(parse_,'Filename','1', validationFcn_4_);
-    addParameter(parse_,'Sigma',0.1*eye(3), validationFcn_5_);
-	addParameter(parse_,'Type','3D', validationFcn_6_);
+	addParameter(parse_,'Label_On',false, validationFcn_1_);
+    addParameter(parse_,'SubPlot',false ,validationFcn_2_);    
+	addParameter(parse_,'ThreeD',false, validationFcn_3_);
 	parse(parse_,varargin{:})
 	
-    % Generate hemisphere.
-	SP_NUM = 500;
+    %% Generate hemisphere.
+	SP_NUM = 700;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
 	phivec = linspace(0,2*pi,2*SP_NUM);
 	[th, ph] = meshgrid(thetavec,phivec);
@@ -31,113 +28,77 @@ function Vis_Assem(k_p, sigma, varargin)
 	x = R.*sin(th).*cos(ph);
 	y = R.*sin(th).*sin(ph);
 	z = R.*cos(th);
-	[~, num_k_p] = size(k_p);
+    
+    %% Parameters
+	[~, num_k_p] = size(k_p); 
+	n = 91;
+	psi = linspace(0,90,n);
+	c = reshape(cosd(2*psi),[1,1,n]);
+	s = reshape(sind(2*psi),[1,1,n]);
+	R = reshape([ones(1,1,n), zeros(1,1,n), zeros(1,1,n); zeros(1,1,n), c, -s; zeros(1,1,n), s, c],[3,3*n]).';
+	
+	[x_plain, y_plain] = meshgrid(linspace(-1,1,SP_NUM),linspace(-1,1,SP_NUM));
+
+	alphabets = char(97:96+num_k_p).'; % Label for subplot, start from a to ...
+	subplot_label = strcat({'('}, alphabets, {')'});
+	
 	for qq = 1 : num_k_p
-        % Normalize k_p
-        k_p(:,qq) = k_p(:,qq)/norm(k_p(:,qq),2);
-		% Approach 1. Brute Force 
-		n = 90;
-		psi = linspace(0,pi/2-0.001,n);
-		c = reshape(cos(2*psi),[1,1,n]);
-		s = reshape(sin(2*psi),[1,1,n]);
-		R = reshape([ones(1,1,n), zeros(1,1,n), zeros(1,1,n); zeros(1,1,n), c, -s; zeros(1,1,n), s, c],[3,3*n]).';
-		temp = R*k_p;
-		[sup_, ind] = min(abs(temp(3:3:end)));
-		psi_br = psi(ind);
-		% Approach 2. Analytical Solution
-			alpha = acos(abs(k_p(1)));
-			beta = acos(abs(k_p(2))/sin(alpha));
-			if ~isreal(beta)
-				fprintf('beta is not real number, alpha = %f, beta = %f+%fi \n', alpha/pi*180, real(beta), imag(beta) )
-				beta = real(beta);
-			end
-			phi_2 = angle(k_p(2));
-			phi_3 = angle(k_p(3));
-			psi_ana = mod((2*(cos(phi_2-phi_3)>=0)-1)/4*(2*beta - mod(2*beta,pi) ......
-			+ mod(atan(tan(2*beta)*abs(cos(phi_2-phi_3))), pi)), pi/2);
-		fprintf('Brute force: %f, Analytical: %f \n', psi_br/pi*180, psi_ana/pi*180)    
-
-		% Generate the pattern 
-		% Check if there exist more than one min value
-		F = zeros(size(th));
-		[x_plain, y_plain] = meshgrid(linspace(-1,1,SP_NUM),linspace(-1,1,SP_NUM));
-		F_plain = zeros(size(x_plain));
-		
-			
-		R = [1, 0, 0; 0, cos(2*psi_ana), -sin(2*psi_ana); 0, sin(2*psi_ana), cos(2*psi_ana)];
-		%k_pp = abs((R*k_p)).*[1, cos(2*psi_ana), sin(2*psi_ana)].';  
-		k_pp = abs(k_p).*[1, cos(2*psi_ana), sin(2*psi_ana)].';  
-		
-		k_pp = k_pp/norm(k_pp, 2);
-		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.  		
-		sig = parse_.Results.Sigma(2:3, 2:3);
-		temp_F = mvnpdf([x(:) y(:)],mu, sig);
-		F = F + reshape(temp_F,size(th));
-		temp_P = mvnpdf([x_plain(:) y_plain(:)],mu, sig);
-		F_plain = F_plain + reshape(temp_P,size(x_plain));
-
-
-		allkp_3 = temp(3:3:end);
-		psi_p = psi(abs(abs(allkp_3) - sup_) < 2.2251e-10);
-		for n = 1 : numel(psi_p)
-			R = [1, 0, 0; 0, cos(2*psi_p(n)), -sin(2*psi_p(n)); 0, sin(2*psi_p(n)), cos(2*psi_p(n))];
-			k_pp = abs((R*k_p)).*[1, cos(2*psi_p(n)), sin(2*psi_p(n))].';  
-			%k_pp = k_pp/sqrt(sum(abs(k_pp).^2));
-			k_pp = k_pp/norm(k_pp, 2);
-			mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-			%mu = [0.5 0]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.
-			sig = k_pp*k_pp';
-			sig = sig(2:3,2:3);
-			temp_F = mvnpdf([x(:) y(:)],mu, sig);
-			F = F + reshape(temp_F,size(th));
-			temp_P = mvnpdf([x_plain(:) y_plain(:)],mu, sig);
-			F_plain = F_plain + reshape(temp_P,size(x_plain));
+        k_p(:,qq) = k_p(:,qq)/norm(k_p(:,qq),2); % Normalize k_p
+		% Caulculate the deorientation angle
+		alpha = acosd(abs(k_p(1,qq)));
+		beta = acosd(abs(k_p(2,qq))/sind(alpha));
+		if ~isreal(beta)
+			fprintf('beta is not real number, alpha = %f, beta = %f+%fi \n', alpha, real(beta), imag(beta) )
+			beta = real(beta);
 		end
+		phi_2 = atan2d(imag(k_p(2,qq)), real(k_p(2,qq)));
+		phi_3 = atan2d(imag(k_p(3,qq)), real(k_p(3,qq)));
+		psi_ana = mod((2*(cosd(phi_2-phi_3)>=0)-1)/4*(2*beta - mod(2*beta, 180) ......
+			+ mod(atand(tand(2*beta)*abs(cosd(phi_2-phi_3))), 180)), 90);
+		S_hh = (k_p(1,qq)+k_p(2,qq))/sqrt(2);
+        S_vv = (k_p(1,qq)-k_p(2,qq))/sqrt(2);
+        S_hv = k_p(3,qq)/sqrt(2);
+        a = atan2d(abs(S_vv),abs(S_hh));
+        %b = 0.5*(atan2d(imag(S_vv),real(S_vv)-atan2d(imag(S_hh),real(S_hh));
+        c = acosd(sqrt(2)*abs(S_hv)/norm([S_hh, sqrt(2)*S_hv, S_vv]));
+        u = sind(c)*cosd(2*a);
+        psi_ana = psi_ana+90*(u<0);
+        %fprintf('Orientation angle: %f \n', psi_ana)
+	
+		%% Generate the pattern
+		k_pp = abs(k_p(:,qq)).*[1, cosd(2*psi_ana), sind(2*psi_ana)].';
+		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.  		
+		F = reshape(mvnpdf([x(:) y(:)],mu, sigma(2:3,2:3,qq)), size(th));
+		F_plain = reshape(mvnpdf([x_plain(:) y_plain(:)],mu, sigma(2:3,2:3,qq)), size(x_plain));
 		F = ind2rgb(uint8((F/max(max(F)))*255),jet);
 		F_plain = F_plain/max(max(F_plain));
-	end 
-
-	if strcmp(parse_.Results.Type, '3D')
-		figure
+		%% plot 
+		if parse_.Results.SubPlot
+			% We can plot a circular plot by using SURF
+			% and view topdown
+			subplot(2, 4, qq)
 			surf(x,y,z,F,'EdgeColor','none')
-			%surf(x,y,z,'FaceColor','w')
-			view(135,30);
-			xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-			ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-			zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-			%plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
-	else if parse_.Results.Subplot
-        figure(1)
-        ax_1 = axes;
-        imagesc(ax_1, x_plain(1,:), y_plain(:,1),F_plain/max(max(F_plain)));
-        ax_1.Visible = 'off';
-        ax_1.XTick = [];
-        ax_1.YTick = [];
-        plot_para('Ratio',[1 1 1])
-
-        ax_2 = axes;
-        imagesc(ax_2, x_plain(1,:), y_plain(:,1),sqrt(x_plain.^2 + y_plain.^2)>1,.....
-            'AlphaData', sqrt(x_plain.^2 + y_plain.^2)>1);
-        linkaxes([ax_1,ax_2])
-        ax_2.Visible = 'off';
-        ax_2.XTick = [];
-        ax_2.YTick = [];
-        colormap(ax_1, 'jet')
-        colormap(ax_2, 'gray')
-        xlabel(ax_2, parse_.Results.xlabel,'Interpreter', 'latex')
-        ylabel(ax_2, parse_.Results.ylabel,'Interpreter', 'latex')
-        set(ax_1,'Ydir','normal','XGrid','on','YGrid','on','GridAlpha', .5, 'GridColor', 'w')
-        set(ax_2,'Ydir','normal')
-        axis off
-        plot_para('Ratio',[1 1 1],'Maximize',true,'Filename',parse_.Results.Filename)
-        close all
-    else
-        figure
-            imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
-            xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-            ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-            grid on
-            colormap gray
-            %plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
-    end
+			set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
+                'XTickLabelMode','manual','GridColor','none')
+            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
+            pbaspect([1 1 1])
+		else
+			% Plot each \bar{A} in different figure
+			figure
+			if parse_.Results.ThreeD
+				surf(x,y,z,F,'EdgeColor','none')
+				view(135,30);
+				xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
+				ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
+				zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
+			else
+				imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
+				xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
+				ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
+				grid on
+				colormap gray
+            end
+        end
+	plot_para('Maximize',true,'Filename','SimAtom')
+	movefile SimAtom.jpg PolSAR/output
 end

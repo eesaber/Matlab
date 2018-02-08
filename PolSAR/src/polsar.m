@@ -1,6 +1,6 @@
 %% Data IO
-[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io();
-%a = data_io('Test',true);
+[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO();
+%a = Data_IO('Test',true);
 %k_p = 1/sqrt(2)*[hh_hh+vv_vv; hh_hh-vv_vv; sqrt(2)*hv_hv ];
 %% Pauli decomposition
 [row, col] = size(hh_hh);
