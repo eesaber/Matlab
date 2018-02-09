@@ -1,60 +1,56 @@
-function gen_scatterer()
-%function [S, Sigma] = gen_scatterer()
+function [k_p, sigma] = Gen_scatterer()
+%function Gen_scatterer()
 % GEN_SCATTERER is used to generate dictionary matrix for simulation.
 % The return of GEN_SCATTERER is an 3D matrix of size [row, column, # of atom].
-	rng(180);
-	n_atom = 8;
-	range = 10;
-	phi = linspace(0,pi,180);
-	A = zeros(3,8);
-	I = [1, 0; 0, 1];
-    Sigma = zeros(8,9);
+	rng(182); % seed of random number generator
+	size_Q = 8; % number of atoms
+	range = 10; 
+	phi = linspace(0,180,362);
+	k_p = zeros(3,size_Q);
+    sigma = zeros(3,3,size_Q);
 	% surface 3 atoms
 	for k = 1 : 3
-		S = abs(range*rand(2).*I);
-		theta = rand(1)*pi;
-		R_k = [1, 0, 0; 0, cos(2*theta), -sin(2*theta); 0, sin(2*theta), cos(2*theta)];
-        Sigma(k,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
-		A(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+		S = abs(rand(2).*eye(2));
+		theta = 120*rand(1)-60;
+		R_k = [1, 0, 0; 0, cosd(2*theta), -sind(2*theta); 0, sind(2*theta), cosd(2*theta)];
+        temp = 1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+		temp = temp/norm(temp);
+        sigma(:,:,k) = temp*temp';
+		k_p(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
 	end
 	% dihedral 2 big sigma 2 small sigma
 	for k = 4 : 7
-		S = range*(1-randn(2) + 1j-1j*randn(2)).*I;
-		theta = rand(1)*pi;
-		R_k = [1, 0, 0; 0, cos(2*theta), -sin(2*theta); 0, sin(2*theta), cos(2*theta)];
-        Sigma(k,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
-		A(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+		S = (2*randn(2)-1 + j*(2*randn(2)-1)).*eye(2);
+		theta = 180*rand(1)-90;
+		R_k = [1, 0, 0; 0, cosd(2*theta), -sind(2*theta); 0, sind(2*theta), cosd(2*theta)];
+		temp = 1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+		temp = temp/norm(temp);
+		sigma(:,:,k) = temp*temp';
+		k_p(:,k) = 1/sqrt(2)*R_k*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+        %sigma(:,:,k) = abs(k_p(:,k)*k_p(:,k)');
 	end
 	% volume
-    Base = [1, 0; 0, 0];
+    Base = [1, 0; 0, 0]; % horizontal dipole
     S = zeros(2,2);
     for  k = 1 : numel(phi)
-        R_i = [cos(phi(k)), sin(phi(k)); -sin(phi(k)), cos(phi(k))];
-        S = S + sin(phi(k))*R_i*Base*R_i.'*(phi(2)-phi(1));
+        R_i = [cosd(phi(k)), sind(phi(k)); -sind(phi(k)), cosd(phi(k))];
+        %S = S + sind(phi(k))*R_i*Base*R_i.'*(phi(2)-phi(1))/180*pi;
+		%S = S + R_i*Base*R_i.';
+		S = R_i*Base*R_i.';
+		temp =  1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
+		k_p(:,8) = k_p(:,8) + temp*sind(phi(k))/2*(phi(2)-phi(1))/180*pi;
+		sigma(:,:,8) = sigma(:,:,8) + temp*temp'*sind(phi(k))/2*(phi(2)-phi(1))/180*pi;
+        %sigma(:,:,8) = sigma(:,:,8)/100;
     end
-    A(:,8) = 1/sqrt(2)*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)];
-	Sigma(8,:) = 1/2*reshape([S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]*[S(1,1)+S(2,2); S(1,1)-S(2,2); 2*S(1,2)]', [1 9]);
-    temp = (abs(Sigma) < 0.0001).*repmat([1 0 0 0 1 0 0 0 1],[8,1]);
-    Sigma = Sigma + temp;
- 
-   
-	%%
-    for qq = 1 : n_atom
-		Vis_Co(A(:,qq),'Sigma',0.01*reshape(abs(Sigma(qq,:)),[3 3]),'Subplot',true,'Filename',num2str(qq))
-	end
-	%%
-    label = ['(a)';'(b)';'(c)';'(d)';'(e)';'(f)';'(g)';'(h)'];
-    for qq = 1 : n_atom
-		subplot(2, n_atom/2, qq)
-		I = imread([num2str(qq),'.jpg']);
-		delete([num2str(qq),'.jpg'])
-		imshow(I)
-		q = size(I);
-		%set(gca,'XTick',linspace(1,q(1),3), 'YTick',linspace(1,q(1),3),'XTickLabel',{'-1','0','1'},'YTickLabel',{'-1','0','1'})
-		set(gca,'TickDir','in','XTick',linspace(1,q(1),3), 'YTick',linspace(1,q(1),5),'XTickLabel',{'-1','0','1'},'YTickLabel',{'-1','-0.5','0','0.5','1'})
-		xlabel(label(qq,:),'Interpreter', 'latex')
-		plot_para('Fontsize', 24)
-	end
-	plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimAtom')
 	
+    for k = 1 : size_Q
+        sigma(:,:,k) = sigma(:,:,k) + 10^-2*(abs(sigma(:,:,k)) < 0.0001).*eye(3);
+		%sigma(:,:,k) = diag(diag(sigma(:,:,k)));
+    end
+
+	%% plot
+	if 1 
+        close all
+		Vis_Assem(k_p, sigma,'SubPlot',true)
+	end
 end

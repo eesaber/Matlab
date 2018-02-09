@@ -1,22 +1,43 @@
 %% The code implement decomposition by using non-negative matrix factorization
 clear 
 clc
-test = 1;
-q = 9; 
-M = 100;
-Q = 8;
-%% Read Data
-if test 
+simulation = 1;
+%% import or simulate data
+if simulation
 	% Simulated data
+    disp('Using simulation data')
 	% declaration of variable
+    rng(181); % number of random generator
 	N_az = 100; N_ra = 100; % az==row, ran == col
-	N = N_az*N_ra; % Image with size (100x100) 
-	%A = random(M,Q); % Assembly matrix (MxQ)
-	X = gen_map(N_az, N_ra, Q); % Spatial distribution matrix (QxN)
-	D = 1;
-	Y = D*X;
+	N = N_az*N_ra; % Image with size (100x100)
+    size_Q = 8; % Numbers of atom in D
+    size_M = 1000; % Numbers of vector in C
+    %% generate coherency target space (C)
+    mu = 0;
+    sigma = 1;
+    k_p = normrnd(mu,sigma,[3, size_M]) + 1j*normrnd(mu,sigma,[3, size_M]);
+    C = zeros(9, size_M);
+    for r = 1 : size_M
+        %k_p(:,r) = exp(-1j*angle(k_p(1,r)))*k_p(:,r);
+        k_p(:,r) = k_p(:,r)/norm(k_p(:,r),2);
+        t = k_p(:,r)*k_p(:,r)';
+        C(:,r) = [real(t(1,1)); real(t(2,2)); real(t(3,3)); sqrt(2)*real(t(1,2)); sqrt(2)*imag(t(1,2)); ...
+                sqrt(2)*real(t(1,3)); sqrt(2)*imag(t(1,3)); sqrt(2)*real(t(2,3)); sqrt(2)*imag(t(2,3))];
+    end
+    Vis_Co(k_p,'ThreeD',false) % Visulization of the coherent target space
+    %% generate spatial distribution (X)
+    X = Gen_map(N_az, N_ra, size_Q); % Spatial distribution matrix (QxN)
+    %% generate assembly matrix (A) MxQ
+    sigma = Gen_Scatterer();
+    A = zeros(size_M, size_Q);
+    for q = 1 : size_Q
+        A(:,q) = 1/(pi^2.5*det(sigma(:,:,q)))*exp(-real(sum((k_p'*sigma(:,:,q)).*k_p.',2)));
+    end
+    %% Synthesis the data (Y)
+	Y = C*A*X;
 else
 	% Real data import
+    disp('Using real data...')
 	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io();
 	n = numel(hh_hh);
 	Y = [reshape(hh_hh, [1, n]); reshape(hv_hv, [1, n]); reshape(vv_vv, [1, n]); ......
@@ -26,32 +47,10 @@ else
 	[N_az, N_ra] = Y.size;
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
-%% Build coherency target space 
-%{
-rho = linspace(0,1,101);
-theta = linspace(0,2*pi-0.001,360);
-[kp_2, kp_3] = pol2cart(meshgrid(rho, theta));
-kp_2 = reshape(1, numel(kp_2));
-kp_3 = reshape(1, numel(kp_3));
-kp_1 = sqrt(1 - kp_2.^2 - kp_3.^2);
-%}
-rng(180);
-mu = 0;
-sigma = 1;
-size_K = 100;
-k_p = normrnd(mu,sigma,[3, size_K]) + 1j*normrnd(mu,sigma,[3, size_K]);
-C = zeros(9, size_K);
-for r = 1 : size_K
-	%k_p(:,r) = exp(-1j*angle(k_p(1,r)))*k_p(:,r);
-	k_p(:,r) = k_p(:,r)/norm(k_p(:,r),2);
-	t = k_p(:,r)*k_p(:,r)';
-	C(:,r) = [real(t(1,1)); real(t(2,2)); real(t(3,3)); sqrt(2)*real(t(1,2)); sqrt(2)*imag(t(1,2)); ...
-			sqrt(2)*real(t(1,3)); sqrt(2)*imag(t(1,3)); sqrt(2)*real(t(2,3)); sqrt(2)*imag(t(2,3))];
-end
-Vis_Co(k_p)
+
 
 %% Non-negative matrix factorization
-[A_sol, X_sol] = nnmf(Y, k, 'Display', 'iter', 'UseParallel', true);
+[A_sol, X_sol] = nnmf(Y, size_Q, 'Display', 'iter', 'UseParallel', true);
 X_sol = reshape(X_sol, [N_az, N_ra, k]);
 figure(1)
 	for rr = 1 : k

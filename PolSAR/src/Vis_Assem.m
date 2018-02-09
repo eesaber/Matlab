@@ -67,7 +67,7 @@ function Vis_Assem(k_p, sigma, varargin)
 	
 		%% Generate the pattern
 		k_pp = abs(k_p(:,qq)).*[1, cosd(2*psi_ana), sind(2*psi_ana)].';
-		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.  		
+		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.  
 		F = reshape(mvnpdf([x(:) y(:)],mu, sigma(2:3,2:3,qq)), size(th));
 		F_plain = reshape(mvnpdf([x_plain(:) y_plain(:)],mu, sigma(2:3,2:3,qq)), size(x_plain));
 		F = ind2rgb(uint8((F/max(max(F)))*255),jet);
@@ -80,7 +80,7 @@ function Vis_Assem(k_p, sigma, varargin)
 			surf(x,y,z,F,'EdgeColor','none')
 			set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
                 'XTickLabelMode','manual','GridColor','none')
-            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
+            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',24)
             pbaspect([1 1 1])
 		else
 			% Plot each \bar{A} in different figure
