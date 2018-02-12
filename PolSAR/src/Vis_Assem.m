@@ -80,7 +80,7 @@ function Vis_Assem(k_p, sigma, varargin)
 			surf(x,y,z,F,'EdgeColor','none')
 			set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
                 'XTickLabelMode','manual','GridColor','none')
-            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',24)
+            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
             pbaspect([1 1 1])
 		else
 			% Plot each \bar{A} in different figure
@@ -98,7 +98,9 @@ function Vis_Assem(k_p, sigma, varargin)
 				grid on
 				colormap gray
             end
-        end
-	plot_para('Maximize',true,'Filename','SimAtom')
-	movefile SimAtom.jpg PolSAR/output
+		end
+	if 0
+		plot_para('Maximize',true,'Filename','SimAtom')
+		movefile SimAtom.jpg PolSAR/output
+	end
 end
