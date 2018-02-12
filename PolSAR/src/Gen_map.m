@@ -14,7 +14,13 @@ function [map] = Gen_map(varargin)
         otherwise
         	disp('NUMBER OF INPUT VARIABLE ERROR')
     end
-
+	if isunix
+		cd /home/akb/Code/Matlab
+	else 
+		cd D:\Code\Simu\PolSAR
+	end
+	
+	%%
 	map = zeros(row_size, col_size, n_map);
 	mu = 1;
 	sigma = 0.01;
@@ -57,4 +63,5 @@ function [map] = Gen_map(varargin)
 	end
 	axis on
     plot_para('Fontsize', 24,'Ratio', [1 1 1], 'Maximize',true, 'Filename','SimMap')
+	movefile SimMap.jpg PolSAR/output
 end

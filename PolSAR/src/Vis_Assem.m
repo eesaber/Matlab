@@ -99,7 +99,7 @@ function Vis_Assem(k_p, sigma, varargin)
 				colormap gray
             end
 		end
-	if 0
+	if 1
 		plot_para('Maximize',true,'Filename','SimAtom')
 		movefile SimAtom.jpg PolSAR/output
 	end
