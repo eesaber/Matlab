@@ -1,7 +1,8 @@
-function [sigma] = Gen_scatterer(varargin)
+function [sigma] = Gen_assem(varargin)
 %function Gen_scatterer()
 % GEN_SCATTERER is used to generate dictionary matrix for simulation.
-% The return of GEN_SCATTERER is an 3D matrix of size [row, column, # of atom].
+% The return of GEN_SCATTERER is an 3D matrix of size [row, column, # of
+% atom]. 
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{}); 
 	addParameter(parse_,'Isplot',true,validationFcn_1_);
