@@ -4,11 +4,10 @@ function Vis_Assem(k_p, sigma, varargin)
 % with size 3x3xN
 
 	if isunix
-		cd /home/akb/Code/Matlab
+		cd /home/akb/Code/Matlab/PolSAR
 	else 
 		cd D:\Code\Simu\PolSAR
 	end
-
 	% Parse input parameter
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
@@ -24,19 +23,18 @@ function Vis_Assem(k_p, sigma, varargin)
 	thetavec = linspace(0,pi/2,SP_NUM/2);
 	phivec = linspace(0,2*pi,2*SP_NUM);
 	[th, ph] = meshgrid(thetavec,phivec);
-	R = ones(size(th)); % should be your R(theta,phi) surface in general
-	x = R.*sin(th).*cos(ph);
-	y = R.*sin(th).*sin(ph);
-	z = R.*cos(th);
+	radial = ones(size(th)); % should be your R(theta,phi) surface in general
+	x = radial.*sin(th).*cos(ph);
+	y = radial.*sin(th).*sin(ph);
+	z = radial.*cos(th);
     
     %% Parameters
 	[~, num_k_p] = size(k_p); 
 	n = 91;
 	psi = linspace(0,90,n);
-	c = reshape(cosd(2*psi),[1,1,n]);
-	s = reshape(sind(2*psi),[1,1,n]);
-	R = reshape([ones(1,1,n), zeros(1,1,n), zeros(1,1,n); zeros(1,1,n), c, -s; zeros(1,1,n), s, c],[3,3*n]).';
-	
+	S_a = 1/sqrt(2)*[1; 0; 1];
+	S_b = 1/sqrt(2)*[1; 0; -1];
+	S_c = 1/sqrt(2)*[0; 2; 0];
 	[x_plain, y_plain] = meshgrid(linspace(-1,1,SP_NUM),linspace(-1,1,SP_NUM));
 
 	alphabets = char(97:96+num_k_p).'; % Label for subplot, start from a to ...
@@ -44,6 +42,17 @@ function Vis_Assem(k_p, sigma, varargin)
 	
 	for qq = 1 : num_k_p
         k_p(:,qq) = k_p(:,qq)/norm(k_p(:,qq),2); % Normalize k_p
+		
+		% Judge if it is symmetry
+		S = 1/sqrt(2)*[k_p(1,qq)+k_p(2,qq); sqrt(2)*k_p(3,qq); k_p(1,qq)-k_p(2,qq)];
+		chi = 0.5*atand((conj(k_p(2,qq))*k_p(3,qq) + k_p(2,qq)*conj(k_p(3,qq)))/(abs(k_p(2,qq))^2 + abs(k_p(3,qq))^2));
+		DS = dot(S, S_a)*S_a + dot(S, cosd(chi)*S_b+sind(chi)*S_c)*(cosd(chi)*S_b+sind(chi)*S_c);
+		tau = acos(dot(S,DS)/norm(S)/norm(DS));
+		symmetry = (tau <= 8/pi);
+		if tau > 8/pi
+			symmetry = 0;
+			disp('asymmetry target')
+		end
 		% Caulculate the deorientation angle
 		alpha = acosd(abs(k_p(1,qq)));
 		beta = acosd(abs(k_p(2,qq))/sind(alpha));
@@ -66,10 +75,27 @@ function Vis_Assem(k_p, sigma, varargin)
         %fprintf('Orientation angle: %f \n', psi_ana)
 	
 		%% Generate the pattern
-		k_pp = abs(k_p(:,qq)).*[1, cosd(2*psi_ana), sind(2*psi_ana)].';
-		mu = [k_pp(2) k_pp(3)]; % Let k_p(2) and k_p(3) be x-axis and y-axis respectively.  
-		F = reshape(mvnpdf([x(:) y(:)],mu, sigma(2:3,2:3,qq)), size(th));
-		F_plain = reshape(mvnpdf([x_plain(:) y_plain(:)],mu, sigma(2:3,2:3,qq)), size(x_plain));
+		if symmetry
+			k_pp = abs(k_p(:,qq)).*[1, cosd(2*psi_ana), sind(2*psi_ana)].';
+		else
+			R_T = [1, 0, 0; 0, cosd(2*psi_ana),-sind(2*psi_ana); 0, sind(2*psi_ana), cosd(2*psi_ana)];
+			temp = R_T*k_p(:,qq);
+			temp = real(2*temp(1)-1);
+			k_pp = 1/(2+2*temp^2)*[(1-temp)*cosd(2*psi_ana), (1-temp)*sind(2*psi_ana), 1+temp].';
+		end
+		vis_cor = [0,1,0;0,0,1;1,0,0]*k_pp; % Rearrange the order of k_pp
+		mu = vis_cor(1:2).'; % vis_cor(1) and vis_cor(2) are x-axis and y-axis respectively.
+		A_q = mu.'*mu;
+		thershold = 1e-3;
+		A_q(1,1) = A_q(1,1)*(A_q(1,1) > thershold) + thershold*(A_q(1,1) < thershold);
+		A_q(2,2) = A_q(2,2)*(A_q(2,2) > thershold) + thershold*(A_q(2,2) < thershold);
+		disp(det(A_q))
+		A_q_inv = 1/det(A_q)*[A_q(2,2), -A_q(1,2); -A_q(2,1), A_q(1,1)];
+		F = 1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x-mu(1)).^2 + ......
+			(A_q_inv(1,2)+A_q_inv(2,1))*(x-mu(1)).*(y-mu(2)) + A_q_inv(2,2)*(y-mu(2)).^2));
+		F_plain = 1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x_plain-mu(1)).^2 + ......
+			(A_q_inv(1,2)+A_q_inv(2,1))*(x_plain-mu(1)).*(y_plain-mu(2)) + A_q_inv(2,2)*(y_plain-mu(2)).^2));
+		
 		F = ind2rgb(uint8((F/max(max(F)))*255),jet);
 		F_plain = F_plain/max(max(F_plain));
 		%% plot 
@@ -99,8 +125,9 @@ function Vis_Assem(k_p, sigma, varargin)
 				colormap gray
             end
 		end
+	end
 	if 1
 		plot_para('Maximize',true,'Filename','SimAtom')
-		movefile SimAtom.jpg PolSAR/output
+		movefile SimAtom.jpg output
 	end
-end
+end 

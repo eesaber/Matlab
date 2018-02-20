@@ -13,15 +13,7 @@ if simulation
     size_Q = 8; % Numbers of atom in D
     size_M = 100; % Numbers of vector in C
     %% generate coherency target space (C)
-    [k_p, C] = Gen_Cspace(size_M);
-
-    %% generate spatial distribution (X)
-    X = zeros(size_Q, size_N);
-    temp = Gen_map(N_az, N_ra, size_Q); % Spatial distribution matrix (QxN)
-    for k = 1 : size_Q
-        X(k,:) = reshape(temp(:,:,k),[1, size_N]);
-    end
-    clear temp
+    [k_p, C, phi] = Gen_Cspace(size_M);
 
     %% generate assembly matrix (A) MxQ
     sigma = Gen_assem('Isplot',true);
@@ -32,9 +24,18 @@ if simulation
         end
         A(:,q) = A(:,q)/sum(A(:,q));
     end
+    
+    %% generate spatial distribution (X)
+    X = zeros(size_Q, size_N);
+    temp = Gen_map(N_az, N_ra, size_Q); % Spatial distribution matrix (QxN)
+    for k = 1 : size_Q
+        X(k,:) = reshape(temp(:,:,k),[1, size_N]);
+    end
+    clear temp
+
     %% Synthesis the data (Y)
 	Y = C*A*X;
-    if (sum(sum(isnan(Y))) > 0)*(sum(sum(isfinite(Y))) > 0)
+    if (sum(sum(isnan(Y))) > 0) || (sum(sum(isfinite(Y))) > 0)
         error('There are NaN or Inf in Y')
     end
 else

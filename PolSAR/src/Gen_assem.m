@@ -1,14 +1,17 @@
 function [sigma] = Gen_assem(varargin)
-%function Gen_scatterer()
-% GEN_SCATTERER is used to generate dictionary matrix for simulation.
-% The return of GEN_SCATTERER is an 3D matrix of size [row, column, # of
+% GEN_ASSEM is used to generate dictionary matrix for simulation.
+% The return of GEN_ASSEM is an 3D matrix of size [row, column, # of
 % atom]. 
 	parse_ = inputParser;
-	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{}); 
+	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
+	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
+    validationFcn_3_ = @(x) validateattributes(x,{'logical'},{});
 	addParameter(parse_,'Isplot',true,validationFcn_1_);
+	addParameter(parse_,'SubPlot',false ,validationFcn_2_);    
+	addParameter(parse_,'ThreeD',false, validationFcn_3_);
 	parse(parse_,varargin{:})
 
-	rng(2); % seed of random number generator
+	rng(99); % seed of random number generator
 	size_Q = 8; % number of atoms
 	k_p = zeros(3,size_Q);
     sigma = zeros(3,3,size_Q);
@@ -27,7 +30,7 @@ function [sigma] = Gen_assem(varargin)
 	% 3rd and 4th are dihedral (z = -1)
 	S = [2,0,0,-1;2,0,0,-1;1,0,0,-1;1,0,0,-1];
 	for k = 4 : 7
-		S_temp = reshape(S(k-3,:),[2,2]).*eye(2).*exp(j*pi*rand(2)-pi/2); 
+		S_temp = reshape(S(k-3,:),[2,2])*exp(j*2*pi*rand(1));
 		theta = 180*rand(1)-90;
 		R_k = [1, 0, 0; 0, cosd(2*theta), -sind(2*theta); 0, sind(2*theta), cosd(2*theta)];
 		%temp = 1/sqrt(2)*[S_temp(1,1)+S_temp(2,2); S_temp(1,1)-S_temp(2,2);......
@@ -38,6 +41,7 @@ function [sigma] = Gen_assem(varargin)
 						S_temp(1,1)-S_temp(2,2); 2*S_temp(1,2)];
         sigma(:,:,k) = k_p(:,k)*k_p(:,k)';
 	end
+
 	% volume
     % horizontal dipole S = [1, 0; 0, 0]
 	phi = linspace(0,180,362); % Orientation angle
@@ -49,14 +53,15 @@ function [sigma] = Gen_assem(varargin)
     end
 	
     for k = 1 : size_Q
-        sigma(:,:,k) = sigma(:,:,k) + 10^-2*(abs(sigma(:,:,k)) < 0.0001).*eye(3);
+        %sigma(:,:,k) = sigma(:,:,k) + 10^-2*(abs(sigma(:,:,k)) < 0.0001).*eye(3);
 		%sigma(:,:,k) = diag(diag(sigma(:,:,k)));
-		sigma(:,:,k) = sigma(:,:,k)/10;
+		%sigma(:,:,k) = sigma(:,:,k)/10;
 	end
 	
 	%% plot
 	if parse_.Results.Isplot 
         close all
-		Vis_Assem(k_p, sigma,'SubPlot',true)
+		Vis_Assem(k_p, sigma,'SubPlot', parse_.Results.SubPlot, ......
+				'ThreeD', parse_.Results.ThreeD)
 	end
 end
