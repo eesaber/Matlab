@@ -8,7 +8,7 @@ function [sigma] = Gen_assem(varargin)
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{});
 	addParameter(parse_,'Isplot',true,validationFcn_1_);
 	addParameter(parse_,'SubPlot',false ,validationFcn_2_);    
-	addParameter(parse_,'ThreeD',false, validationFcn_3_);
+	addParameter(parse_,'TwoD',true, validationFcn_3_);
 	parse(parse_,varargin{:})
 
 	rng(99); % seed of random number generator
@@ -61,7 +61,7 @@ function [sigma] = Gen_assem(varargin)
 	%% plot
 	if parse_.Results.Isplot 
         close all
-		Vis_Assem(k_p, sigma,'SubPlot', parse_.Results.SubPlot, ......
-				'ThreeD', parse_.Results.ThreeD)
+		Vis(k_p,'Subplot', parse_.Results.SubPlot, ......
+				'A_2D', ~parse_.Results.TwoD)
 	end
 end
