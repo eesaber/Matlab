@@ -1,5 +1,9 @@
 function Vis(k_p, typ, varargin)
 %VIS is used to visualize \bar{\bar{A}} or \bar{\bar{C}}.
+% k_p is coherent vector.
+% typ can be 'C' or 'A' which represents differnt visualization approach.
+% 'C' plots each k_p by a dot, and 'A' plots each k_p by the corresponding
+% covarianve matrix \bar{\bar{T}} = \bar{k}_p \cdot \bar{k}_p^t.
 	if isunix
 		cd /home/akb/Code/Matlab/PolSAR
 	else 
