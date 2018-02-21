@@ -1,7 +1,7 @@
 %% The code implements PolSAR decomposition by using non-negative matrix factorization
 clear 
 clc
-simulation = 1;
+simulation = 0;
 %% import or simulate data
 if simulation
 	% Simulated data
@@ -44,8 +44,8 @@ if simulation
 else
 	% Real data import
     disp('Using real data...')
-	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = data_io('Test',true);
-	[N_az, N_ra] = hh_hh.size;
+	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test',true);
+	[N_az, N_ra] = size(hh_hh);
 	size_N = numel(hh_hh);
 	Y = [reshape(hh_hh, [1, size_N]); reshape(hv_hv, [1, size_N]); reshape(vv_vv, [1, size_N]); ......
 		real(reshape(hh_hv, [1, size_N]))/sqrt(2); imag(reshape(hh_hv, [1, size_N]))/sqrt(2);
@@ -53,6 +53,7 @@ else
 		real(reshape(hv_vv, [1, size_N]))/sqrt(2); imag(reshape(hv_hv, [1, size_N]))/sqrt(2)];
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
+clear simulation
 %% Pauli decomposition
 if(1)	
 	up_ = 10; low_ = -20;
@@ -80,13 +81,15 @@ if(1)
 		plot_para('Filename','My_pauli_c','Maximize',true, 'Ratio', [4 3 1]);
 end
 %% Generate the redundant coding matrix 
+size_M = 100;
+[k_p, C, phi] = Gen_Cspace(size_M);%generate another coherency target space (C)
 R = zeros(size_M, size_N);
 for m = 1 : size_M
     for n = 1 : size_N
         T_n = [Y(1,n), sqrt(2)*(Y(4,n)+1j*Y(5,n)), sqrt(2)*(Y(6,n)+1j*Y(7,n));.....
             conj(sqrt(2)*(Y(4,n)+1j*Y(5,n))), Y(2,n), sqrt(2)*(Y(8,n)+1j*Y(9,n));......
             conj(sqrt(2)*(Y(6,n)+1j*Y(7,n))), conj(sqrt(2)*(Y(8,n)+1j*Y(9,n))), Y(3,n)];
-        R(m,n) = exp(k_p(:,m)'*(T_n\k_p(:,m)/diag(T_n)))^(-7/2);
+        R(m,n) = exp(k_p(:,m)'*(T_n\k_p(:,m)/sum(diag(T_n))))^(-7/2);
     end
 end
 

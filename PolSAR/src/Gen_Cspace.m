@@ -17,7 +17,7 @@ function [k_p, C, phi] = Gen_Cspace(size_M)
     phi(4,:) = acosd(real(k_p(3,:))./(sind(phi(1,:)).*sind(phi(2,:)).*sind(phi(3,:)) ));
     for r = 1 : size_M
         t = k_p(:,r)*k_p(:,r)';
-		fprintf('%i\n',rank(t))
+		%fprintf('%i\n',rank(t))
         C(:,r) = [real(t(1,1)); real(t(2,2)); real(t(3,3)); sqrt(2)*real(t(1,2)); sqrt(2)*imag(t(1,2)); ...
                 sqrt(2)*real(t(1,3)); sqrt(2)*imag(t(1,3)); sqrt(2)*real(t(2,3)); sqrt(2)*imag(t(2,3))];
     end
