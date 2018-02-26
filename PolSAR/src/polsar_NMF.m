@@ -38,7 +38,7 @@ if simulation
 	Y = C*A*X;
 	if (sum(sum(isnan(Y))) > 0) || (sum(sum(isfinite(Y))) > 0)
         disp('There are NaN or Inf in A')
-		A(isnan(A)) = 0;
+		A( isnan(A)) = 0;
 		Y = C*A*X;
 	end
 else
@@ -47,10 +47,15 @@ else
 	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test',true);
 	[N_az, N_ra] = size(hh_hh);
 	size_N = numel(hh_hh);
-	Y = [reshape(hh_hh, [1, size_N]); reshape(hv_hv, [1, size_N]); reshape(vv_vv, [1, size_N]); ......
-		real(reshape(hh_hv, [1, size_N]))/sqrt(2); imag(reshape(hh_hv, [1, size_N]))/sqrt(2);
-		real(reshape(hh_vv, [1, size_N]))/sqrt(2); imag(reshape(hh_vv, [1, size_N]))/sqrt(2);
-		real(reshape(hv_vv, [1, size_N]))/sqrt(2); imag(reshape(hv_hv, [1, size_N]))/sqrt(2)];
+	T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
+	T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
+	T_33 = 2*hv_hv;
+	T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
+	T_13 = hh_hv + conj(hv_vv);
+	Y = [reshape(T_11, [1, size_N]); reshape(T_22, [1, size_N]); reshape(T_33, [1, size_N]); ......
+		reshape(real(T_12), [1, size_N])*sqrt(2); reshape(imag(T_12), [1, size_N])*sqrt(2);
+		reshape(real(T_13), [1, size_N])*sqrt(2); reshape(imag(T_13), [1, size_N])*sqrt(2);
+		reshape(real(T_23), [1, size_N])*sqrt(2); reshape(imag(T_23), [1, size_N])*sqrt(2)];
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
 clear simulation
@@ -84,13 +89,14 @@ end
 size_M = 100;
 [k_p, C, phi] = Gen_Cspace(size_M);%generate another coherency target space (C)
 R = zeros(size_M, size_N);
-for m = 1 : size_M
-    for n = 1 : size_N
-        T_n = [Y(1,n), sqrt(2)*(Y(4,n)+1j*Y(5,n)), sqrt(2)*(Y(6,n)+1j*Y(7,n));.....
-            conj(sqrt(2)*(Y(4,n)+1j*Y(5,n))), Y(2,n), sqrt(2)*(Y(8,n)+1j*Y(9,n));......
-            conj(sqrt(2)*(Y(6,n)+1j*Y(7,n))), conj(sqrt(2)*(Y(8,n)+1j*Y(9,n))), Y(3,n)];
-        R(m,n) = exp(k_p(:,m)'*(T_n\k_p(:,m)/sum(diag(T_n))))^(-7/2);
-    end
+for n = 1 : size_N
+	T_n = [Y(1,n), (Y(4,n)+1j*Y(5,n))/sqrt(2), (Y(6,n)+1j*Y(7,n))/sqrt(2);.....
+            conj((Y(4,n)+1j*Y(5,n))/sqrt(2)), Y(2,n), (Y(8,n)+1j*Y(9,n))/sqrt(2);......
+            conj((Y(6,n)+1j*Y(7,n))/sqrt(2)), conj((Y(8,n)+1j*Y(9,n))/sqrt(2)), Y(3,n)];
+	for m = 1 : size_M
+        R(m,n) = real(exp(k_p(:,m)'*(T_n\k_p(:,m)/sum(diag(T_n))))^(-7/2));
+	end
+	R(:,n) = R(:,n)/(Y(1,n)+Y(2,n)+Y(3,n));
 end
 
 %% Non-negative matrix factorization
