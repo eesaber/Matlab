@@ -65,6 +65,12 @@ clear simulation
 %Pauli decomposition
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
     reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp') 
+% H_alpha decomposition 
+temp = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
+             cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
+             cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
+ind_ = randperm(size_N);
+H_Alpha(temp(:,:,ind_(1:2000)))
 %% Generate the redundant coding matrix 
 disp('Generating R...')
 size_M = 100;
