@@ -13,7 +13,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 
 	% Data IO
 	if isunix
-		cd /home/akb/Code/Matlab
+		cd /home/akb/Code/Matlab/PolSAR
 		temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
 	end
 	if(0)
