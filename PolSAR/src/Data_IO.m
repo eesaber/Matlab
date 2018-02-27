@@ -15,7 +15,10 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	if isunix
 		cd /home/akb/Code/Matlab
 		temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
+	else
+		temp = 'D:Code/Simu/PolSAR/data';
 	end
+	
 	if(0)
 		fprintf('Parsing input file...')
 		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHH_CX_01.grd'],'r','ieee-le'); 
