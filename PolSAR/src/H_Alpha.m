@@ -28,12 +28,11 @@ function H_Alpha(T)
 	H = -sum(P.*log(P)/log(3),1);
 	plot(H(n/2+1:end), acosd(0)*2./(2*x(n/2+1:end)+1),'k','Linewidth',2)
     %
-	xlim([0,1])
-	ylim([0,90])
-	xlabel('entropy $H$','Interpreter', 'latex')
-	ylabel('$\langle \alpha \rangle^\circ$','Interpreter', 'latex')
+	set(gca,'Xlim', [0, 1], 'Ylim', [0, 90], 'XTick', 0:0.2:1,'YTick',0:15:90,'Box','On')
     grid on
-    box on
-    plot_para('Maximize',true)
 	hold off
+    xlabel('entropy $H$','Interpreter', 'latex')
+	ylabel('$\langle \alpha \rangle^\circ$','Interpreter', 'latex')
+    plot_para('Maximize',true,'Filename', 'H_alpha_decomp')
+    movefile 'H_alpha_decomp.jpg' output
 end

@@ -21,6 +21,6 @@ function Pauli_decomp(R, G, B, name)
     set(gca,'Ydir','normal')
     xlabel('Azimuth (pixel)', 'Fontsize', 40)
     ylabel('Range (pixel)', 'Fontsize', 40)
-    plot_para('Filename',name,'Maximize',true, 'Ratio', [4 3 1]);
+    plot_para('Maximize',true,'Filename',name, 'Ratio', [4 3 1]);
     movefile([name, '.jpg'],  'output/')
 end

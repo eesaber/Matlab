@@ -14,11 +14,16 @@ function Vis(k_p, typ, varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
 	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{});
+    validationFcn_4_ = @(x) validateattributes(x,{'numeric'},{});
 	addParameter(parse_,'C_2D',true, validationFcn_1_);
     addParameter(parse_,'A_2D',false ,validationFcn_2_);    
 	addParameter(parse_,'A_Subplot',true, validationFcn_3_);
+    addParameter(parse_,'T',[], validationFcn_4_);
 	parse(parse_,varargin{:})
-	
+    if numel(parse_.Results.T)>0
+        VisByT(parse_.Results.T, parse_.Results.A_Subplot)
+        return 
+    end
     %% Generate hemisphere.
 	SP_NUM = 700;
 	thetavec = linspace(0,pi/2,SP_NUM/2);
@@ -188,4 +193,85 @@ function Vis(k_p, typ, varargin)
 		zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
 		plot_para('Ratio',[2 2 1],'Maximize', true,'Filename', 'VisSph','Fontsize',32)
 	end
+end
+function VisByT(T, subp)
+    %% Generate hemisphere.
+	SP_NUM = 700;
+	thetavec = linspace(0,pi/2,SP_NUM/2);
+	phivec = linspace(0,2*pi,2*SP_NUM);
+	[th, ph] = meshgrid(thetavec,phivec);
+	[x_plain, y_plain] = meshgrid(linspace(-1,1,SP_NUM),linspace(-1,1,SP_NUM));
+	radial = ones(size(th)); % should be your R(theta,phi) surface in general
+	x = radial.*sin(th).*cos(ph);
+	y = radial.*sin(th).*sin(ph);
+	z = radial.*cos(th);
+	
+	%% Parameters
+	[~,~, num_T] = size(T);
+	S_a = 1/sqrt(2)*[1; 0; 1];
+	S_b = 1/sqrt(2)*[1; 0; -1];
+	S_c = 1/sqrt(2)*[0; 2; 0];
+	alphabets = char(97:96+num_T).'; % Label for subplot, start from a to ...
+	subplot_label = strcat({'('}, alphabets, {')'});
+	
+    for qq = 1 : num_T        
+		T(:,:,qq) = T(:,:,qq)/trace(T(:,:,qq));
+        A_q = T(:,:,qq);
+		k_p = [sqrt(T(1,1,qq)); sqrt(T(2,2,qq))*exp(-1j*angle(T(1,2,qq))); ......
+				sqrt(T(3,3,qq))*exp(-1j*angle(T(1,3,qq)))];
+		A_q_inv = inv(T(:,:,qq));
+		% Judge if it is symmetry
+		S = 1/sqrt(2)*[k_p(1)+k_p(2); sqrt(2)*k_p(3); k_p(1)-k_p(2)];
+		chi = 0.5*atand((conj(k_p(2))*k_p(3) + k_p(2)*conj(k_p(3)))/(abs(k_p(2))^2 + abs(k_p(3))^2));
+		DS = dot(S, S_a)*S_a + dot(S, cosd(chi)*S_b+sind(chi)*S_c)*(cosd(chi)*S_b+sind(chi)*S_c);
+		tau = acos(dot(S,DS)/norm(S)/norm(DS));
+		symmetry = (tau <= 8/pi);
+		if tau > 8/pi
+			symmetry = 0;
+			disp('asymmetry target')
+		end
+				% Caulculate the deorientation angle
+		alpha = acosd(abs(k_p(1)));
+		beta = acosd(abs(k_p(2))/sind(alpha));
+		if ~isreal(beta)
+			fprintf('beta is not real number, alpha = %f, beta = %f+%fi \n', alpha, real(beta), imag(beta) )
+			beta = real(beta);
+		end
+		phi_2 = atan2d(imag(k_p(2)), real(k_p(2)));
+		phi_3 = atan2d(imag(k_p(3)), real(k_p(3)));
+		psi_ana = mod((2*(cosd(phi_2-phi_3)>=0)-1)/4*(2*beta - mod(2*beta, 180) ......
+			+ mod(atand(tand(2*beta)*abs(cosd(phi_2-phi_3))), 180)), 90);
+		S_hh = (k_p(1)+k_p(2))/sqrt(2);
+        S_vv = (k_p(1)-k_p(2))/sqrt(2);
+        S_hv = k_p(3)/sqrt(2);
+        a = atan2d(abs(S_vv),abs(S_hh));
+        c = acosd(sqrt(2)*abs(S_hv)/norm([S_hh, sqrt(2)*S_hv, S_vv]));
+        u = sind(c)*cosd(2*a);
+        psi_ana = psi_ana+90*(u<0);
+		%% Generate the pattern
+		if symmetry
+			k_pp = abs(k_p).*[1, cosd(2*psi_ana), sind(2*psi_ana)].';
+		else
+			R_T = [1, 0, 0; 0, cosd(2*psi_ana),-sind(2*psi_ana); 0, sind(2*psi_ana), cosd(2*psi_ana)];
+			temp = R_T*k_p;
+			temp = real(2*temp(1)-1);
+			k_pp = 1/(2+2*temp^2)*[(1-temp)*cosd(2*psi_ana), (1-temp)*sind(2*psi_ana), 1+temp].';
+        end
+        %mu = k_pp;
+        mu = [0,0,1];
+        F_temp = 1/(pi^3*det(A_q))*exp(-(real(A_q_inv(1,1))*(z-mu(3)).^2 + real(A_q_inv(2,2))*(x-mu(1)).^2 + .......
+                    real(A_q_inv(3,3))*(y-mu(2)).^2 + 2*real(A_q_inv(1,2))*(x-mu(1)).*(z-mu(3)) +......
+                    2*real(A_q_inv(1,3))*(y-mu(2)).*(z-mu(3)) + 2*real(A_q_inv(2,3))*(x-mu(1)).*(y-mu(2))));
+        F = ind2rgb(uint8((F_temp/max(max(F_temp)))*255),jet);
+        figure(999)
+        % We can plot a circular plot by using SURF and view topdown
+        subplot(2, num_T/2, qq)
+        surf(x,y,z,F,'EdgeColor','none')
+        set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
+            'XTickLabelMode','manual','GridColor','none')
+        xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
+        pbaspect([1 1 1])
+    end
+	plot_para('Maximize',true,'Filename', ['Atom_', int2str(num_T)])
+	movefile(['Atom_', int2str(num_T), '.jpg'], 'output')
 end
