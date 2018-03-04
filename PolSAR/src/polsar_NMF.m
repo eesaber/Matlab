@@ -2,6 +2,7 @@
 clear 
 clc
 simulation = 0;
+
 %% import or simulate data
 if simulation
 	% Simulated data
@@ -47,11 +48,13 @@ else
 	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test',true);
 	[N_az, N_ra] = size(hh_hh);
 	size_N = numel(hh_hh);
+    size_Q = 4; % Numbers of atom in D
 	T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
 	T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
 	T_33 = 2*hv_hv;
 	T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
 	T_13 = hh_hv + conj(hv_vv);
+    T_23 = hh_hv - conj(hv_vv);
 	Y = [reshape(T_11, [1, size_N]); reshape(T_22, [1, size_N]); reshape(T_33, [1, size_N]); ......
 		reshape(real(T_12), [1, size_N])*sqrt(2); reshape(imag(T_12), [1, size_N])*sqrt(2);
 		reshape(real(T_13), [1, size_N])*sqrt(2); reshape(imag(T_13), [1, size_N])*sqrt(2);
@@ -59,58 +62,72 @@ else
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
 clear simulation
-%% Pauli decomposition
-if(1)	
-	up_ = 10; low_ = -20;
-	Pauli = ones(N_az, N_ra, 3);	
-	% |S_vv - S_hh|^2 -> double bounce scattering 
-	t_p = 10*log10(sqrt(reshape(Y(2,:),[N_az, N_ra])));	
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
-	% |S_hv|^2 -> volume scattering
-	t_p= 10*log10(sqrt(reshape(Y(3,:),[N_az, N_ra])));
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
-	% |S_vv + S_hh|^2 -> single scattering
-	t_p = 10*log10(sqrt(reshape(Y(1,:),[N_az, N_ra])));	
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
-	figure(7)
-		image(Pauli)
-		set(gca,'Ydir','normal')
-		xlabel('Azimuth (m)', 'Fontsize', 40)
-		ylabel('Range (m)', 'Fontsize', 40)
-		plot_para('Filename','My_pauli_c','Maximize',true, 'Ratio', [4 3 1]);
-end
+%Pauli decomposition
+Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
+    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp') 
+% H_alpha decomposition 
+temp = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
+             cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
+             cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
+ind_ = randperm(size_N);
+H_Alpha(temp(:,:,ind_(1:2000)))
 %% Generate the redundant coding matrix 
+disp('Generating R...')
 size_M = 100;
 [k_p, C, phi] = Gen_Cspace(size_M);%generate another coherency target space (C)
+%%
 R = zeros(size_M, size_N);
 for n = 1 : size_N
-	T_n = [Y(1,n), (Y(4,n)+1j*Y(5,n))/sqrt(2), (Y(6,n)+1j*Y(7,n))/sqrt(2);.....
+    T_n = [Y(1,n), (Y(4,n)+1j*Y(5,n))/sqrt(2), (Y(6,n)+1j*Y(7,n))/sqrt(2);.....
             conj((Y(4,n)+1j*Y(5,n))/sqrt(2)), Y(2,n), (Y(8,n)+1j*Y(9,n))/sqrt(2);......
             conj((Y(6,n)+1j*Y(7,n))/sqrt(2)), conj((Y(8,n)+1j*Y(9,n))/sqrt(2)), Y(3,n)];
+    kerl = inv(T_n/trace(T_n));
 	for m = 1 : size_M
-        R(m,n) = real(exp(k_p(:,m)'*(T_n\k_p(:,m)/sum(diag(T_n))))^(-7/2));
+        %R(m,n) = real(-k_p(:,m)'*kerl*k_p(:,m))^(-4);
+        R(m,n) = real(k_p(:,m)'*kerl*k_p(:,m))^(-7/2);
 	end
 	R(:,n) = R(:,n)/(Y(1,n)+Y(2,n)+Y(3,n));
 end
+% Compare to the original 
+Y_sol = C*R;
+Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'redun_re')
 
 %% Non-negative matrix factorization
-opt = statset('MaxIter', 5, 'Display', 'iter', 'UseParallel', true);
+disp('NMF...')
+opt = statset('MaxIter', 100, 'Display', 'iter', 'UseParallel', true);
+size_Q = 8;
 [A_sol, X_sol] = nnmf(R, size_Q,'algorithm', 'als', 'options', opt);
-X_sol = reshape(X_sol, [N_az, N_ra, k]);
-figure(1)
-for rr = 1 : k
-	subplot(2, k/2, rr)
-	imagesc(~map(:, :, rr))
+
+% Compare to the original 
+Y_sol = C*A_sol*X_sol;
+Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'result')
+D_sol = C*A_sol;
+%% Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
+subplot_label = char(97:96+size_Q).';
+for rr = 1 : size_Q
+	map_q = D_sol(:,rr)*X_sol(rr,:);
+	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), reshape(map_q(3,:),[N_az, N_ra]),......
+    reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)])
+end
+% Visualize dictionary 
+D_sol = cat(1,cat(2, reshape(D_sol(1,:),[1,1,size_Q]), reshape((D_sol(4,:)+1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(6,:)+1j*D_sol(7,:))/sqrt(2),[1,1,size_Q])), ......
+             cat(2,reshape((D_sol(4,:)-1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(2,:),[1,1,size_Q]), reshape((D_sol(8,:)+1j*D_sol(9,:))/sqrt(2),[1,1,size_Q])),.......
+             cat(2,reshape((D_sol(6,:)-1j*D_sol(7,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(8,:)-1j*D_sol(9,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(3,:),[1,1,size_Q])));
+Vis([],'A','T',D_sol)
+
+% Distribution map of atoms 
+X_sol = reshape(X_sol', [N_az, N_ra, size_Q]);
+figure
+for rr = 1 : size_Q
+	subplot(2, size_Q/2, rr)
+    %subplot(1, size_Q, rr)
+	imagesc(X_sol(:, :, rr))
 	title(['# of ' num2str(rr)])
 	set(gca, 'YDir','normal')
-	axis off
+	%axis off
 	colormap gray
 end
-axis on
-
+plot_para('Fontsize', 12,'Filename','X_map','Maximize',true);
+movefile X_map.jpg output/
