@@ -35,7 +35,7 @@ if(1)
 		%set(gca,'xtick',0:111:555,'ytick',0:150:600,'XTickLabel', 0:800:4000, 'YTickLabel', [0:800:2400 3000] );
 		xlabel('Azimuth (m)', 'Fontsize', 40)
 		ylabel('Range (m)', 'Fontsize', 40)
-		plot_para('Filename','My_pauli_c','Maximize',true, 'Ratio', [4 3 1]);
+		%plot_para('Filename','My_pauli_c','Maximize',true, 'Ratio', [4 3 1]);
 	%clear Pauli t_p
 	%{
 	figure(7)
