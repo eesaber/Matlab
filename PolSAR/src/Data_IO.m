@@ -13,10 +13,10 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 
 	% Data IO
 	if isunix
-		cd /home/akb/Code/Matlab
+		cd /home/akb/Code/Matlab/PolSAR
 		temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
 	else
-		temp = 'D:Code/Simu/PolSAR/data';
+		temp = 'D:\Code\Simu\PolSAR\data\';
 	end
 	
 	if(0)
@@ -67,14 +67,18 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	fprintf('\n')
 	if numel(parse_.Results.CutBatch)
 		disp('This will replace test.mat\n')
-    	[r_1, r_2, c_1, c_2] = parse_.Results.CutBatch;
+    	a = parse_.Results.CutBatch;
+        r_1 = a(1);
+        r_2 = a(2);
+        c_1 = a(3);
+        c_2 = a(4);
 		hh_hh = hh_hh(r_1:r_2, c_1:c_2);
 		hv_hv = hv_hv(r_1:r_2, c_1:c_2);
 		vv_vv = vv_vv(r_1:r_2, c_1:c_2);
 		hh_hv = hh_hv(r_1:r_2, c_1:c_2);
 		hh_vv = hh_vv(r_1:r_2, c_1:c_2);
 		hv_vv = hv_vv(r_1:r_2, c_1:c_2);
-		save([temp 'test.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
+		save([temp 'test.mat'],'-v6', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
 	end
 	if(0)
 		figure(1)

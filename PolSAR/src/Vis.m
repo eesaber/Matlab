@@ -4,6 +4,7 @@ function Vis(k_p, typ, varargin)
 % typ can be 'C' or 'A' which represents differnt visualization approach.
 % 'C' plots each k_p by a dot, and 'A' plots each k_p by the corresponding
 % covarianve matrix \bar{\bar{T}} = \bar{k}_p \cdot \bar{k}_p^t.
+% Option: 'C_2D' = true, 'A_2D' = false, 'A_Subplot' = true,
 	if isunix
 		cd /home/akb/Code/Matlab/PolSAR
 	else 
@@ -40,8 +41,8 @@ function Vis(k_p, typ, varargin)
 	S_a = 1/sqrt(2)*[1; 0; 1];
 	S_b = 1/sqrt(2)*[1; 0; -1];
 	S_c = 1/sqrt(2)*[0; 2; 0];
+    sig = 1e-4*eye(2);
 	if strcmp(typ, 'C')
-		sig = 1e-4*eye(2);
 		F = zeros(size(th));
 		F_plain = zeros(size(x_plain));
 	else
@@ -73,10 +74,13 @@ function Vis(k_p, typ, varargin)
 		phi_3 = atan2d(imag(k_p(3,qq)), real(k_p(3,qq)));
 		psi_ana = mod((2*(cosd(phi_2-phi_3)>=0)-1)/4*(2*beta - mod(2*beta, 180) ......
 			+ mod(atand(tand(2*beta)*abs(cosd(phi_2-phi_3))), 180)), 90);
+        if(k_p(3,qq) == 0)
+            psi_ana = 0;
+        end
 		S_hh = (k_p(1,qq)+k_p(2,qq))/sqrt(2);
         S_vv = (k_p(1,qq)-k_p(2,qq))/sqrt(2);
         S_hv = k_p(3,qq)/sqrt(2);
-        a = atan2d(abs(S_vv),abs(S_hh));
+        a = atand(abs(S_vv)/abs(S_hh));
         %b = 0.5*(atan2d(imag(S_vv),real(S_vv)-atan2d(imag(S_hh),real(S_hh));
         c = acosd(sqrt(2)*abs(S_hv)/norm([S_hh, sqrt(2)*S_hv, S_vv]));
         u = sind(c)*cosd(2*a);
@@ -90,27 +94,28 @@ function Vis(k_p, typ, varargin)
 			temp = R_T*k_p(:,qq);
 			temp = real(2*temp(1)-1);
 			k_pp = 1/(2+2*temp^2)*[(1-temp)*cosd(2*psi_ana), (1-temp)*sind(2*psi_ana), 1+temp].';
-		end
-		vis_cor = [0,1,0;0,0,1;1,0,0]*k_pp; % Rearrange the order of k_pp
-		mu = vis_cor(1:2).'; % vis_cor(1) and vis_cor(2) are x-axis and y-axis respectively.
+        end
 				
 		if strcmp(typ, 'C')
-			F = F + reshape(mvnpdf([x(:) y(:)],mu, sig), size(th));
-			F_plain = F_plain + reshape(mvnpdf([x_plain(:) y_plain(:)],mu, sig), size(x_plain));
+			F = F + reshape(mvnpdf([x(:) y(:)],k_pp(2:3).', sig), size(th));
+			F_plain = F_plain + reshape(mvnpdf([x_plain(:) y_plain(:)],k_pp(2:3).', sig), size(x_plain));
 		else
 			% Visual. of \bar{A}_q
-			A_q = mu.'*mu;
-			thershold = 1e-3;
-			A_q(1,1) = A_q(1,1)*(A_q(1,1) > thershold) + thershold*(A_q(1,1) < thershold);
-			A_q(2,2) = A_q(2,2)*(A_q(2,2) > thershold) + thershold*(A_q(2,2) < thershold);
-			disp(det(A_q))
-			A_q_inv = 1/det(A_q)*[A_q(2,2), -A_q(1,2); -A_q(2,1), A_q(1,1)];
-
-			F_temp = 1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x-mu(1)).^2 + ......
-				(A_q_inv(1,2)+A_q_inv(2,1))*(x-mu(1)).*(y-mu(2)) + A_q_inv(2,2)*(y-mu(2)).^2));
-			F_plain_temp = 1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x_plain-mu(1)).^2 + ......
-				(A_q_inv(1,2)+A_q_inv(2,1))*(x_plain-mu(1)).*(y_plain-mu(2)) + A_q_inv(2,2)*(y_plain-mu(2)).^2));
-			
+			A_q = k_p(:,qq)*k_p(:,qq)';
+            mu = k_pp';
+            
+            if(det(A_q) < 0.00001)
+                F_temp = reshape(mvnpdf([x(:) y(:)], k_pp(2:3).', sig), size(th));
+                F_plain_temp = reshape(mvnpdf([x_plain(:) y_plain(:)], k_pp(2:3).', sig), size(x_plain));
+            else 
+                A_q_inv = inv(A_q);
+                F_temp = 1/(pi^3*det(A_q))*exp(-(real(A_q_inv(1,1))*(z-mu(3)).^2 + real(A_q_inv(2,2))*(x-mu(1)).^2 + .......
+                    real(A_q_inv(3,3))*(y-mu(2)).^2 + 2*real(A_q_inv(1,2))*(x-mu(1)).*(z-mu(3)) +......
+                    2*real(A_q_inv(1,3))*(y-mu(2)).*(z-mu(3)) + 2*real(A_q_inv(2,3))*(x-mu(1)).*(y-mu(2))));
+                F_plain_temp = 1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x_plain-mu(1)).^2 + ......
+                    (A_q_inv(1,2)+A_q_inv(2,1))*(x_plain-mu(1)).*(y_plain-mu(2)) + A_q_inv(2,2)*(y_plain-mu(2)).^2));
+            end
+            
 			F = ind2rgb(uint8((F_temp/max(max(F_temp)))*255),jet);
 			F_plain = F_plain_temp/max(max(F_plain_temp));
 			if parse_.Results.A_Subplot
@@ -216,10 +221,10 @@ function VisByT(T, subp)
 	
     for qq = 1 : num_T        
 		T(:,:,qq) = T(:,:,qq)/trace(T(:,:,qq));
-        A_q = T(2:3,2:3,qq);
-		k_p = [sqrt(T(1,1)); sqrt(T(2,2))*exp(-1j*angle(T(1,2))); ......
-				sqrt(T(3,3))*exp(-1j*angle(T(1,2)))*exp(-1j*angle(T(2,3)))];
-		A_q_inv = inv(A_q);
+        A_q = T(:,:,qq);
+		k_p = [sqrt(T(1,1,qq)); sqrt(T(2,2,qq))*exp(-1j*angle(T(1,2,qq))); ......
+				sqrt(T(3,3,qq))*exp(-1j*angle(T(1,3,qq)))];
+		A_q_inv = inv(T(:,:,qq));
 		% Judge if it is symmetry
 		S = 1/sqrt(2)*[k_p(1)+k_p(2); sqrt(2)*k_p(3); k_p(1)-k_p(2)];
 		chi = 0.5*atand((conj(k_p(2))*k_p(3) + k_p(2)*conj(k_p(3)))/(abs(k_p(2))^2 + abs(k_p(3))^2));
@@ -256,45 +261,22 @@ function VisByT(T, subp)
 			temp = R_T*k_p;
 			temp = real(2*temp(1)-1);
 			k_pp = 1/(2+2*temp^2)*[(1-temp)*cosd(2*psi_ana), (1-temp)*sind(2*psi_ana), 1+temp].';
-		end
-		vis_cor = [0,1,0;0,0,1;1,0,0]*k_pp; % Rearrange the order of k_pp
-		mu = vis_cor(1:2).'; % vis_cor(1) and vis_cor(2) are x-axis and y-axis respectively.
-
-        F_temp = real(1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x-mu(1)).^2 + ......
-            (A_q_inv(1,2)+A_q_inv(2,1))*(x-mu(1)).*(y-mu(2)) + A_q_inv(2,2)*(y-mu(2)).^2)));
-        F_plain_temp = real(1/sqrt((2*pi)^2*det(A_q))*exp(-1/2*(A_q_inv(1,1)*(x_plain-mu(1)).^2 + ......
-            (A_q_inv(1,2)+A_q_inv(2,1))*(x_plain-mu(1)).*(y_plain-mu(2)) + A_q_inv(2,2)*(y_plain-mu(2)).^2)));
-
+        end
+        %mu = k_pp;
+        mu = [0,0,1];
+        F_temp = 1/(pi^3*det(A_q))*exp(-(real(A_q_inv(1,1))*(z-mu(3)).^2 + real(A_q_inv(2,2))*(x-mu(1)).^2 + .......
+                    real(A_q_inv(3,3))*(y-mu(2)).^2 + 2*real(A_q_inv(1,2))*(x-mu(1)).*(z-mu(3)) +......
+                    2*real(A_q_inv(1,3))*(y-mu(2)).*(z-mu(3)) + 2*real(A_q_inv(2,3))*(x-mu(1)).*(y-mu(2))));
         F = ind2rgb(uint8((F_temp/max(max(F_temp)))*255),jet);
-        F_plain = F_plain_temp/max(max(F_plain_temp));   
-        if 1
-            %figure(999)
-            % We can plot a circular plot by using SURF
-            % and view topdown
-            subplot(2, num_T/2, qq)
-            surf(x,y,z,F,'EdgeColor','none')
-            set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
-                'XTickLabelMode','manual','GridColor','none')
-            xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
-            pbaspect([1 1 1])
-        else
-            % Plot each \bar{A} in different figure
-            figure
-            if parse_.Results.A_2D
-                imagesc(x_plain(1,:), y_plain(:,1),-F_plain/max(max(F_plain)))
-                xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-                ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-                grid on
-                colormap gray
-            else
-                surf(x,y,z,F,'EdgeColor','none')
-                view(135,30);
-                xlabel('$|k''_{p2}| \cos (2 \psi_m) / \|\bar{k}_p\|_2$','Interpreter', 'latex')
-                ylabel('$|k''_{p3}| \sin (2 \psi_m)/ \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-                zlabel('$|k''_{p1}| / \|\bar{k}_p\|_2 $','Interpreter', 'latex')
-            end
-		end
+        figure(999)
+        % We can plot a circular plot by using SURF and view topdown
+        subplot(2, num_T/2, qq)
+        surf(x,y,z,F,'EdgeColor','none')
+        set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
+            'XTickLabelMode','manual','GridColor','none')
+        xlabel(subplot_label(qq),'Interpreter', 'latex','Fontsize',28)
+        pbaspect([1 1 1])
     end
-	plot_para('Maximize',true,'Filename','Atom')
-	movefile Atom.jpg output
+	plot_para('Maximize',true,'Filename', ['Atom_', int2str(num_T)])
+	movefile(['Atom_', int2str(num_T), '.jpg'], 'output')
 end

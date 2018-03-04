@@ -48,7 +48,7 @@ else
 	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test',true);
 	[N_az, N_ra] = size(hh_hh);
 	size_N = numel(hh_hh);
-    size_Q = 4; % Numbers of atom in D
+    size_Q = 6; % Numbers of atom in D
 	T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
 	T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
 	T_33 = 2*hv_hv;
@@ -73,7 +73,7 @@ ind_ = randperm(size_N);
 H_Alpha(temp(:,:,ind_(1:2000)))
 %% Generate the redundant coding matrix 
 disp('Generating R...')
-size_M = 100;
+size_M = 200;
 [k_p, C, phi] = Gen_Cspace(size_M);%generate another coherency target space (C)
 %%
 R = zeros(size_M, size_N);
@@ -86,25 +86,24 @@ for n = 1 : size_N
         %R(m,n) = real(-k_p(:,m)'*kerl*k_p(:,m))^(-4);
         R(m,n) = real(k_p(:,m)'*kerl*k_p(:,m))^(-7/2);
 	end
-	R(:,n) = R(:,n)/(Y(1,n)+Y(2,n)+Y(3,n));
+	R(:,n) = R(:,n)/sum(R(:,n))*trace(T_n);
 end
 % Compare to the original 
 Y_sol = C*R;
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'redun_re')
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_Redund')
 
 %% Non-negative matrix factorization
-disp('NMF...')
 opt = statset('MaxIter', 100, 'Display', 'iter', 'UseParallel', true);
-size_Q = 8;
-[A_sol, X_sol] = nnmf(R, size_Q,'algorithm', 'als', 'options', opt);
+fprintf('Q = %i, NMF...\n', size_Q)
+[A_sol, X_sol] = nnmf(R, size_Q,'algorithm', 'mult', 'options', opt, 'replicates', 5);
 
 % Compare to the original 
 Y_sol = C*A_sol*X_sol;
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'result')
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF')
 D_sol = C*A_sol;
-%% Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
+% Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
 subplot_label = char(97:96+size_Q).';
 for rr = 1 : size_Q
 	map_q = D_sol(:,rr)*X_sol(rr,:);
@@ -119,15 +118,19 @@ Vis([],'A','T',D_sol)
 
 % Distribution map of atoms 
 X_sol = reshape(X_sol', [N_az, N_ra, size_Q]);
+alphabets = char(97:96+size_Q).'; % Label for subplot, start from a to ...
+subplot_label = strcat({'('}, alphabets, {')'});
+
 figure
 for rr = 1 : size_Q
 	subplot(2, size_Q/2, rr)
     %subplot(1, size_Q, rr)
-	imagesc(X_sol(:, :, rr))
-	title(['# of ' num2str(rr)])
+	imagesc(X_sol(:, :, rr), [0, 0.0001])
+	xlabel(subplot_label(rr,:),'Interpreter', 'latex')
+    plot_para('Fontsize',22,'Ratio',[1,1,1]);
 	set(gca, 'YDir','normal')
 	%axis off
-	colormap gray
+	colormap jet
 end
-plot_para('Fontsize', 12,'Filename','X_map','Maximize',true);
-movefile X_map.jpg output/
+plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q)],'Maximize',true);
+movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
