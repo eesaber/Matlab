@@ -59,12 +59,14 @@ else
 		reshape(real(T_12), [1, size_N])*sqrt(2); reshape(imag(T_12), [1, size_N])*sqrt(2);
 		reshape(real(T_13), [1, size_N])*sqrt(2); reshape(imag(T_13), [1, size_N])*sqrt(2);
 		reshape(real(T_23), [1, size_N])*sqrt(2); reshape(imag(T_23), [1, size_N])*sqrt(2)];
+    % 4-component decomposition
+    FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
 clear simulation
 %Pauli decomposition
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
-    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp') 
+    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp',1) 
 % H_alpha decomposition 
 temp = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
@@ -91,7 +93,7 @@ end
 % Compare to the original 
 Y_sol = C*R;
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_Redund')
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_Redund', 0)
 
 %% Non-negative matrix factorization
 opt = statset('MaxIter', 100, 'Display', 'iter', 'UseParallel', true);
@@ -101,14 +103,14 @@ fprintf('Q = %i, NMF...\n', size_Q)
 % Compare to the original 
 Y_sol = C*A_sol*X_sol;
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF')
+    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF',0)
 D_sol = C*A_sol;
 % Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
 subplot_label = char(97:96+size_Q).';
 for rr = 1 : size_Q
 	map_q = D_sol(:,rr)*X_sol(rr,:);
 	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), reshape(map_q(3,:),[N_az, N_ra]),......
-    reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)])
+    reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)], 0)
 end
 % Visualize dictionary 
 D_sol = cat(1,cat(2, reshape(D_sol(1,:),[1,1,size_Q]), reshape((D_sol(4,:)+1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(6,:)+1j*D_sol(7,:))/sqrt(2),[1,1,size_Q])), ......
