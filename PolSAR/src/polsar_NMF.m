@@ -120,17 +120,20 @@ Vis([],'A','T',D_sol)
 X_sol = reshape(X_sol', [N_az, N_ra, size_Q]);
 alphabets = char(97:96+size_Q).'; % Label for subplot, start from a to ...
 subplot_label = strcat({'('}, alphabets, {')'});
+%%
 
-figure
 for rr = 1 : size_Q
-	subplot(2, size_Q/2, rr)
+	figure
+	%subplot(2, size_Q/2, rr)
     %subplot(1, size_Q, rr)
 	imagesc(X_sol(:, :, rr), [0, 0.0001])
 	xlabel(subplot_label(rr,:),'Interpreter', 'latex')
-    plot_para('Fontsize',22,'Ratio',[1,1,1]);
+    %plot_para('Fontsize',22,'Ratio',[1,1,1]);
+	plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q),'_',char(96+rr)],'Maximize',true);
+	%movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
 	set(gca, 'YDir','normal')
 	%axis off
 	colormap jet
 end
-plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q)],'Maximize',true);
-movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
+%plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q)],'Maximize',true);
+%movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
