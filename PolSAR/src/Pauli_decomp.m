@@ -21,8 +21,8 @@ function Pauli_decomp(R, G, B, name, saibu)
 	figure
     image(Pauli)
     set(gca,'Ydir','normal')
-    xlabel('Azimuth (pixel)', 'Fontsize', 40)
-    ylabel('Range (pixel)', 'Fontsize', 40)
+    xlabel('azimuth (pixel)', 'Fontsize', 40)
+    ylabel('range (pixel)', 'Fontsize', 40)
     plot_para('Maximize',true,'Filename',name, 'Ratio', [4 3 1]);
     movefile([name, '.jpg'],  'output/')
 
@@ -33,24 +33,24 @@ function Pauli_decomp(R, G, B, name, saibu)
         imagesc(dum.*(R>G).*(R>B))
         colormap gray
         set(gca,'Ydir','normal')
-        xlabel('Azimuth (pixel)', 'Fontsize', 40)
-        ylabel('Range (pixel)', 'Fontsize', 40)
+        xlabel('azimuth (pixel)', 'Fontsize', 40)
+        ylabel('range (pixel)', 'Fontsize', 40)
         plot_para('Maximize',true,'Filename',[name, '_r'])
         movefile([name, '_r.jpg'],  'output/')
         figure
         imagesc(dum.*(G>R).*(G>B))
         colormap gray
         set(gca,'Ydir','normal')
-        xlabel('Azimuth (pixel)', 'Fontsize', 40)
-        ylabel('Range (pixel)', 'Fontsize', 40)
+        xlabel('azimuth (pixel)', 'Fontsize', 40)
+        ylabel('range (pixel)', 'Fontsize', 40)
         plot_para('Maximize',true,'Filename',[name, '_g'])
         movefile([name, '_g.jpg'],  'output/')
         figure
         imagesc(dum.*(B>R).*(B>G))
         colormap gray
         set(gca,'Ydir','normal')
-        xlabel('Azimuth (pixel)', 'Fontsize', 40)
-        ylabel('Range (pixel)', 'Fontsize', 40)
+        xlabel('azimuth (pixel)', 'Fontsize', 40)
+        ylabel('range (pixel)', 'Fontsize', 40)
         plot_para('Maximize',true,'Filename',[name, '_b'])
         movefile([name, '_b.jpg'],  'output/')
     end
