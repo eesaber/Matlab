@@ -66,13 +66,49 @@ end
 clear simulation
 %Pauli decomposition
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
-    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp',1) 
+    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp',1)
 % H_alpha decomposition 
 temp = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
 ind_ = randperm(size_N);
 H_Alpha(temp(:,:,ind_(1:2000)))
+%% Case study
+alpha = reshape(Y(1,:),[N_az, N_ra]);
+beta = reshape(Y(2,:),[N_az, N_ra]);
+gamma = reshape(Y(3,:),[N_az, N_ra]);
+% Case 1.
+n = numel(alpha(319:338,16:89));
+figure
+scatter3(reshape(alpha(319:338,16:89),[1,n]), reshape(beta(319:338,16:89),[1,n]), reshape(gamma(319:338,16:89),[1,n]),'r')
+n = numel(alpha(231:245,482:535));
+hold on 
+scatter3(reshape(alpha(231:245,482:535),[1,n]), reshape(beta(231:245,482:535),[1,n]), reshape(gamma(231:245,482:535),[1,n]),'b')
+hold off
+xlabel('$\alpha$','Interpreter', 'latex')
+ylabel('$\beta$','Interpreter', 'latex')
+zlabel('$\gamma$','Interpreter', 'latex')
+legend('tree','buliding')
+set(gca,'XAxisLocation','origin','YAxisLocation','origin','xlim',[0,2],'ylim',[0,2],'zlim',[0,2])
+plot_para('Maximize',true,'Filename','case_tre_bui')
+
+% Case 2.
+%{
+figure
+scatter3(reshape(alpha(319:338,16:89),[1,n]), reshape(beta(319:338,16:89),[1,n]), reshape(gamma(319:338,16:89),[1,n]),'r')
+n = numel(alpha(231:245,482:535));
+hold on 
+scatter3(reshape(alpha(231:245,482:535),[1,n]), reshape(beta(231:245,482:535),[1,n]), reshape(gamma(231:245,482:535),[1,n]),'b')
+hold off
+xlabel('$\alpha$','Interpreter', 'latex')
+ylabel('$\beta$','Interpreter', 'latex')
+zlabel('$\gamma$','Interpreter', 'latex')
+legend('tree','buliding')
+set(gca,'XAxisLocation','origin','YAxisLocation','origin','xlim',[0,2],'ylim',[0,2],'zlim',[0,2])
+plot_para('Maximize',true,'Filename','case_tre_bui')
+%}
+
+
 %% Generate the redundant coding matrix 
 disp('Generating R...')
 size_M = 200;
@@ -90,13 +126,24 @@ for n = 1 : size_N
 	end
 	R(:,n) = R(:,n)/sum(R(:,n))*trace(T_n);
 end
-% Compare to the original 
-Y_sol = C*R;
-Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_Redund', 0)
+%Compare to the original 
+Y_cod = C*R;
+Pauli_decomp(reshape(Y_cod(2,:),[N_az, N_ra]), reshape(Y_cod(3,:),[N_az, N_ra]),......
+    reshape(Y_cod(1,:),[N_az, N_ra]), 'Result_Redund', 0);
+mse_msg = {'|S_hh + S_vv|^2', '|S_hh - S_vv|^2', '|S_hv|^2'};
+disp('Comparison between the encoded image and the received image.')
+for n = 1 : 3
+    err_Y = 1/numel(Y_cod(n,:))*sum((Y_cod(n,:) - Y(n,:)).^2);
+    fprintf(['mean of            ', char(mse_msg(n)), ' : %f, '], mean(Y(n,:)))
+    fprintf(['std of             ', char(mse_msg(n)), ' : %f \n'], std(Y(n,:)))
+    fprintf(['after NMF, mean of ', char(mse_msg(n)), ' : %f, '], mean(Y_cod(n,:)))
+    fprintf(['after NMF, std of  ', char(mse_msg(n)), ' : %f \n'], std(Y_cod(n,:)))
+    fprintf(['MSE of             ', char(mse_msg(n)), ' : %f\n'], err_Y)
+    disp('---------------------------------------------------------')
+end
 
 %% Non-negative matrix factorization
-opt = statset('MaxIter', 100, 'Display', 'iter', 'UseParallel', true);
+opt = statset('MaxIter', 100, 'Display', 'final', 'UseParallel', true);
 fprintf('Q = %i, NMF...\n', size_Q)
 [A_sol, X_sol] = nnmf(R, size_Q,'algorithm', 'mult', 'options', opt, 'replicates', 5);
 
@@ -105,14 +152,28 @@ Y_sol = C*A_sol*X_sol;
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
     reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF',0)
 D_sol = C*A_sol;
+disp('Comparison between the reconstructed image and the received image.')
+mse_msg = {'|S_hh + S_vv|^2', '|S_hh - S_vv|^2', '|S_hv|^2'};
+for n = 1 : 3
+    err_Y = 1/numel(Y_sol(n,:))*sum((Y_sol(n,:) - Y(n,:)).^2);
+    fprintf(['mean of            ', char(mse_msg(n)), ' : %f, '], mean(Y(n,:)))
+    fprintf(['std of             ', char(mse_msg(n)), ' : %f \n'], std(Y(n,:)))
+    fprintf(['after NMF, mean of ', char(mse_msg(n)), ' : %f, '], mean(Y_sol(n,:)))
+    fprintf(['after NMF, std of  ', char(mse_msg(n)), ' : %f \n'], std(Y_sol(n,:)))
+    fprintf(['MSE of             ', char(mse_msg(n)), ' : %f\n'], err_Y)
+    disp('---------------------------------------------------------')
+end
+
 % Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
 subplot_label = char(97:96+size_Q).';
 for rr = 1 : size_Q
 	map_q = D_sol(:,rr)*X_sol(rr,:);
-	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), reshape(map_q(3,:),[N_az, N_ra]),......
+	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), 2*reshape(map_q(3,:),[N_az, N_ra]),......
     reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)], 0)
 end
-% Visualize dictionary 
+
+% Visualize dictionary
+D_org = D_sol;
 D_sol = cat(1,cat(2, reshape(D_sol(1,:),[1,1,size_Q]), reshape((D_sol(4,:)+1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(6,:)+1j*D_sol(7,:))/sqrt(2),[1,1,size_Q])), ......
              cat(2,reshape((D_sol(4,:)-1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(2,:),[1,1,size_Q]), reshape((D_sol(8,:)+1j*D_sol(9,:))/sqrt(2),[1,1,size_Q])),.......
              cat(2,reshape((D_sol(6,:)-1j*D_sol(7,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(8,:)-1j*D_sol(9,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(3,:),[1,1,size_Q])));
@@ -122,7 +183,6 @@ Vis([],'A','T',D_sol)
 X_sol = reshape(X_sol', [N_az, N_ra, size_Q]);
 alphabets = char(97:96+size_Q).'; % Label for subplot, start from a to ...
 subplot_label = strcat({'('}, alphabets, {')'});
-%%
 
 for rr = 1 : size_Q
 	figure
@@ -132,7 +192,7 @@ for rr = 1 : size_Q
 	xlabel(subplot_label(rr,:),'Interpreter', 'latex')
     %plot_para('Fontsize',22,'Ratio',[1,1,1]);
 	plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q),'_',char(96+rr)],'Maximize',true);
-	%movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
+    movefile(['X_map_Q_', int2str(size_Q),'_',char(96+rr),'.jpg'], 'output')
 	set(gca, 'YDir','normal')
 	%axis off
 	colormap jet

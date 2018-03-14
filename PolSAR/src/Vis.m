@@ -5,11 +5,8 @@ function Vis(k_p, typ, varargin)
 % 'C' plots each k_p by a dot, and 'A' plots each k_p by the corresponding
 % covarianve matrix \bar{\bar{T}} = \bar{k}_p \cdot \bar{k}_p^t.
 % Option: 'C_2D' = true, 'A_2D' = false, 'A_Subplot' = true,
-	if isunix
-		cd /home/akb/Code/Matlab/PolSAR
-	else 
-		cd D:\Code\Simu\PolSAR
-	end
+
+    chk_pw()
 	% Parse input parameter
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});

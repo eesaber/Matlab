@@ -6,11 +6,7 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
 % S_{hh}S^*_{hv}, C(:,:,5) is S_{hh}S_{vv}^2 and C(:,:,6) is
 % S_{hv}S^*_{vv}.
 	
-	if isunix
-		cd /home/akb/Code/Matlab/PolSAR
-	else
-		cd 'D:\Code\Simu\PolSAR'
-	end
+    chk_pw() % change pwd
 
     % f_ is the scattering matrix coefficient. The subscript
     % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
@@ -66,7 +62,7 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
 	f_d(temp) = 0;
     f_v(f_t - f_c - f_v < 0) = f_t(f_t - f_c - f_v < 0) - f_c(f_t - f_c - f_v < 0);
 	f_v(temp) = f_t(temp) - f_c(temp);
-    clear S D C
+    clear S D C temp
     % Set the negative power to 0
     ind_d = logical((f_d<0).*(f_t > (f_c + f_v)));
     f_s(ind_d) = f_t(ind_d) - f_v(ind_d) - f_c(ind_d);
@@ -74,10 +70,10 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     ind_d = logical((f_s<0).*(f_t > (f_c + f_v)));
     f_d(ind_d) = f_t(ind_d) - f_v(ind_d) - f_c(ind_d);
     f_s(ind_d) = 0;
-      
+    clear ind_d
     if(1)
         figure
-            imagesc(10*log10(f_s))
+            imagesc(10*log10(abs(f_s)))
 			title('single', 'Interpreter', 'latex')
             xlabel('azimuth (pixel)', 'Interpreter', 'latex')
             ylabel('range (pixel)', 'Interpreter', 'latex')
@@ -86,7 +82,7 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename', [filename,'_s']);
 			movefile([filename, '_s.jpg'], 'output/')
         figure 
-            imagesc(10*log10(f_d))
+            imagesc(10*log10(abs(f_d)))
 			title('double', 'Interpreter', 'latex')
             xlabel('azimuth (pixel)', 'Interpreter', 'latex')
             ylabel('range (pixel)', 'Interpreter', 'latex')
@@ -95,7 +91,7 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename',[filename, '_d']);
 			movefile([filename, '_d.jpg'], 'output/')
         figure
-            imagesc(10*log10(f_v))
+            imagesc(10*log10(abs(f_v)))
 			title('volume', 'Interpreter', 'latex')
             xlabel('azimuth (pixel)', 'Interpreter', 'latex')
             ylabel('range (pixel)', 'Interpreter', 'latex')
@@ -108,14 +104,14 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     if(1)	% Plot the 4-component decomposition.
         img = single(zeros([size(hh_hh), 3]));
         up_ = 20; low_ = -30;
-        img(:,:,1) = 10*log10(f_d);
-        img(:,:,2) = 10*log10(f_v);
-        img(:,:,3) = 10*log10(f_s);
+        img(:,:,1) = 10*log10(abs(f_d));
+        img(:,:,2) = 10*log10(abs(f_v));
+        img(:,:,3) = 10*log10(abs(f_s));
         %%clear P_d  f_v P_s f_c f_d f_s 
         img(img < low_) = low_;
         img(img > up_) = up_;
         img = (img-low_)/(up_-low_);
-        figure(10)
+        figure
             image(img)
             set(gca,'Ydir','normal')
             xlabel('azimuth (pixel)', 'Interpreter', 'latex')

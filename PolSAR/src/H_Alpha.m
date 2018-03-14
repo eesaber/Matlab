@@ -18,7 +18,7 @@ function H_Alpha(T)
 	H = -sum(P.*log(P)/log(3),1);
 	H(isnan(H)) = 0;
 	plot(H,acosd(0)*(P(2,:)+P(3,:)),'k','Linewidth',2)
-	%
+	% Plot the boundary
 	P = [zeros(size(x)); ones(size(x)); 2*x]./repmat(2*x+1,[3,1]);
 	H = -sum(P.*log(P)/log(3),1);
 	H(isnan(H)) = 0;
@@ -27,9 +27,16 @@ function H_Alpha(T)
 	P = [2*x-1; ones(size(x)); ones(size(x))]./repmat(2*x+1,[3,1]);
 	H = -sum(P.*log(P)/log(3),1);
 	plot(H(n/2+1:end), acosd(0)*2./(2*x(n/2+1:end)+1),'k','Linewidth',2)
-    %
+    % Plot segmetation lines
+	plot([0.5,0.5],[0, 90],'--','Linewidth', 2)
+	plot([0.9, 0.9],[0 90],'--','Linewidth', 2)
+	plot([0,0.5],[47.5, 47.5],'--','Linewidth', 2)
+	plot([0,0.5],[42.5, 42.5],'--','Linewidth', 2)
+	plot([0.5,0.9],[50, 50],'--','Linewidth', 2)
+	plot([0.5,1],[40, 40],'--','Linewidth', 2)
+	plot([0.9, 1], [57.5, 57.5],'--','Linewidth', 2)
+	% Image setting
 	set(gca,'Xlim', [0, 1], 'Ylim', [0, 90], 'XTick', 0:0.2:1,'YTick',0:15:90,'Box','On')
-    grid on
 	hold off
     xlabel('entropy $H$','Interpreter', 'latex')
 	ylabel('$\langle \alpha \rangle^\circ$','Interpreter', 'latex')

@@ -7,59 +7,80 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+    validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test',0,validationFcn_2_);
+    addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
 	parse(parse_,varargin{:})
 
-	% Data IO
-	if isunix
-		cd /home/akb/Code/Matlab/PolSAR
-		temp = '/media/akb/2026EF9426EF696C/raw_data/PiSAR2_07507_13170_009_131109_L090_CX_01_grd/';
-	else
-		temp = 'D:\Code\Simu\PolSAR\data\';
+	chk_pw()
+	% Task
+	mission_num = 2;
+	switch mission_num
+		case 1
+			disp('Mission: Aso volcano, 熊本、日本')
+			im_size = [23499,8735];
+			im_size_c = [im_size(1)*2, im_size(2)];
+			temp = '/media/akb/2026EF9426EF696C/raw_data/Aso_Kumamoto/';
+			task = 'PiSAR2_07507_13170_009_131109_L090';
+		case 2
+			disp('Mission: HaywardFault, CA USA')
+			im_size = [21798, 13827];
+			im_size_c = [im_size(1)*2, im_size(2)];
+			temp = '/media/akb/2026EF9426EF696C/raw_data/HaywardFault_CA/';
+			task = 'Haywrd_23501_17114_003_171019_L090';
+		case 3
+			disp('Mission: SMAPVEX12, CAN')
+			im_size = [17020, 11274];
+			im_size_c = [im_size(1)*2, im_size(2)];
+			temp = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12';
+			task = 'winnip_31605_12056_002_120705_L090';
+		otherwise 
+			error('You need to select a mission')
 	end
 	
-	if(0)
-		fprintf('Parsing input file...')
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHH_CX_01.grd'],'r','ieee-le'); 
-		hh_hh = single(rot90(fread(fid,[23499,8735],'real*4')));
+	if(parse_.Results.ReadNewFile)
+		disp('Parsing input file...')
+		fid = fopen([temp task 'HHHH_CX_01.grd'],'r','ieee-le'); 
+		hh_hh = single(rot90(fread(fid, im_size,'real*4')));
 		
-		%hh_hh = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVHV_CX_01.grd'],'r','ieee-le'); 
-		hv_hv = single(rot90(fread(fid,[23499,8735],'real*4')));
-		%hv_hv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090VVVV_CX_01.grd'],'r','ieee-le'); 
-		vv_vv = single(rot90(fread(fid,[23499,8735],'real*4')));
-		%vv_vv = sparse(rot90(fread(fid,[23499,8735],'real*4')));
+		%hh_hh = sparse(rot90(fread(fid, im_size,'real*4')));
+		fid = fopen([temp task 'HVHV_CX_01.grd'],'r','ieee-le'); 
+		hv_hv = single(rot90(fread(fid, im_size,'real*4')));
+		%hv_hv = sparse(rot90(fread(fid, im_size,'real*4')));
+		fid = fopen([temp task 'VVVV_CX_01.grd'],'r','ieee-le'); 
+		vv_vv = single(rot90(fread(fid, im_size,'real*4')));
+		%vv_vv = sparse(rot90(fread(fid, im_size,'real*4')));
 		
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HVVV_CX_01.grd'],'r','ieee-le'); 
-		hv_vv = fread(fid,[23499*2,8735],'real*4');
+		fid = fopen([temp task 'HVVV_CX_01.grd'],'r','ieee-le'); 
+		hv_vv = fread(fid,im_size_c,'real*4');
 		hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
 		%hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
 		
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHVV_CX_01.grd'],'r','ieee-le'); 
-		hh_vv = fread(fid,[23499*2,8735],'real*4');
+		fid = fopen([temp task 'HHVV_CX_01.grd'],'r','ieee-le'); 
+		hh_vv = fread(fid,im_size_c,'real*4');
 		hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
 		%hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
 		
-		fid = fopen([temp 'PiSAR2_07507_13170_009_131109_L090HHHV_CX_01.grd'],'r','ieee-le'); 
-		hh_hv = fread(fid,[23499*2,8735],'real*4');
+		fid = fopen([temp task 'HHHV_CX_01.grd'],'r','ieee-le'); 
+		hh_hv = fread(fid,im_size_c,'real*4');
 		hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
 		%hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
 		fclose(fid) ;
 		clear fid
-		save([temp 'Covariance_ds.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
+		disp('Saving parsed file...')
+		save([temp 'Covariance_s.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
 	else
 		if parse_.Results.Test
 			if exist([temp 'test.mat'], 'file')
-				fprintf('Loading test.mat  ...')
+				disp('Loading test.mat  ...')
 				load([temp 'test.mat']);
 			else
 				error('You have to do CutBatch First!')	
 			end
 		else
-			fprintf('Loading image...')
-			load([temp 'Covariance.mat']);
+			disp('Loading image...')
+			load([temp 'Covariance_s.mat']);
 			%load([temp 'Covariance_d.mat']);
 			%load([temp 'Covariance_ds.mat']);
 		end
