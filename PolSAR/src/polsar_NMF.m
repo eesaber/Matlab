@@ -68,11 +68,12 @@ clear simulation
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
     reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp',1)
 % H_alpha decomposition 
-temp = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
+temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
 ind_ = randperm(size_N);
-H_Alpha(temp(:,:,ind_(1:2000)))
+H_Alpha(temp_T(:,:,ind_(1:2000)))
+%{
 %% Case study
 alpha = reshape(Y(1,:),[N_az, N_ra]);
 beta = reshape(Y(2,:),[N_az, N_ra]);
@@ -93,7 +94,7 @@ set(gca,'XAxisLocation','origin','YAxisLocation','origin','xlim',[0,2],'ylim',[0
 plot_para('Maximize',true,'Filename','case_tre_bui')
 
 % Case 2.
-%{
+
 figure
 scatter3(reshape(alpha(319:338,16:89),[1,n]), reshape(beta(319:338,16:89),[1,n]), reshape(gamma(319:338,16:89),[1,n]),'r')
 n = numel(alpha(231:245,482:535));
@@ -107,7 +108,6 @@ legend('tree','buliding')
 set(gca,'XAxisLocation','origin','YAxisLocation','origin','xlim',[0,2],'ylim',[0,2],'zlim',[0,2])
 plot_para('Maximize',true,'Filename','case_tre_bui')
 %}
-
 
 %% Generate the redundant coding matrix 
 disp('Generating R...')
@@ -143,9 +143,13 @@ for n = 1 : 3
 end
 
 %% Non-negative matrix factorization
-opt = statset('MaxIter', 100, 'Display', 'final', 'UseParallel', true);
+opt = statset('MaxIter', 100, 'Display', 'final', 'TolX', 1e-6, 'TolFun', 1e-6,'UseParallel', true);
 fprintf('Q = %i, NMF...\n', size_Q)
-[A_sol, X_sol] = nnmf(R, size_Q,'algorithm', 'mult', 'options', opt, 'replicates', 5);
+
+rng('shuffle') % random seed
+w_0 = single(rand(size_M, size_Q)>0.5);
+x_0 = single(rand(size_Q, size_N)>0.5);
+[A_sol, X_sol] = nnmf(R, size_Q,'w0',w_0, 'h0',x_0, 'algorithm', 'mult', 'options', opt, 'replicates', 5);
 
 % Compare to the original 
 Y_sol = C*A_sol*X_sol;
@@ -164,38 +168,37 @@ for n = 1 : 3
     disp('---------------------------------------------------------')
 end
 
-% Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
+% Visualize dictionary
+D_T = cat(1,cat(2, reshape(D_sol(1,:),[1,1,size_Q]), reshape((D_sol(4,:)+1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(6,:)+1j*D_sol(7,:))/sqrt(2),[1,1,size_Q])), ......
+             cat(2,reshape((D_sol(4,:)-1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(2,:),[1,1,size_Q]), reshape((D_sol(8,:)+1j*D_sol(9,:))/sqrt(2),[1,1,size_Q])),.......
+             cat(2,reshape((D_sol(6,:)-1j*D_sol(7,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(8,:)-1j*D_sol(9,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(3,:),[1,1,size_Q])));
+Vis([],'A','T',D_T)
+
+% Distribution map of atoms 
+    % Aboslute value 
+X_map = reshape(X_sol', [N_az, N_ra, size_Q]);
+alphabets = char(97:96+size_Q).'; % Label for subplot, start from a to ...
+subplot_label = strcat({'('}, alphabets, {')'});
+for rr = 1 : size_Q
+	figure
+	%subplot(2, size_Q/2, rr)
+    %subplot(1, size_Q, rr)
+	imagesc(X_map(:, :, rr), [0, 0.0001])
+	xlabel(subplot_label(rr,:),'Interpreter', 'latex')
+    %plot_para('Fontsize',22,'Ratio',[1,1,1]);
+    set(gca, 'YDir','normal')
+	plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q),'_',char(96+rr)],'Maximize',true);
+    movefile(['X_map_Q_', int2str(size_Q),'_',char(96+rr),'.jpg'], 'output')
+	%axis off
+	colormap jet
+end
+%plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q)],'Maximize',true);
+%movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')
+
+    % Pauli decomposition of \bar{\bar{D}} \cdot \bar{\bar{X}}
 subplot_label = char(97:96+size_Q).';
 for rr = 1 : size_Q
 	map_q = D_sol(:,rr)*X_sol(rr,:);
 	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), 2*reshape(map_q(3,:),[N_az, N_ra]),......
     reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)], 0)
 end
-
-% Visualize dictionary
-D_org = D_sol;
-D_sol = cat(1,cat(2, reshape(D_sol(1,:),[1,1,size_Q]), reshape((D_sol(4,:)+1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(6,:)+1j*D_sol(7,:))/sqrt(2),[1,1,size_Q])), ......
-             cat(2,reshape((D_sol(4,:)-1j*D_sol(5,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(2,:),[1,1,size_Q]), reshape((D_sol(8,:)+1j*D_sol(9,:))/sqrt(2),[1,1,size_Q])),.......
-             cat(2,reshape((D_sol(6,:)-1j*D_sol(7,:))/sqrt(2),[1,1,size_Q]), reshape((D_sol(8,:)-1j*D_sol(9,:))/sqrt(2),[1,1,size_Q]), reshape(D_sol(3,:),[1,1,size_Q])));
-Vis([],'A','T',D_sol)
-
-% Distribution map of atoms 
-X_sol = reshape(X_sol', [N_az, N_ra, size_Q]);
-alphabets = char(97:96+size_Q).'; % Label for subplot, start from a to ...
-subplot_label = strcat({'('}, alphabets, {')'});
-
-for rr = 1 : size_Q
-	figure
-	%subplot(2, size_Q/2, rr)
-    %subplot(1, size_Q, rr)
-	imagesc(X_sol(:, :, rr), [0, 0.0001])
-	xlabel(subplot_label(rr,:),'Interpreter', 'latex')
-    %plot_para('Fontsize',22,'Ratio',[1,1,1]);
-	plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q),'_',char(96+rr)],'Maximize',true);
-    movefile(['X_map_Q_', int2str(size_Q),'_',char(96+rr),'.jpg'], 'output')
-	set(gca, 'YDir','normal')
-	%axis off
-	colormap jet
-end
-%plot_para('Fontsize',22,'Filename',['X_map_Q_', int2str(size_Q)],'Maximize',true);
-%movefile(['X_map_Q_', int2str(size_Q),'.jpg'], 'output')

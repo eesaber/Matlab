@@ -1,3 +1,31 @@
+%% Plot Each Region onto H/alpha diagram
+% bare soil
+fan = [343,461;214,368]; % [row, row; col, col]
+size_f = (fan(1,2)-fan(1,1)+1)*(fan(2,2)-fan(2,1)+1);
+temp = cat(1,cat(2, reshape(T_11(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])), ......
+             cat(2,reshape(conj(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_22(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])),.......
+             cat(2,reshape(conj(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(conj(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_33(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])));
+ind_ = randperm(size_f);
+figure
+H_Alpha(temp(:,:,ind_(1:500)),'Pointcolor','b')
+% building 
+fan = [176,273; 1,212]; % [row, row; col, col]
+size_f = (fan(1,2)-fan(1,1)+1)*(fan(2,2)-fan(2,1)+1);
+temp = cat(1,cat(2, reshape(T_11(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])), ......
+             cat(2,reshape(conj(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_22(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])),.......
+             cat(2,reshape(conj(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(conj(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_33(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])));
+ind_ = randperm(size_f);
+H_Alpha(temp(:,:,ind_(1:500)),'Pointcolor','r')
+% canopy
+fan = [214,285; 661,801]; % [row, row; col, col]
+size_f = (fan(1,2)-fan(1,1)+1)*(fan(2,2)-fan(2,1)+1);
+temp = cat(1,cat(2, reshape(T_11(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])), ......
+             cat(2,reshape(conj(T_12(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_22(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f]), reshape(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])),.......
+             cat(2,reshape(conj(T_13(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(conj(T_23(fan(1,1):fan(1,2), fan(2,1): fan(2,2))),[1,1,size_f]), reshape(T_33(fan(1,1):fan(1,2), fan(2,1): fan(2,2)),[1,1,size_f])));
+ind_ = randperm(size_f);
+H_Alpha(temp(:,:,ind_(1:500)),'Pointcolor','k')
+
+%%
 syms x y z a b c e f g r 
 r = 1;
 eqn1 = r*e*x + y + z == a;
