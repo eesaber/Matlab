@@ -1,3 +1,30 @@
+syms hh hv vv co si
+S = [hh, hv;hv, vv];
+A = 1/2*[1,1j;1j,1];
+R = [co, si; -si, co];
+A*R*S*R.'*A
+
+%%
+psi = 0;
+R_T = [1, 0, 0; 0, cosd(2*psi),-sind(2*psi); 0, sind(2*psi), cosd(2*psi)];
+k_p = [1;3;0];
+(R_T*k_p)*(R_T*k_p)'
+
+%%
+for a = 1 : 6
+	temp(:,:,a) = D_sol(:,:,a)/trace(D_sol(:,:,a));
+end
+csvwrite('output/dic_6.csv', reshape(temp,[3,18]).')
+%%
+a = [rand(1)+1j*rand(1); rand(1)-1j*rand(1)];
+T = a*a';
+disp(T)
+disp(det(T))
+T = [0.1, 10j; -10j, 0.4];
+p = real(1/(2*pi)*exp(-a'*inv(T)*a));
+disp(p)
+
+%%
 syms x y z a b c e f g r 
 r = 1;
 eqn1 = r*e*x + y + z == a;
