@@ -2,6 +2,7 @@
 *.tif
 *.mat
 *.asv
+*.m~
 
 ASP/
 output/
@@ -10,4 +11,3 @@ output_aso
 Itfat/
 Not_research/
 libsvm-3.22/
-

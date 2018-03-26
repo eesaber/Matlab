@@ -66,15 +66,21 @@ end
 clear simulation
 %Pauli decomposition
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
-    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp',1)
+    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp','saibu',false)
 % H_alpha decomposition 
 temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
 ind_ = randperm(size_N);
+figure
 H_Alpha(temp_T(:,:,ind_(1:2000)))
+%% Find terrain slope in azimuth and range direction
+close all
+Find_angle(temp_T)
+
 %{
 %% Case study
+
 alpha = reshape(Y(1,:),[N_az, N_ra]);
 beta = reshape(Y(2,:),[N_az, N_ra]);
 gamma = reshape(Y(3,:),[N_az, N_ra]);
@@ -111,7 +117,7 @@ plot_para('Maximize',true,'Filename','case_tre_bui')
 
 %% Generate the redundant coding matrix 
 disp('Generating R...')
-size_M = 200;
+size_M = 100;
 [k_p, C, phi] = Gen_Cspace(size_M);%generate another coherency target space (C)
 %%
 R = zeros(size_M, size_N);
@@ -128,8 +134,9 @@ for n = 1 : size_N
 end
 %Compare to the original 
 Y_cod = C*R;
+        
 Pauli_decomp(reshape(Y_cod(2,:),[N_az, N_ra]), reshape(Y_cod(3,:),[N_az, N_ra]),......
-    reshape(Y_cod(1,:),[N_az, N_ra]), 'Result_Redund', 0);
+    reshape(Y_cod(1,:),[N_az, N_ra]), 'Result_Redund');
 mse_msg = {'|S_hh + S_vv|^2', '|S_hh - S_vv|^2', '|S_hv|^2'};
 disp('Comparison between the encoded image and the received image.')
 for n = 1 : 3
@@ -153,9 +160,16 @@ x_0 = single(rand(size_Q, size_N)>0.5);
 
 % Compare to the original 
 Y_sol = C*A_sol*X_sol;
+T_temp = cat(1,cat(2, reshape(Y_sol(1,:),[1,1,size_N]), reshape((Y_sol(4,:)+1j*Y_sol(5,:))/sqrt(2),[1,1,size_N]), reshape((Y_sol(6,:)+1j*Y_sol(7,:))/sqrt(2),[1,1,size_N])), ......
+             cat(2,reshape((Y_sol(4,:)-1j*Y_sol(5,:))/sqrt(2),[1,1,size_N]), reshape(Y_sol(2,:),[1,1,size_N]), reshape((Y_sol(8,:)+1j*Y_sol(9,:))/sqrt(2),[1,1,size_N])),.......
+             cat(2,reshape((Y_sol(6,:)-1j*Y_sol(7,:))/sqrt(2),[1,1,size_N]), reshape((Y_sol(8,:)-1j*Y_sol(9,:))/sqrt(2),[1,1,size_N]), reshape(Y_sol(3,:),[1,1,size_N])));
+Find_angle(T_temp)
+         
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
     reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF',0)
 D_sol = C*A_sol;
+
+
 disp('Comparison between the reconstructed image and the received image.')
 mse_msg = {'|S_hh + S_vv|^2', '|S_hh - S_vv|^2', '|S_hv|^2'};
 for n = 1 : 3

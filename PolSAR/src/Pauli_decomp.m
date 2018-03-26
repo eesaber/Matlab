@@ -3,7 +3,7 @@ function Pauli_decomp(R, G, B, name, varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{'nonempty'});
     validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
 	addParameter(parse_,'Contour',[],validationFcn_1_);
-    addParameter(parse_,'Saibu',[],validationFcn_2_);
+    addParameter(parse_,'Saibu',false,validationFcn_2_);
 	parse(parse_,varargin{:})
 
     chk_pw()
