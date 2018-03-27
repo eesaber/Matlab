@@ -33,8 +33,14 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			disp('Mission: SMAPVEX12, CAN')
 			im_size = [17020, 11274];
 			im_size_c = [im_size(1)*2, im_size(2)];
-			dir = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12';
+			dir = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12/';
 			task = 'winnip_31605_12056_002_120705_L090';
+        case 4
+            disp('Mission: Aleutian Volcanoes')
+			im_size = [21169, 4172];
+			im_size_c = [im_size(1)*2, im_size(2)];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/Aleutian/';
+			task = 'aleutn_09103_09077_000_090930_L090';
 		otherwise 
 			error('You need to select a mission')
 	end

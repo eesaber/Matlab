@@ -9,6 +9,7 @@ function Pauli_decomp(R, G, B, name, varargin)
     chk_pw()
     %%
     up_ = 10; low_ = -20;
+    %{
 	Pauli = zeros([size(R), 3]);	
 	% |S_vv - S_hh|^2 -> double bounce scattering 
 	t_p = 10*log10(sqrt(R));	
@@ -25,8 +26,9 @@ function Pauli_decomp(R, G, B, name, varargin)
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
-	
     image(Pauli);
+	%}
+    image((cat(3, 10*log10(sqrt(R)), 10*log10(sqrt(G)), 10*log10(sqrt(B)))-low_)/(up_-low_))
     if numel(parse_.Results.Contour) ~= 0
         hold on 
         [rr1,rr2] = contour(parse_.Results.Contour,100:100:500,'LineColor','y','Linewidth',1,'ShowText','on');
@@ -34,9 +36,10 @@ function Pauli_decomp(R, G, B, name, varargin)
         hold off
     end
     set(gca,'Ydir','normal')
+    caxis([-20 10])
     xlabel('azimuth (pixel)', 'Fontsize', 40)
     ylabel('range (pixel)', 'Fontsize', 40)
-    plot_para('Maximize',true,'Filename',name, 'Ratio', [4 3 1]);
+    plot_para('Maximize',true,'Filename',name, 'Ratio', [16 9 1]);
     movefile([name, '.jpg'],  'output/')
     
     if parse_.Results.Saibu
