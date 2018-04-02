@@ -66,7 +66,8 @@ end
 clear simulation
 %Pauli decomposition
 Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
-    reshape(Y(1,:),[N_az, N_ra]), 'Pauli_decomp','saibu',false)
+    reshape(Y(1,:),[N_az, N_ra]),'Filename','Pauli_decomp','saibu',false)
+%Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv))/2, 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv))/2,'Filename','Pauli_decomp')
 % H_alpha decomposition 
 temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
@@ -75,7 +76,7 @@ ind_ = randperm(size_N);
 figure
 H_Alpha(temp_T(:,:,ind_(1:2000)))
 %% Find terrain slope in azimuth and range direction
-close all
+%close all
 Find_angle(temp_T)
 
 %{
@@ -136,7 +137,7 @@ end
 Y_cod = C*R;
         
 Pauli_decomp(reshape(Y_cod(2,:),[N_az, N_ra]), reshape(Y_cod(3,:),[N_az, N_ra]),......
-    reshape(Y_cod(1,:),[N_az, N_ra]), 'Result_Redund');
+    reshape(Y_cod(1,:),[N_az, N_ra]),'Filename', 'Result_Redund');
 mse_msg = {'|S_hh + S_vv|^2', '|S_hh - S_vv|^2', '|S_hv|^2'};
 disp('Comparison between the encoded image and the received image.')
 for n = 1 : 3
@@ -166,7 +167,7 @@ T_temp = cat(1,cat(2, reshape(Y_sol(1,:),[1,1,size_N]), reshape((Y_sol(4,:)+1j*Y
 Find_angle(T_temp)
          
 Pauli_decomp(reshape(Y_sol(2,:),[N_az, N_ra]), reshape(Y_sol(3,:),[N_az, N_ra]),......
-    reshape(Y_sol(1,:),[N_az, N_ra]), 'Result_aftNMF',0)
+    reshape(Y_sol(1,:),[N_az, N_ra]),'Filename', 'Result_aftNMF',0)
 D_sol = C*A_sol;
 
 
@@ -214,5 +215,5 @@ subplot_label = char(97:96+size_Q).';
 for rr = 1 : size_Q
 	map_q = D_sol(:,rr)*X_sol(rr,:);
 	Pauli_decomp(reshape(map_q(2,:),[N_az, N_ra]), 2*reshape(map_q(3,:),[N_az, N_ra]),......
-    reshape(map_q(1,:),[N_az, N_ra]), ['Map_Pauli_Atom_', subplot_label(rr)], 0)
+    reshape(map_q(1,:),[N_az, N_ra]),'Filename', ['Map_Pauli_Atom_', subplot_label(rr)])
 end

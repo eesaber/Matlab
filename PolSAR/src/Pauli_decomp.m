@@ -1,9 +1,11 @@
-function Pauli_decomp(R, G, B, name, varargin)
+function Pauli_decomp(R, G, B, varargin)
     parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{'nonempty'});
     validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
+    validationFcn_3_ = @(x) validateattributes(x,{'char'},{});
 	addParameter(parse_,'Contour',[],validationFcn_1_);
     addParameter(parse_,'Saibu',false,validationFcn_2_);
+    addParameter(parse_,'Filename','',validationFcn_3_);
 	parse(parse_,varargin{:})
 
     chk_pw()
@@ -37,10 +39,12 @@ function Pauli_decomp(R, G, B, name, varargin)
     end
     set(gca,'Ydir','normal')
     caxis([-20 10])
-    xlabel('azimuth (pixel)', 'Fontsize', 40)
-    ylabel('range (pixel)', 'Fontsize', 40)
-    plot_para('Maximize',true,'Filename',name, 'Ratio', [16 9 1]);
-    movefile([name, '.jpg'],  'output/')
+    xlabel('east (pixel)', 'Fontsize', 40)
+    ylabel('north (pixel)', 'Fontsize', 40)
+    if numel(parse_.Results.Filename)
+        plot_para('Maximize',true,'Filename',parse_.Results.Filename, 'Ratio', [4 3 1]);
+        movefile([parse_.Results.Filename, '.jpg'],  'output/')
+    end
     
     if parse_.Results.Saibu
         %% Plot the dominant channel
@@ -51,24 +55,30 @@ function Pauli_decomp(R, G, B, name, varargin)
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_r'])
-        movefile([name, '_r.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_r'])
+            movefile([parse_.Results.Filename, '_r.jpg'],  'output/')
+        end
         figure
         imagesc(dum.*(G>R).*(G>B))
         colormap gray
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_g'])
-        movefile([name, '_g.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_g'])
+            movefile([parse_.Results.Filename, '_g.jpg'],  'output/')
+        end
         figure
         imagesc(dum.*(B>R).*(B>G))
         colormap gray
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_b'])
-        movefile([name, '_b.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_b'])
+            movefile([parse_.Results.Filename, '_b.jpg'],  'output/')
+        end
 
     end
     
