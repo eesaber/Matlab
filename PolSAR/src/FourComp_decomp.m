@@ -74,31 +74,25 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-			title('single', 'Interpreter', 'latex')
-            xlabel('azimuth (pixel)', 'Interpreter', 'latex')
-            ylabel('range (pixel)', 'Interpreter', 'latex')
-            set(gca,'Ydir','normal'), colorbar, colormap jet;
-            caxis([-30 10])
-            plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename', [filename,'_s']);
-			movefile([filename, '_s.jpg'], 'output/')
+            plotset([-30 10])
+			%title('single', 'Interpreter', 'latex')
+            xlabel('east', 'Interpreter', 'latex')
+            ylabel('north', 'Interpreter', 'latex')          
+            plot_para('Maximize',true,'Filename', ['output/' filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-			title('double', 'Interpreter', 'latex')
-            xlabel('azimuth (pixel)', 'Interpreter', 'latex')
-            ylabel('range (pixel)', 'Interpreter', 'latex')
-            set(gca,'Ydir','normal'), colorbar, colormap jet;
-            caxis([-30 10])
-            plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename',[filename, '_d']);
-			movefile([filename, '_d.jpg'], 'output/')
+            plotset([-30 10])
+			%title('double', 'Interpreter', 'latex')
+            xlabel('east', 'Interpreter', 'latex')
+            ylabel('north', 'Interpreter', 'latex')
+            plot_para('Maximize',true,'Filename',['output/' filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-			title('volume', 'Interpreter', 'latex')
-            xlabel('azimuth (pixel)', 'Interpreter', 'latex')
-            ylabel('range (pixel)', 'Interpreter', 'latex')
-            set(gca,'Ydir','normal'), colorbar, colormap jet;
-            caxis([-30 10])
-            plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename', [filename, '_v']);
-			movefile([filename, '_v.jpg'], 'output/')
+            plotset([-30 10])
+			%title('volume', 'Interpreter', 'latex')
+            xlabel('east', 'Interpreter', 'latex')
+            ylabel('north', 'Interpreter', 'latex')
+            plot_para('Maximize',true, 'Filename', ['output/' filename, '_v']);
     end
 
     if(1)	% Plot the 4-component decomposition.
@@ -113,12 +107,30 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
         img = (img-low_)/(up_-low_);
         figure
             image(img)
-            set(gca,'Ydir','normal')
-            xlabel('azimuth (pixel)', 'Interpreter', 'latex')
-            ylabel('range (pixel)', 'Interpreter', 'latex')
-            plot_para('Filename',filename,'Maximize',true,'Ratio', [4 3 1]);
-        movefile([filename, '.jpg'], 'output/')
+            set(gca,'Ydir','normal','View',[90 90])
+            xlabel('east', 'Interpreter', 'latex')
+            ylabel('north', 'Interpreter', 'latex')
+            plot_para('Filename',['output/' filename],'Maximize',true);
         clear img 
     end
 
+end
+function plotset(Clim)
+    n = 3;
+    switch n
+        case 1
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:900:4501)
+        xt=arrayfun(@num2str,get(gca,'xtick')+500-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+30500,'un',0);
+        case 2 
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:500:2501)
+        xt=arrayfun(@num2str,get(gca,'xtick')+2000-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+22000,'un',0);
+        case 3
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:300:1401)
+        xt=arrayfun(@num2str,get(gca,'xtick')+600-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+26000,'un',0);
+    end
+    set(gca,'xticklabel',xt,'yticklabel',yt)
+    colormap jet; colorbar    
 end

@@ -267,7 +267,8 @@ function VisByT(T, subp)
         F = ind2rgb(uint8((F_temp/max(max(F_temp)))*255),jet);
         figure(999)
         % We can plot a circular plot by using SURF and view topdown
-        subplot(2, num_T/2, qq)
+        num_temp = num_T + mode(num_T,2);
+        subplot(2, num_temp/2, qq)
         surf(x,y,z,F,'EdgeColor','none')
         set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
             'XTickLabelMode','manual','GridColor','none')

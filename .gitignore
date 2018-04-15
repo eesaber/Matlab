@@ -5,7 +5,7 @@
 *.m~
 
 ASP/
-output/
+output*
 output_Key
 output_aso
 Itfat/

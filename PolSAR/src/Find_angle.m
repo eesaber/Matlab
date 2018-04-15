@@ -1,17 +1,17 @@
-function Find_angle(T)
+function [thm_angle]= Find_angle(T)
 % FIND_ANGLE implements the algorithm [1] that obtain the oreintatation angle 
 % from covaraince matrix C
 % 
 % [1] "On the Estimation of Radar Polarization Orientation Shifts Induced by Terrain Slopes"
  
     %% Read incident file and elevation data
-    dir = '/media/akb/2026EF9426EF696C/raw_data/HaywardFault_CA/';
-	task = 'Haywrd_23501_17114_003_171019_L090';
+    global dir task im_size;
     if(0)
         disp('Parsing input file...')
-        im_size = [21798, 13827];
+        
         fid = fopen([dir task '_CX_01.hgt'],'r','ieee-le'); 
         hgt = single(rot90(fread(fid, im_size,'real*4')));
+        %{
         fid = fopen([dir task '_CX_01.inc'],'r','ieee-le'); 
         incd = single(rot90(fread(fid, im_size,'real*4')));
         im_size = [21798*2, 13827];
@@ -19,23 +19,22 @@ function Find_angle(T)
         slp_n = single(fread(fid, im_size,'real*4'));
         slp_e = rot90(slp_n(1:2:end, :));
         slp_n = rot90(slp_n(2:2:end, :));
+        %}
+        %incd = incd(cut(1):cut(2), cut(3): cut(4));
         
-        cut = [8600,9100,14400,15200];
-        hgt = hgt(cut(1):cut(2), cut(3): cut(4));
-        incd = incd(cut(1):cut(2), cut(3): cut(4));
-        slp_e = slp_e(cut(1):cut(2), cut(3): cut(4));
-        slp_n = slp_n(cut(1):cut(2), cut(3): cut(4));
-        save([dir task 'dem_1.mat'],'-v6', 'hgt','incd', 'slp_e', 'slp_n')
+        
     else
-        load([dir 'dem_1.mat']);
+        prompt = 'What is the filename of .hgt ?';
+        x = input(prompt);
+        load([dir x '.mat']);
     end
 
-    
+    %{
     %%
     method = {'bicubic','bilinear','nearest'}; % Interpolation method 
-    method = char(method(2));
+    method = char(method(3));
     disp(['Interpolation by using ' method])
-    ang = 35.6506;
+    ang = 35;
     %ang = -49.5;
     [r_, c_] = size(hgt);
     r_hgt = imrotate(hgt,-ang,method);
@@ -48,10 +47,23 @@ function Find_angle(T)
         imagesc(imrotate(temp,-ang,method));
         set(gca,'Ydir','normal','Clim',[-100 -20])
         xlabel('range','Interpreter', 'latex')
-        ylabel('azimuth','Interpreter', 'latex')
+        ylabel('azimuth','Interpreter', 'l        set(gca,'Ydir','normal','Clim',[-1 1])
+        colormap jet; colorbar
+        xlabel('east')
+        ylabel('north')
+        plot_para('Filename','AziSlpEst', 'Maximize',true)
+        movefile('AziSlpEst.jpg', 'output/')atex')
+    %}
     %%
-    refvec = [1/5.556e-05, 37.9686, -121.929];
+    %refvec = [1/5.556e-05, 37.9686, -121.929];
+    refvec = [1/0.000055560, 37.04863700, -118.21025500 ];
     [~,~,gN, gE] = gradientm(hgt,refvec,referenceEllipsoid('earth'));
+    gN = -gN;
+    line = zeros(1,size(gN,1));
+    for a=1 : size(gN,1)
+        line(a) = find(hgt(a,:)+10000,1);
+    end
+     %{
     [~,~,r_azi_slp,r_rng_slp] = gradientm(r_hgt,refvec,referenceEllipsoid('earth'));
     % --------How to find the boundary--------
     % 1. Create array "A" one(size(hgt))
@@ -60,9 +72,10 @@ function Find_angle(T)
     % ----------------------------------------
     rng_slp = imrotate(r_rng_slp, ang, 'nearest');
     azi_slp = imrotate(r_azi_slp, ang, 'nearest');
-    rng_slp = -rng_slp(380:880, 238:1038);
-    azi_slp = -azi_slp(380:880, 238:1038);
-     %{
+    rng_slp = -rng_slp(377:877, 237:1037);
+    azi_slp = -azi_slp(377:877, 237:1037);
+    %azi_slp = -azi_slp(380:880, 238:1038);
+    
     figure
         imagesc(rng_slp)
         set(gca,'Ydir','normal','Clim',[-1 1])
@@ -90,22 +103,7 @@ function Find_angle(T)
         plot_para('Filename','hgt_rot', 'Maximize',true)
         movefile('hgt_rot.jpg', 'output/')
    
-    figure 
-        imagesc(gE)
-        set(gca,'Ydir','normal')
-        caxis([-1,1])
-        colormap jet
-        colorbar
-        plot_para('Filename','a3', 'Maximize',true)
-        movefile('gE.jpg', 'output/')
-    figure 
-        imagesc(gN)
-        set(gca,'Ydir','normal')
-        caxis([-1,1])
-        colormap jet
-        colorbar
-        plot_para('Filename','r3', 'Maximize',true)
-        movefile('gN.jpg', 'output/')
+
     figure 
         imagesc(slp_e)
         set(gca,'Ydir','normal')
@@ -124,44 +122,77 @@ function Find_angle(T)
         movefile('slpN.jpg', 'output/')
     figure
         Pauli_decomp(reshape(T_22,[N_az, N_ra]), reshape(T_33,[N_az, N_ra]),......
-            reshape(T_11,[N_az, N_ra]), 'hgt',0, 'Contour', hgt)    
+            reshape(T_11,[N_az, N_ra]), 'hgt',0, 'Contour', hgt)
+
+    
+    %}
     figure
         imagesc(hgt)
-        set(gca,'Ydir','normal')
-        caxis([-100 600])
-        colormap jet
-        colorbar
-        xlabel('east $\rightarrow$', 'Interpreter', 'latex')
+        plotset([1000 2000])
+        hold on 
+        plot(line,1:size(gE,1),'w', 'Linewidth', 1 )
+        hold off
+        xlabel('east', 'Interpreter', 'latex')
         ylabel('north', 'Interpreter', 'latex')
-        plot_para('Filename','hgt_dem', 'Maximize',true)
-        movefile('hgt_dem.jpg', 'output/')
-    %}
+        plot_para('Filename','output/hgt_dem', 'Maximize',true)
+      
+    figure 
+        imagesc(gE)
+        plotset([-1 1])
+        hold on 
+        plot(line,1:size(gE,1),'k', 'Linewidth', 2 )
+        hold off
+        xlabel('east')
+        ylabel('north')
+        %title('range slope')
+        plot_para('Filename','output/gE', 'Maximize',true)
+    figure 
+        imagesc(gN)
+        hold on 
+        plot(line,1:size(gE,1),'k', 'Linewidth', 2 )
+        hold off
+        plotset([-1 1])
+        %title('azimuth slope')
+        xlabel('east')
+        ylabel('north')
+        plot_para('Filename','output/gN', 'Maximize',true)
     %% Calculate the azimuth terrain slope
-    phi = 20*pi/180; % Look angle
+    [row, ~]= size(hgt);
+    phi = repmat(atan((3252+linspace(1,21192,4920))/10023), [row, 1]); % Look angle
+    x = input('Corresponding column range:(by a 2x1 array) \n');
+    phi = phi(:,x(1):x(2));
     % atan2(Y,X), returns values in the closed interval [-pi,pi]
     % atan(X), returns values in the closed interval [-pi/2,pi/2]
-    theta = squeeze(1/4*(atan2(-2*real(T(2,3,:)), -T(2,2,:)+T(3,3,:))+pi)).';
+    theta = squeeze(1/4*(atan2(-4*real(T(2,3,:)), -T(2,2,:)+T(3,3,:))+pi)).';
     a = theta > pi/4;
     theta(a) = theta(a) - pi/2;
+    rng_slp = gE;
+    azi_slp = gN;
+    thm_angle = -atan(-azi_slp./(-rng_slp.*cos(phi)+sin(phi)));
+    
     clear a
-    %{
     figure
-    imagesc(reshape(theta,size(hgt)))
-    caxis([-pi/4, pi/4])
-    colormap gray
-    plot_para('Filename','1', 'Maximize',true,'Ratio',[4 3 1])
+        imagesc(reshape(theta,size(hgt))/pi*180)
+        plotset([-45, 45])
+        xlabel('east')
+        ylabel('north')
+        colormap jet; colorbar
+        plot_para('Filename','output/angle_sig', 'Maximize',true)
     figure
-    imagesc(-atan(-azi_slp./(-rng_slp.*cos(phi)+sin(phi))))
-    caxis([-pi/2, pi/2])
-    colorbar
-    plot_para('Filename','2', 'Maximize',true,'Ratio',[4 3 1])
-    %}
+        imagesc(thm_angle/pi*180)
+        plotset([-45, 45])
+        xlabel('east')
+        ylabel('north')
+        colormap jet; colorbar
+        plot_para('Filename','output/angle_thm', 'Maximize',true)
+    close all
     rng_slp = reshape(rng_slp, [1, numel(rng_slp)]);
+    phi = reshape(phi, [1, numel(phi)]);
     azi_slp_est = tan(theta).*(-rng_slp.*cos(phi) + sin(phi));   
     azi_slp_est = reshape(azi_slp_est, size(hgt));
     
     %%
-    
+    %{
     figure
     Pauli_decomp(reshape(T(2,2,:), size(hgt)), reshape(T(3,3,:), size(hgt)),......
     reshape(T(1,1,:), size(hgt)))
@@ -174,18 +205,23 @@ function Find_angle(T)
         colormap jet
         hold off
         set(h, 'AlphaData', (abs(azi_slp-azi_slp_est)<0.1)/2);
-        arrow('y')
+        %arrow('y')
         plot_para('Filename','AziSlpEstErr_ovp', 'Maximize',true,'Ratio',[4 3 1])
         movefile('AziSlpEstErr_ovp.jpg', 'output/')
-    
+    %}
     figure
         imagesc(abs(azi_slp-azi_slp_est))
-        set(gca,'Ydir','normal','Clim',[0 1])
-        %title('estimation azi-slope')
-        colormap jet; colorbar
-        arrow([250,235,215]/256)
-        plot_para('Filename','AziSlpEstErr', 'Maximize',true,'Ratio',[4 3 1])
-        movefile('AziSlpEstErr.jpg', 'output/')
+        plotset([0 1])
+        xlabel('east')
+        ylabel('north')
+        plot_para('Filename','output/AziSlpEstErr', 'Maximize',true)
+    
+    figure
+        imagesc(azi_slp_est)
+        plotset([-1 1])
+        xlabel('east')
+        ylabel('north')
+        plot_para('Filename','output/AziSlpEst', 'Maximize',true)
 end
 function arrow(c)
     pos_x = [0.4 0.3];
@@ -200,4 +236,23 @@ function arrow(c)
     pos_x = [0.27 0.3];
     pos_y = [0.8 0.9];
     annotation('textarrow',pos_x,pos_y,'String','azimuth','Interpreter', 'latex','Color',c,'Headstyle','none','Linewidth',2.5,'Fontsize',24)
+end
+function plotset(Clim)
+    n = 3;
+    switch n
+        case 1
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:900:4501)
+        xt=arrayfun(@num2str,get(gca,'xtick')+500-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+30500,'un',0);
+        case 2 
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:500:2501)
+        xt=arrayfun(@num2str,get(gca,'xtick')+2000-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+22000,'un',0);
+        case 3
+        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:300:1401)
+        xt=arrayfun(@num2str,get(gca,'xtick')+600-1,'un',0);
+        yt=arrayfun(@num2str,get(gca,'ytick')+26000,'un',0);
+    end
+    set(gca,'xticklabel',xt,'yticklabel',yt)
+    colormap jet; colorbar    
 end

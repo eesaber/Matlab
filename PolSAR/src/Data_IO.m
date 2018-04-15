@@ -6,28 +6,29 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	% NOTICE! The data is rotated for 90 degree ! 
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
-	validationFcn_2_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
-	addParameter(parse_,'Test',0,validationFcn_2_);
+	addParameter(parse_,'Test','',validationFcn_2_);
     addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
 	parse(parse_,varargin{:})
 
 	chk_pw()
     % file type   
-    typ = '.mlc';
-    disp(['Using ' typ ' as input!'])
+    typ = '.grd';
+    disp(['Using ' typ ' as input!'])    
 	% mission
-	mission_num = 2;
+    global dir task im_size
+	mission_num = 6;
 	switch mission_num
 		case 1
-			disp('Mission: Aso volcano, 熊本、日本')
+			disp('UAVSAR Mission: Aso volcano, 熊本、日本')
 			im_size = [23499,8735];
 			im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Aso_Kumamoto/';
 			task = 'PiSAR2_07507_13170_009_131109_L090';
 		case 2
-			disp('Mission: HaywardFault, CA USA')
+			disp('UAVSAR Mission: HaywardFault, CA USA')
 			%im_size = [21798, 13827];
 			%im_size_c = [im_size(1)*2, im_size(2)];
             im_size = [3300, 15900];
@@ -35,22 +36,36 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			dir = '/media/akb/2026EF9426EF696C/raw_data/HaywardFault_CA/';
 			task = 'Haywrd_23501_17114_003_171019_L090';
 		case 3
-			disp('Mission: SMAPVEX12, CAN')
+			disp('UAVSAR Mission: SMAPVEX12, CAN')
 			im_size = [17020, 11274];
 			im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12/';
 			task = 'winnip_31605_12056_002_120705_L090';
         case 4
-            disp('Mission: Aleutian Volcanoes')
+            disp('UAVSAR Mission: Aleutian Volcanoes')
 			im_size = [53672, 17186];
 			im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Aleutian/';
 			task = 'aleutn_09103_09077_000_090930_L090';
         case 5
-            disp('Mission: Beaufort')
-            
-            dir = '/media/akb/2026EF9426EF696C/raw_data/ Beaufort/';
-            task = 'beaufo_01105_15148_004_151006_L090';
+            disp('UAVSAR Mission: Manu National Park')
+			im_size = [21947, 24787];
+			im_size_c = im_size.*[2 ,1];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/ManuNationalPark/';    
+			task = 'ManuNP_22024_14057_004_140501_L090';
+		case 6
+			disp('UAVSAR Mission: PPA')
+			im_size = [4920, 34191];
+			im_size_c = im_size.*[2 ,1];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/PPA/';
+			task = 'PPAtst_18013_11046_003_110707_L090';
+        case 7
+            disp('UAVSAR Mission: Beaufort')
+            %im_size = [17186 53672];
+            im_size = [17186 53672/4];
+            im_size_c = im_size.*[2 ,1];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/Beaufort/';
+			task = 'beaufo_01105_15148_004_151006_L090';
 		otherwise 
 			error('You need to select a mission')
 	end
@@ -59,43 +74,51 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 		disp('Parsing input file...')
 		fid = fopen([dir task 'HHHH_CX_01' typ],'r','ieee-le'); 
 		hh_hh = single(rot90(fread(fid, im_size,'real*4')));
-		
-		%hh_hh = sparse(rot90(fread(fid, im_size,'real*4')));
+		%hh_hh = single((fread(fid, im_size,'real*4')));
+        %hh_hh = hh_hh(:,im_size(2)/2);
+        
 		fid = fopen([dir task 'HVHV_CX_01' typ],'r','ieee-le'); 
 		hv_hv = single(rot90(fread(fid, im_size,'real*4')));
-		%hv_hv = sparse(rot90(fread(fid, im_size,'real*4')));
+        %hv_hv = single((fread(fid, im_size,'real*4')));
+        %hv_hv = hv_hv(:,im_size(2)/2);
+        
 		fid = fopen([dir task 'VVVV_CX_01' typ],'r','ieee-le'); 
 		vv_vv = single(rot90(fread(fid, im_size,'real*4')));
-		%vv_vv = sparse(rot90(fread(fid, im_size,'real*4')));
-		
+        %vv_vv = single((fread(fid, im_size,'real*4')));
+		%vv_vv = vv_vv(:,im_size(2)/2);
+        
 		fid = fopen([dir task 'HVVV_CX_01' typ],'r','ieee-le'); 
 		hv_vv = fread(fid,im_size_c,'real*4');
 		hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
-		%hv_vv = sparse((rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :))));
+        %hv_vv = single((hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+        %hv_vv = hv_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHVV_CX_01' typ],'r','ieee-le'); 
-		hh_vv = fread(fid,im_size_c,'real*4');
-		hh_vv = single(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
-		%hh_vv = sparse(rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :)));
+		hh_vv = single(fread(fid,im_size_c,'real*4'));
+		hh_vv = rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
+		%hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
+        %hh_vv = hh_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHHV_CX_01' typ],'r','ieee-le'); 
-		hh_hv = fread(fid,im_size_c,'real*4');
-		hh_hv = single(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
-		%hh_hv = sparse(rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :)));
+		hh_hv = single(fread(fid,im_size_c,'real*4'));
+		hh_hv = rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
+		%hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
+        %hh_hv = hh_hv(:,im_size(2)/2);
+        
 		fclose(fid) ;
 		clear fid
 		disp('Saving parsed file...')
 		save([dir 'Covariance_s.mat'],'-v7.3', 'hh_hh', 'hv_hv', 'vv_vv', 'hh_hv', 'hh_vv', 'hv_vv');
 	else
-		if parse_.Results.Test
-			if exist([dir 'test.mat'], 'file')
+		if numel(parse_.Results.Test) ~= 0
+			if exist([dir parse_.Results.Test '.mat'], 'file')
 				disp('Loading test.mat  ...')
-				load([dir 'test.mat']);
+				load([dir parse_.Results.Test '.mat']);
 			else
 				error('You have to do CutBatch First!')	
 			end
 		else
-			disp('Loading image...')
+			disp('Loading whole image...')
 			load([dir 'Covariance_s.mat']);
 			%load([temp 'Covariance_d.mat']);
 			%load([temp 'Covariance_ds.mat']);

@@ -47,6 +47,7 @@ function H_Alpha(T, varargin)
     plot_para('Maximize',true,'Filename', 'H_alpha_decomp')
     movefile 'H_alpha_decomp.jpg' output
 end
+
 %{
 %% Plot Each Region onto H/alpha diagram
 % bare soil
