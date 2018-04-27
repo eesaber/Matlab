@@ -5,7 +5,7 @@ function Eigen_decomp(T, span)
         H_Alpha(T(:,:,ind_(1:2000)))
     clear ind_
     global dir
-    if(1)
+    if(0)
     % Plot each entropy of each pixel
         t = cputime;
         [~,~,num]= size(T);
@@ -26,7 +26,7 @@ function Eigen_decomp(T, span)
         e = cputime -t;
         disp(e)
         %%
-        H = reshape(H, size(span));
+        H = real(reshape(H, size(span)));
         A_1 = reshape(A_1, size(span));
         A_2 = reshape(A_2, size(span));
         alpha_bar = reshape(alpha_bar, size(span));
