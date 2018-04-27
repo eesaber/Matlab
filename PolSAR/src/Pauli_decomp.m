@@ -40,7 +40,7 @@ function Pauli_decomp(R, G, B, varargin)
         clabel(rr1,rr2,'Color','w','Fontsize',18)
         hold off
     end
-    plotset([-20 10])
+    Plotsetting_1([-40 0])
     xlabel('east (pixel)', 'Fontsize', 40)
     ylabel('north (pixel)', 'Fontsize', 40)
     if numel(parse_.Results.Filename)
@@ -82,25 +82,4 @@ function Pauli_decomp(R, G, B, varargin)
         end
 
     end
-    
-end
-function plotset(Clim)
-    n = 3;
-    switch n
-        case 1
-        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:900:4501)
-        xt=arrayfun(@num2str,get(gca,'xtick')+500-1,'un',0);
-        yt=arrayfun(@num2str,get(gca,'ytick')+30500,'un',0);
-        case 2 
-        set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:500:2501)
-        xt=arrayfun(@num2str,get(gca,'xtick')+2000-1,'un',0);
-        yt=arrayfun(@num2str,get(gca,'ytick')+22000,'un',0);
-        case 3
-        %set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:300:1401)
-        set(gca,'Ydir','normal','Clim',Clim)
-        %xt=arrayfun(@num2str,get(gca,'xtick')+600-1,'un',0);
-        %yt=arrayfun(@num2str,get(gca,'ytick')+26000,'un',0);
-    end
-    %set(gca,'xticklabel',xt,'yticklabel',yt)
-    colormap jet; colorbar    
 end

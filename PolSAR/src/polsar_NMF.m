@@ -46,11 +46,22 @@ else
 	% Real data import
     disp('Using real data...')
     area = 'area_3';
-	[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test', area);
+	%[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('Test', area);
+    [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO();
 	[N_az, N_ra] = size(hh_hh);
 	size_N = numel(hh_hh);
     size_Q = 6; % Numbers of atom in D
-	T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
+    span = hh_hh+vv_vv+2*hv_hv;
+    % 4-component decomposition
+    FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
+    % Span
+    figure
+        imagesc(10*log10(span))
+        Plotsetting_1([-40 0])
+        xlabel('azimuth')
+        ylabel('range')  
+        plot_para('Filename','output/span', 'Maximize',true)
+    T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
 	T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
 	T_33 = 2*hv_hv;
 	T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
@@ -60,12 +71,9 @@ else
 		reshape(real(T_12), [1, size_N])*sqrt(2); reshape(imag(T_12), [1, size_N])*sqrt(2);
 		reshape(real(T_13), [1, size_N])*sqrt(2); reshape(imag(T_13), [1, size_N])*sqrt(2);
 		reshape(real(T_23), [1, size_N])*sqrt(2); reshape(imag(T_23), [1, size_N])*sqrt(2)];
-    % 4-component decomposition
-    span = hh_hh+vv_vv+2*hv_hv;
-    FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 	clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 end
-clear simulation
+close all
 temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
@@ -75,49 +83,11 @@ Pauli_decomp(reshape(Y(2,:),[N_az, N_ra]), reshape(Y(3,:),[N_az, N_ra]),......
     reshape(Y(1,:),[N_az, N_ra]),'Filename','Pauli_decomp','saibu',false)
 %Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv))/2, 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv))/2,'Filename','Pauli_decomp')
 close all
-%% H_alpha decomposition 
-ind_ = randperm(size_N);
-figure
-H_Alpha(temp_T(:,:,ind_(1:2000)))
-clear ind_
+%% Eigen-decomposition
+Eigen_decomp(temp_T, span)
 
-% Plot each entropy of each pixel
-t = cputime;
-[~,~,num]= size(temp_T);
-H = zeros(1, num);
-for r = 1 : num
-    [U, L] = eig(temp_T(:,:,r));
-    P = L/sum(L);
-    H(r) = -sum(P.*log(P)/log(3));
-    %alpha = sum(P'.*acosd(abs(U(1,:))));
-end
-e = cputime -t;
-disp(e)
-H  = reshape(H, size(T_11));
-close all
-line = zeros(1,size(H,1));
-global dir;
-load([dir area '_hgt.mat']);
-for a=1 : size(H,1)
-    line(a) = find(hgt(a,:)+10000,1);
-end
-figure
-    imagesc(H)
-    set(gca,'Ydir','normal','Clim',Clim, 'View',[90 90], 'XTick',1:300:1401)
-    xt=arrayfun(@num2str,get(gca,'xtick')+600-1,'un',0);
-    yt=arrayfun(@num2str,get(gca,'ytick')+26000,'un',0);
-    set(gca,'xticklabel',xt,'yticklabel',yt)
-    colormap jet; colorbar
-    hold on 
-    plot(line,1:size(H,1),'magenta', 'Linewidth', 2 )
-    hold off
-    xlabel('east')
-    ylabel('north')
-    plot_para('Filename','output/Entropy', 'Maximize',true)
 %% Obtain terrain slope in azimuth and induced angle by terrain slope. 
-
-close all
-thm_angle = Find_angle(temp_T);
+Find_angle(temp_T);
 clear T_11 T_22 T_33 T_12 T_13 T_23 
 %clear temp_T 
 thm_angle = resize(thm_angle, [1,size_N]);

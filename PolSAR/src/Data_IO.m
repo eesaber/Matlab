@@ -15,11 +15,11 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 
 	chk_pw()
     % file type   
-    typ = '.grd';
+    typ = '.mlc';
     disp(['Using ' typ ' as input!'])    
 	% mission
     global dir task im_size
-	mission_num = 6;
+	mission_num = 8;
 	switch mission_num
 		case 1
 			disp('UAVSAR Mission: Aso volcano, 熊本、日本')
@@ -66,6 +66,12 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
             im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Beaufort/';
 			task = 'beaufo_01105_15148_004_151006_L090';
+        case 8 
+            disp('UAVSAR Mission: Golf of Mexico Scen.1')
+            im_size = [3300, 31696];
+            im_size_c = im_size.*[2,1];
+            dir = '/media/akb/2026EF9426EF696C/raw_data/Mexico_Golf_1/';
+			task = 'GOMoil_07601_10052_102_100622_L090';
 		otherwise 
 			error('You need to select a mission')
 	end
@@ -73,35 +79,35 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	if(parse_.Results.ReadNewFile)
 		disp('Parsing input file...')
 		fid = fopen([dir task 'HHHH_CX_01' typ],'r','ieee-le'); 
-		hh_hh = single(rot90(fread(fid, im_size,'real*4')));
+		hh_hh = (single(fread(fid, im_size,'real*4')));
 		%hh_hh = single((fread(fid, im_size,'real*4')));
         %hh_hh = hh_hh(:,im_size(2)/2);
         
 		fid = fopen([dir task 'HVHV_CX_01' typ],'r','ieee-le'); 
-		hv_hv = single(rot90(fread(fid, im_size,'real*4')));
+		hv_hv = (single(fread(fid, im_size,'real*4')));
         %hv_hv = single((fread(fid, im_size,'real*4')));
         %hv_hv = hv_hv(:,im_size(2)/2);
         
 		fid = fopen([dir task 'VVVV_CX_01' typ],'r','ieee-le'); 
-		vv_vv = single(rot90(fread(fid, im_size,'real*4')));
+		vv_vv = (single(fread(fid, im_size,'real*4')));
         %vv_vv = single((fread(fid, im_size,'real*4')));
 		%vv_vv = vv_vv(:,im_size(2)/2);
         
 		fid = fopen([dir task 'HVVV_CX_01' typ],'r','ieee-le'); 
 		hv_vv = fread(fid,im_size_c,'real*4');
-		hv_vv = single(rot90(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+		hv_vv = (single(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
         %hv_vv = single((hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
         %hv_vv = hv_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHVV_CX_01' typ],'r','ieee-le'); 
 		hh_vv = single(fread(fid,im_size_c,'real*4'));
-		hh_vv = rot90(hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
+		hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
 		%hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
         %hh_vv = hh_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHHV_CX_01' typ],'r','ieee-le'); 
 		hh_hv = single(fread(fid,im_size_c,'real*4'));
-		hh_hv = rot90(hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
+		hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
 		%hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
         %hh_hv = hh_hv(:,im_size(2)/2);
         
