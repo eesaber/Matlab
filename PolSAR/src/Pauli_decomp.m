@@ -1,32 +1,53 @@
-function Pauli_decomp(R, G, B, name, saibu)
+function Pauli_decomp(R, G, B, varargin)
+    parse_ = inputParser;
+	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{'nonempty'});
+    validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
+    validationFcn_3_ = @(x) validateattributes(x,{'char'},{});
+	addParameter(parse_,'Contour',[],validationFcn_1_);
+    addParameter(parse_,'Saibu',false,validationFcn_2_);
+    addParameter(parse_,'Filename','',validationFcn_3_);
+	parse(parse_,varargin{:})
 
+    chk_pw()
     %%
-    up_ = 10; low_ = -20;
+    up_ = 10; low_ = -50;
+    
 	Pauli = zeros([size(R), 3]);	
 	% |S_vv - S_hh|^2 -> double bounce scattering 
-	t_p = 10*log10(sqrt(R));	
+	t_p = 10*log10(R);	
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
 	% |S_hv|^2 -> volume scattering
-	t_p= 10*log10(sqrt(G));
+	t_p= 10*log10(G);
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
 	% |S_vv + S_hh|^2 -> single scattering
-	t_p = 10*log10(sqrt(B));
+	t_p = 10*log10(B);
 	t_p(t_p < low_) = low_;
 	t_p(t_p > up_ ) = up_;
 	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
-	figure
     image(Pauli)
-    set(gca,'Ydir','normal')
-    xlabel('azimuth (pixel)', 'Fontsize', 40)
-    ylabel('range (pixel)', 'Fontsize', 40)
-    plot_para('Maximize',true,'Filename',name, 'Ratio', [4 3 1]);
-    movefile([name, '.jpg'],  'output/')
+	
+    %image((cat(3, 10*log10(sqrt(R)), 10*log10(sqrt(G)), 10*log10(sqrt(B)))-low_)/(up_-low_))
 
-    if saibu
+    %image(cat(3, 10*log10(sqrt(R)), 10*log10(sqrt(G)), 10*log10(sqrt(B))))
+    %image((cat(3, R, G, B)+0)/(0.05))
+    if numel(parse_.Results.Contour) ~= 0
+        hold on 
+        [rr1,rr2] = contour(parse_.Results.Contour,100:100:500,'LineColor','y','Linewidth',1,'ShowText','on');
+        clabel(rr1,rr2,'Color','w','Fontsize',18)
+        hold off
+    end
+    Plotsetting_1([-40 0])
+    xlabel('east (pixel)', 'Fontsize', 40)
+    ylabel('north (pixel)', 'Fontsize', 40)
+    if numel(parse_.Results.Filename)
+        plot_para('Maximize',true,'Filename',['output/' parse_.Results.Filename]);
+    end
+    
+    if parse_.Results.Saibu
         %% Plot the dominant channel
         dum = ones(size(R));
         figure
@@ -35,23 +56,30 @@ function Pauli_decomp(R, G, B, name, saibu)
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_r'])
-        movefile([name, '_r.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_r'])
+            movefile([parse_.Results.Filename, '_r.jpg'],  'output/')
+        end
         figure
         imagesc(dum.*(G>R).*(G>B))
         colormap gray
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_g'])
-        movefile([name, '_g.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_g'])
+            movefile([parse_.Results.Filename, '_g.jpg'],  'output/')
+        end
         figure
         imagesc(dum.*(B>R).*(B>G))
         colormap gray
         set(gca,'Ydir','normal')
         xlabel('azimuth (pixel)', 'Fontsize', 40)
         ylabel('range (pixel)', 'Fontsize', 40)
-        plot_para('Maximize',true,'Filename',[name, '_b'])
-        movefile([name, '_b.jpg'],  'output/')
+        if numel(parse_.Results.Filename)
+            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_b'])
+            movefile([parse_.Results.Filename, '_b.jpg'],  'output/')
+        end
+
     end
 end

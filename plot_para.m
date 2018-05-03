@@ -31,10 +31,11 @@ function plot_para(varargin)
 	end
 
 	if parse_.Results.Maximize
-		pause(0.001);
+        pause(0.01);
 		frame_h = get(handle(gcf),'JavaFrame');
 		set(frame_h,'Maximized',1);
-	end
+    end
+    pause(0.5);
 	if strcmp(parse_.Results.Filename,'None') == 0
 		a = [parse_.Results.Filename, '.jpg'];
 		export_fig(a)

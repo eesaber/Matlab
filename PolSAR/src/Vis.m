@@ -5,11 +5,8 @@ function Vis(k_p, typ, varargin)
 % 'C' plots each k_p by a dot, and 'A' plots each k_p by the corresponding
 % covarianve matrix \bar{\bar{T}} = \bar{k}_p \cdot \bar{k}_p^t.
 % Option: 'C_2D' = true, 'A_2D' = false, 'A_Subplot' = true,
-	if isunix
-		cd /home/akb/Code/Matlab/PolSAR
-	else 
-		cd D:\Code\Simu\PolSAR
-	end
+
+    chk_pw()
 	% Parse input parameter
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
@@ -270,7 +267,8 @@ function VisByT(T, subp)
         F = ind2rgb(uint8((F_temp/max(max(F_temp)))*255),jet);
         figure(999)
         % We can plot a circular plot by using SURF and view topdown
-        subplot(2, num_T/2, qq)
+        num_temp = num_T + mode(num_T,2);
+        subplot(2, num_temp/2, qq)
         surf(x,y,z,F,'EdgeColor','none')
         set(gca,'View',[0,90],'TickLength',[0,0],'YColor','none',......
             'XTickLabelMode','manual','GridColor','none')
