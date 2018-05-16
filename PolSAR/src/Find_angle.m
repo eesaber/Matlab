@@ -175,13 +175,13 @@ function Find_angle(T)
     x = input('Corresponding column range:(by a 2x1 array) \n');
     phi = phi(:,x(1):x(2));
     %}
-    hgt = (zeros(3300, 31696)==0);
+    global im_size
     % atan2(Y,X), returns values in the closed interval [-pi,pi]
     % atan(X), returns values in the closed interval [-pi/2,pi/2]
     theta = squeeze(1/4*(atan2(-4*real(T(2,3,:)), -T(2,2,:)+T(3,3,:))+pi)).';
     a = theta > pi/4;
     theta(a) = theta(a) - pi/2;
-    sig_angle = reshape(theta,size(hgt));
+    sig_angle = reshape(theta, im_size);
     %rng_slp = gE;
     %azi_slp = gN;
     %thm_angle = -atan(-azi_slp./(-rng_slp.*cos(phi)+sin(phi)));
@@ -193,6 +193,7 @@ function Find_angle(T)
         ylabel('range')
         colormap jet; colorbar
         plot_para('Filename','output/angle_sig_1', 'Maximize',true)
+    %{
     figure
        hold on 
        %plot(sig_angle(1500,:))
@@ -202,7 +203,7 @@ function Find_angle(T)
        xlabel('azimuth')
        xlim([1 31696])
        plot_para('Filename','output/angle_sig_13', 'Maximize',true)
-    %{
+    
     figure
         imagesc(thm_angle/pi*180)
         plotset([-45, 45])

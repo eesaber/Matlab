@@ -74,31 +74,31 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-            Plotsetting_1([-40 0])
+            Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('single', 'Interpreter', 'latex')
-            xlabel('azimuth', 'Interpreter', 'latex')
-            ylabel('range', 'Interpreter', 'latex')          
+            xlabel('Azimuth (km)', 'Interpreter', 'latex')
+            ylabel('Range (km)', 'Interpreter', 'latex')          
             plot_para('Maximize',true,'Filename', ['output/' filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            Plotsetting_1([-40 0])
+            Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('double', 'Interpreter', 'latex')
-            xlabel('azimuth', 'Interpreter', 'latex')
-            ylabel('range', 'Interpreter', 'latex')
+            xlabel('Azimuth (km)', 'Interpreter', 'latex')
+            ylabel('Range (km)', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename',['output/' filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-            Plotsetting_1([-40 0])
+            Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
-            xlabel('azimuth', 'Interpreter', 'latex')
-            ylabel('range', 'Interpreter', 'latex')
+            xlabel('Azimuth (km)', 'Interpreter', 'latex')
+            ylabel('Range (km)', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
-            Plotsetting_1([-40 0])
+            Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
-            xlabel('azimuth', 'Interpreter', 'latex')
-            ylabel('range', 'Interpreter', 'latex')
+            xlabel('Azimuth (km)', 'Interpreter', 'latex')
+            ylabel('Range (km)', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_c']);
     end
 
@@ -116,8 +116,8 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             image(img)
             %set(gca,'Ydir','normal','View',[90 90])
             set(gca,'Ydir','normal')
-            xlabel('azimuth', 'Interpreter', 'latex')
-            ylabel('range', 'Interpreter', 'latex')
+            xlabel('Azimuth (km)', 'Interpreter', 'latex')
+            ylabel('Range (km)', 'Interpreter', 'latex')
             plot_para('Filename',['output/' filename],'Maximize',true);
         clear img 
     end

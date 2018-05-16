@@ -40,7 +40,7 @@ function Pauli_decomp(R, G, B, varargin)
         clabel(rr1,rr2,'Color','w','Fontsize',18)
         hold off
     end
-    Plotsetting_1([-40 0])
+    Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
     xlabel('east (pixel)', 'Fontsize', 40)
     ylabel('north (pixel)', 'Fontsize', 40)
     if numel(parse_.Results.Filename)

@@ -1,12 +1,12 @@
-function Eigen_decomp(T, span)
+function [H, alpha_bar] = Eigen_decomp(T, span)
     %% H_alpha plot
-    ind_ = randperm(numel(span));
-    figure
-        H_Alpha(T(:,:,ind_(1:2000)))
-    clear ind_
-    global dir
+    global dir im_size
     if(0)
-    % Plot each entropy of each pixel
+        ind_ = randperm(numel(span));
+        figure
+            H_Alpha(T(:,:,ind_(1:2000)))
+        clear ind_
+        % Plot each entropy of each pixel
         t = cputime;
         [~,~,num]= size(T);
         H = zeros(1, num); A_1 = zeros(1, num); A_2 = zeros(1, num);
@@ -26,10 +26,10 @@ function Eigen_decomp(T, span)
         e = cputime -t;
         disp(e)
         %%
-        H = real(reshape(H, size(span)));
-        A_1 = reshape(A_1, size(span));
-        A_2 = reshape(A_2, size(span));
-        alpha_bar = reshape(alpha_bar, size(span));
+        H = real(reshape(H, im_size));
+        A_1 = reshape(A_1, im_size);
+        A_2 = reshape(A_2, im_size);
+        alpha_bar = reshape(alpha_bar, im_size);
         save([dir 'eigen.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'alpha_bar');
     else 
         load([dir 'eigen.mat'])
@@ -46,25 +46,25 @@ function Eigen_decomp(T, span)
     figure
         imagesc(H)
         Plotsetting_1([0 1])
-        xlabel('azimuth')
-        ylabel('range')  
+        xlabel('Azimuth (km)')
+        ylabel('Range (km)')  
         plot_para('Filename','output/Entropy', 'Maximize',true)
     figure
         imagesc(alpha_bar)
         Plotsetting_1([0 90])    
-        xlabel('azimuth')
-        ylabel('range')  
+        xlabel('Azimuth (km)')
+        ylabel('Range (km)')  
         plot_para('Filename','output/alpha', 'Maximize',true)
     figure
         imagesc(A_1)
-        Plotsetting_1([0 1])
-        xlabel('azimuth')
-        ylabel('range')  
+        Plotsetting_1([0 0.6])
+        xlabel('Azimuth (km)')
+        ylabel('Range (km)')  
         plot_para('Filename','output/Anisotropy1', 'Maximize',true)
     figure
         imagesc(A_2)
         Plotsetting_1([0 1])
-        xlabel('azimuth')
-        ylabel('range')  
+        xlabel('Azimuth (km)')
+        ylabel('Range (km)')  
         plot_para('Filename','output/Anisotropy2', 'Maximize',true)
 end
