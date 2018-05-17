@@ -16,11 +16,11 @@ figure
     Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
     annotation('rectangle',[0.125 0.4 0.04 0.525],'Color','k','Linewidth',2)
         annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_1$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.78 0.2 0.06 0.725],'Color','k','Linewidth',2)
-        annotation('textbox',[0.835 0.71 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.68 0.2 0.1 0.325],'Color','k','Linewidth',2)
-        annotation('textbox',[0.66 0.71 0.1 0.1],'String','$A_3$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
+        annotation('textbox',[0.66 0.71 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.78 0.2 0.06 0.725],'Color','k','Linewidth',2)
+        annotation('textbox',[0.835 0.71 0.1 0.1],'String','$A_3$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.68 0.2 0.1 0.325],'Color','k','Linewidth',2)
         annotation('textbox',[0.64 0.4 0.1 0.1],'String','$A_4$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     xlabel('Azimuth (km)')
     ylabel('Range (km)')
@@ -46,6 +46,11 @@ close all
 [H, alpha_bar] = Eigen_decomp(temp_T, span);
 %Eigen_decomp(1,1);
 close all
+%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
+Find_angle(temp_T);
+%clear T_11 T_22 T_33 T_12 T_13 T_23 
+clear temp_T
+close all
 %% Indicator
 %{
 figure
@@ -60,7 +65,15 @@ figure
     imagesc(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv))
     Plotsetting_1([-1 1])
     xlabel('Azimuth (km)')
-    ylabel('Range (km)') 
+    ylabel('Range (km)')
+    annotation('rectangle',[0.125 0.4 0.04 0.525],'Color','k','Linewidth',2)
+        annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{\mu 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
+        annotation('textbox',[0.65 0.71 0.1 0.1],'String','$A_{\mu 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.78 0.2 0.06 0.725],'Color','k','Linewidth',2)
+        annotation('textbox',[0.8 0.9 0.1 0.1],'String','$A_{\mu 3}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.68 0.2 0.1 0.325],'Color','k','Linewidth',2)
+        annotation('textbox',[0.63 0.4 0.1 0.1],'String','$A_{\mu 4}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     plot_para('Filename','output/para_confomty', 'Maximize',true)
 %%
 figure
@@ -71,11 +84,18 @@ figure
     ylabel('Range (km)') 
     plot_para('Filename','output/para_muller', 'Maximize',true)
 %%
-figure
+figure(1)
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
     Plotsetting_1([0 1])
     xlabel('Azimuth (km)')
-    ylabel('Range (km)') 
+    ylabel('Range (km)')
+    annotation('rectangle',[0.125 0.7 0.04 0.225],'Color','k','Linewidth',2)
+        annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{\gamma 1}$','Linestyle','none','Color','w','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
+        annotation('textbox',[0.65 0.71 0.1 0.1],'String','$A_{\gamma 2}$','Linestyle','none','Color','w','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.77 0.525 0.07 0.4],'Color','k','Linewidth',2)
+        annotation('textbox',[0.82 0.42 0.1 0.1],'String','$A_{\gamma 3}$','Linestyle','none','Color','w','Fontsize',40,'Interpreter', 'latex')
+    
     plot_para('Filename','output/para_corelation12', 'Maximize',true)
 %%
 figure
@@ -106,12 +126,6 @@ figure
     xlabel('Azimuth (km)')
     ylabel('Range (km)') 
     plot_para('Filename','output/para_braggalpha', 'Maximize',true)
-%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
-close all
-Find_angle(temp_T);
-%clear T_11 T_22 T_33 T_12 T_13 T_23 
-clear temp_T 
-%% NMF
  
 %% Incident angle and Bragg wavenumber
 global im_size

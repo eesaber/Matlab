@@ -43,12 +43,20 @@ function [H, alpha_bar] = Eigen_decomp(T, span)
         line(a) = find(hgt(a,:)+10000,1);
     end
     %}
+   %%
     figure
         imagesc(H)
         Plotsetting_1([0 1])
+        annotation('rectangle',[0.125 0.5 0.04 0.425],'Color','k','Linewidth',2)
+            annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{E1}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
+        annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)   
+            annotation('textbox',[0.7 0.4 0.1 0.1],'String','$A_{E2}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
+        annotation('rectangle',[0.78 0.5 0.06 0.425],'Color','k','Linewidth',2)
+            annotation('textbox',[0.78 0.4 0.1 0.1],'String','$A_{E3}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
         xlabel('Azimuth (km)')
         ylabel('Range (km)')  
         plot_para('Filename','output/Entropy', 'Maximize',true)
+   %%
     figure
         imagesc(alpha_bar)
         Plotsetting_1([0 90])    

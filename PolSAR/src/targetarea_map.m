@@ -1,7 +1,9 @@
 function targetarea_map()
+    targetarea_map_1()
+end
+function targetarea_map_1()
     % Function TARGETAREA_MAP is used to plot the target area in the Gulf of Mexico.
     % The target area is enclosed by the rectangular, and rigs is marked by 'x'.
-    
     oclayer = wmsfind('Oceans/Seas','SearchFields','layertitle');
     latlim = [28, 31];
     lonlim = [-90,-85.5];
@@ -30,12 +32,19 @@ function targetarea_map()
     plotm([29.36 28.84],[-86.18 -86.06],'k','Linewidth',1) % P-Q
     annotation('arrow',[.5 .5],[.6 .65],'HeadStyle','plain','HeadWidth',5,'LineWidth',2)
     annotation('textarrow',[.5 .5],[.65 .6],'string','N','Fontsize',fsize,'FontName','CMU Sans Serif','HeadStyle','plain','HeadWidth',0.00000000001,'LineWidth',0.5)
+    %% Rigs location
+    rig = [28.866,-88.056; 29.108,-87.944; 28.755,-88.267; 28.481,-88.204; 28.695,-87.931; ...
+    28.893,-87.985; 28.509,-88.031; 28.445,-88.277; 28.785,-88.089; 28.784,-88.235; 28.859,-88.044];
+    for r = 1 : numel(rig)/2
+        scatterm(rig(r,1),rig(r,2), 90, [2 35 209]/255,'x')
+    end
+    %% Move figure downward
     pos = get(gca, 'Position');
     yoffset = -0.05;
     pos(2) = pos(2) + yoffset;
     set(gca, 'Position', pos)
-    %% Rigs location
-    rig = [];
-    
     plot_para('Filename','output/rig_local','Maximize',true)
+end
+function targetarea_map_2()
+
 end
