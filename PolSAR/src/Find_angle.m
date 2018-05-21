@@ -189,8 +189,8 @@ function Find_angle(T)
     figure
         imagesc(sig_angle/pi*180)
         Plotsetting_1([-15, 15])
-        xlabel('azimuth')
-        ylabel('range')
+        xlabel('Azimuth')
+        ylabel('Range')
         colormap jet; colorbar
         plot_para('Filename','output/angle_sig_1', 'Maximize',true)
     %{

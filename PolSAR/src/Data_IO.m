@@ -8,9 +8,11 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+    validationFcn_4_ = @(x) validateattributes(x,{'int8'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test','',validationFcn_2_);
     addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
+    addParameter(parse_,'MissionNum',0,validationFcn_4_);
 	parse(parse_,varargin{:})
 
 	chk_pw()
@@ -19,7 +21,11 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
     disp(['Using ' typ ' as input!'])    
 	% mission
     global dir task im_size
-	mission_num = 8;
+    if parse_.Results.MissionNum == 0
+        mission_num = 9;
+    else
+        mission_num = parse_.Results.MissionNum;
+    end
 	switch mission_num
 		case 1
 			disp('UAVSAR Mission: Aso volcano, 熊本、日本')

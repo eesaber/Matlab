@@ -116,8 +116,8 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             image(img)
             %set(gca,'Ydir','normal','View',[90 90])
             set(gca,'Ydir','normal')
-            xlabel('Azimuth (km)', 'Interpreter', 'latex')
-            ylabel('Range (km)', 'Interpreter', 'latex')
+            xlabel('Azimuth (pixel)', 'Interpreter', 'latex')
+            ylabel('Range (pixel)', 'Interpreter', 'latex')
             plot_para('Filename',['output/' filename],'Maximize',true);
         clear img 
     end
