@@ -3,8 +3,7 @@ function Plotsetting_1(Clim, varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{});
 	addParameter(parse_,'Colorbar_unit',[],validationFcn_1_);
 	parse(parse_,varargin{:})
-    
-    n = 5;
+    n = 1;
     set(gca,'Ydir','normal','Clim',Clim)
     switch n
         case 1
@@ -22,14 +21,6 @@ function Plotsetting_1(Clim, varargin)
         xt=arrayfun(@num2str,get(gca,'xtick')+600-1,'un',0);
         yt=arrayfun(@num2str,get(gca,'ytick')+26000,'un',0);
         set(gca,'xticklabel',xt,'yticklabel',yt)
-        case 4
-            % Gulf of Mexico 1
-            set(gca,'XTick',0:5000:30000, 'Xticklabel',cellstr(int2str((0:5000*7:30000*7)'/1000))')
-            set(gca,'YTick',0:600:3300, 'Yticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
-        case 5
-            % Gulf of Mexico 2
-            set(gca,'XTick',0:5000:36000, 'Xticklabel',cellstr(int2str((0:5000*7:36000*7)'/1000))')
-            set(gca,'YTick',0:600:3300, 'Yticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
         otherwise
             1;
     end

@@ -2,10 +2,15 @@
 % Target area is in the Gulf of Mexico, mission 9
 clear 
 clc
+chk_pw() 
 %% read data
 disp('loading data...')
-area = 'area1';
-[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',9);
+sub_map = 1;
+if sub_map == 0
+    [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',9);
+else
+    [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',9,'Test','area1');
+end
 [N_az, N_ra] = size(hh_hh);
 size_N = numel(hh_hh);
 span = hh_hh+vv_vv+2*hv_hv;
@@ -14,7 +19,7 @@ FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
 figure
     imagesc(10*log10(span))
-    Plotsetting_GOM1([-40 0],'Colorbar_unit',[40 -70])
+    Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
     annotation('rectangle',[0.125 0.4 0.04 0.525],'Color','k','Linewidth',2)
         annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_1$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
@@ -60,7 +65,7 @@ close all
 %{
 figure
     imagesc(H+alpha_bar/180*pi+A_1+abs(hh_vv)./sqrt(hh_hh.*vv_vv))
-    Plotsetting_GOM1([0 3])
+    Plotsetting_GOM2([0 3])
     xlabel('Azimuth (km)')
     ylabel('Range (km)') 
     plot_para('Filename','output/para_F', 'Maximize',true)
@@ -68,7 +73,7 @@ figure
 %%
 figure
     imagesc(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv))
-    Plotsetting_GOM1([-1 1])
+    Plotsetting_GOM2([-1 1])
     annotation('rectangle',[0.125 0.4 0.04 0.525],'Color','k','Linewidth',2)
         annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{\mu 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
@@ -81,13 +86,13 @@ figure
 %%
 figure
     imagesc(-(hv_hv>abs(real(hh_vv))))
-    Plotsetting_GOM1([-1 0])
+    Plotsetting_GOM2([-1 0])
     colormap gray; colorbar off    
     plot_para('Filename','output/para_muller', 'Maximize',true)
 %%
 figure
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
-    Plotsetting_GOM1([0 1])
+    Plotsetting_GOM2([0 1])
     annotation('rectangle',[0.125 0.7 0.04 0.225],'Color','k','Linewidth',2)
         annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{\gamma 1}$','Linestyle','none','Color','w','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)
@@ -98,12 +103,12 @@ figure
 %%
 figure
     imagesc((T_11-T_22)./(T_11+T_22))
-    Plotsetting_GOM1([0 1])
+    Plotsetting_GOM2([0 1])
     plot_para('Filename','output/para_moisture', 'Maximize',true)
 %%
 figure
     imagesc((T_22-T_33)./(T_22+T_33))
-    Plotsetting_GOM1([0 1])
+    Plotsetting_GOM2([0 1])
     xlabel('Azimuth (km)')
     ylabel('Range (km)') 
     plot_para('Filename','output/para_roughness', 'Maximize',true)
@@ -111,12 +116,12 @@ figure
 figure
     %imagesc(atand((T_22+T_33)./T_11))
     imagesc((T_22+T_33)./T_11)
-    Plotsetting_GOM1([0 1])
+    Plotsetting_GOM2([0 1])
     plot_para('Filename','output/para_dielectric', 'Maximize',true)
 %%
 figure
     imagesc(sqrt(atand((T_22+T_33)./T_11)))
-    Plotsetting_GOM1([0 10])
+    Plotsetting_GOM2([0 10])
     plot_para('Filename','output/para_braggalpha', 'Maximize',true)
  
 %% Incident angle and Bragg wavenumber

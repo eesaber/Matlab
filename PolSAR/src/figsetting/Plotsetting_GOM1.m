@@ -9,6 +9,7 @@ function Plotsetting_GOM1(Clim, varargin)
     colormap jet; colorbar
     xlabel('Azimuth (km)')
     ylabel('Range (km)') 
+    
     if parse_.Results.Colorbar_unit
         title(colorbar,'(dB)','Position', parse_.Results.Colorbar_unit)
     end

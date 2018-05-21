@@ -21,11 +21,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
     disp(['Using ' typ ' as input!'])    
 	% mission
     global dir task im_size
-    if parse_.Results.MissionNum == 0
-        mission_num = 9;
-    else
-        mission_num = parse_.Results.MissionNum;
-    end
+    mission_num = parse_.Results.MissionNum;
 	switch mission_num
 		case 1
 			disp('UAVSAR Mission: Aso volcano, 熊本、日本')

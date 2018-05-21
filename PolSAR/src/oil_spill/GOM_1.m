@@ -4,7 +4,6 @@ clear
 clc
 %% read data
 disp('loading data...')
-area = 'area1';
 [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',8);
 [N_az, N_ra] = size(hh_hh);
 size_N = numel(hh_hh);

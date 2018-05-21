@@ -7,10 +7,8 @@ function get_polangle(T)
     % atan2(Y,X), returns values in the closed interval [-pi,pi]
     % atan(X), returns values in the closed interval [-pi/2,pi/2]
     theta = squeeze(1/4*(atan2(-4*real(T(2,3,:)), -T(2,2,:)+T(3,3,:))+pi)).';
-    a = theta > pi/4;
-    theta(a) = theta(a) - pi/2;
+    theta(theta > pi/4) = theta(theta > pi/4) - pi/2;
     sig_angle = reshape(theta, im_size);
-    clear a theta
     figure
         imagesc(sig_angle/pi*180)
         Plotsetting_1([-15, 15])
@@ -18,5 +16,4 @@ function get_polangle(T)
         ylabel('Range')
         colormap jet; colorbar
         plot_para('Filename','output/angle_sig_1', 'Maximize',true)
-
 end

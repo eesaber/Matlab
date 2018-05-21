@@ -1,18 +1,27 @@
-function [H, alpha_bar] = Eigen_decomp(T, span)
+function [H, alpha_bar] = Eigen_decomp(varargin)
     %% H_alpha plot
+    parse_ = inputParser;
+    validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
+    validationFcn_2_ = @(x) validateattributes(x,{'char'},{'nonempty'});
+    validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'3d'});
+    addParameter(parse_,'Calculate',0,validationFcn_1_);
+    addParameter(parse_,'FileName','',validationFcn_2_);
+    addParameter(parse_,'T',[],validationFcn_3_);
+    parse(parse_,varargin{:})
+    
     global dir im_size
-    if(0)
-        ind_ = randperm(numel(span));
+    if parse_.Results.Calculate
+        ind_ = randperm(im_size(1)*im_size(2));
         figure
-            H_Alpha(T(:,:,ind_(1:2000)))
+            H_Alpha(parse_.Results.T(:,:,ind_(1:2000)))
         clear ind_
         % Plot each entropy of each pixel
         t = cputime;
-        [~,~,num]= size(T);
+        [~,~,num]= size(parse_.Results.T);
         H = zeros(1, num); A_1 = zeros(1, num); A_2 = zeros(1, num);
         alpha_bar = zeros(1, num);
         for r = 1 : num
-            if sum(sum(T(:,:,r)== zeros(3,3))) == 9
+            if sum(sum(parse_.Results.FileNameT(:,:,r)== zeros(3,3))) == 9
                 continue;
             end
             [U, L] = eig(T(:,:,r));
@@ -30,51 +39,37 @@ function [H, alpha_bar] = Eigen_decomp(T, span)
         A_1 = reshape(A_1, im_size);
         A_2 = reshape(A_2, im_size);
         alpha_bar = reshape(alpha_bar, im_size);
-        save([dir 'eigen.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'alpha_bar');
+        save([dir parse_.Results.FileName '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'alpha_bar');
     else 
-        load([dir 'eigen.mat'])
+        load([dir parse_.Results.FileName '.mat'])
     end
-    %{
-    close all
-    line = zeros(1,size(H,1));
-    global dir;
-    load([dir area '_hgt.mat']);
-    for a=1 : size(H,1)
-        line(a) = find(hgt(a,:)+10000,1);
-    end
-    %}
-   %%
+
+    %%
     figure
         imagesc(H)
-        Plotsetting_1([0 1])
-        %{
-        annotation('rectangle',[0.125 0.5 0.04 0.425],'Color','k','Linewidth',2)
-            annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{E1}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-        annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)   
-            annotation('textbox',[0.7 0.4 0.1 0.1],'String','$A_{E2}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-        annotation('rectangle',[0.78 0.5 0.06 0.425],'Color','k','Linewidth',2)
-            annotation('textbox',[0.78 0.4 0.1 0.1],'String','$A_{E3}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-        %}
-        xlabel('Azimuth (km)')
-        ylabel('Range (km)')  
+        Plotsetting_GOM1([0 1])
+        ann_GOM1()
         plot_para('Filename','output/Entropy', 'Maximize',true)
-   %%
     figure
         imagesc(alpha_bar)
-        Plotsetting_1([0 90])    
-        xlabel('Azimuth (km)')
-        ylabel('Range (km)')  
+        Plotsetting_GOM1([0 90])    
         plot_para('Filename','output/alpha', 'Maximize',true)
     figure
         imagesc(A_1)
-        Plotsetting_1([0 0.6])
-        xlabel('Azimuth (km)')
-        ylabel('Range (km)')  
+        Plotsetting_GOM1([0 0.6])
         plot_para('Filename','output/Anisotropy1', 'Maximize',true)
     figure
         imagesc(A_2)
-        Plotsetting_1([0 1])
-        xlabel('Azimuth (km)')
-        ylabel('Range (km)')  
+        Plotsetting_GOM1([0 1])
         plot_para('Filename','output/Anisotropy2', 'Maximize',true)
+end
+function ann_GOM1()
+    annotation('rectangle',[0.125 0.5 0.04 0.425],'Color','k','Linewidth',2)
+    annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{E1}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
+    annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)   
+    annotation('textbox',[0.7 0.4 0.1 0.1],'String','$A_{E2}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
+    annotation('rectangle',[0.78 0.5 0.06 0.425],'Color','k','Linewidth',2)
+    annotation('textbox',[0.78 0.4 0.1 0.1],'String','$A_{E3}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
+end
+function ann_GOM2()
 end
