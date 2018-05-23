@@ -8,7 +8,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
-    validationFcn_4_ = @(x) validateattributes(x,{'int8'},{'scalar'});
+    validationFcn_4_ = @(x) validateattributes(x,{'double'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test','',validationFcn_2_);
     addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
@@ -126,7 +126,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	else
 		if numel(parse_.Results.Test) ~= 0
 			if exist([dir parse_.Results.Test '.mat'], 'file')
-				disp('Loading test.mat  ...')
+				disp(['Loading ' parse_.Results.Test '.mat  ...'])
 				load([dir parse_.Results.Test '.mat']);
                 im_size = size(hh_hh);
 			else

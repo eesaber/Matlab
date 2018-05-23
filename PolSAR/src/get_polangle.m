@@ -11,9 +11,6 @@ function get_polangle(T)
     sig_angle = reshape(theta, im_size);
     figure
         imagesc(sig_angle/pi*180)
-        Plotsetting_1([-15, 15])
-        xlabel('Azimuth')
-        ylabel('Range')
-        colormap jet; colorbar
+        Plotsetting_GOM2([-15, 15],1)
         plot_para('Filename','output/angle_sig_1', 'Maximize',true)
 end

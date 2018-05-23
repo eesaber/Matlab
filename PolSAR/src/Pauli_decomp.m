@@ -40,9 +40,9 @@ function Pauli_decomp(R, G, B, varargin)
         clabel(rr1,rr2,'Color','w','Fontsize',18)
         hold off
     end
-    Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
-    xlabel('Azimuth (km)', 'Fontsize', 40)
-    ylabel('Range (km)', 'Fontsize', 40)
+    %Plotsetting_GOM1([-40 0],'Colorbar_unit',[40 -70])
+    Plotsetting_GOM2([-40 0],1)
+    colorbar off
     if numel(parse_.Results.Filename)
         plot_para('Maximize',true,'Filename',['output/' parse_.Results.Filename]);
     end

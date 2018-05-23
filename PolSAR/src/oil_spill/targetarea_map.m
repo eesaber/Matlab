@@ -25,16 +25,16 @@ function targetarea_map()
         scatterm(rig(r,1),rig(r,2), 30, [2 35 209]/255, 'filled')
     end
     scatterm(28.738,-88.366, 90, [255 45 45]/255, 'x') % The explosion BP Deep Horizontal
-    %scatterm(28.962, -88.696, 45, [255 45 45]/255, '^','filled') % The Bouy 
+    scatterm(28.962, -88.696, 45, [255 45 45]/255, '^','filled') % The Bouy 
     %% Move figure downward
     pos = get(gca, 'Position');
     yoffset = -0.05;
     pos(2) = pos(2) + yoffset;
     set(gca, 'Position', pos)
-    targetarea_map_1(fsize)
+    targetarea_map_2(fsize)
 end
 function targetarea_map_1(fsize)
-    cor = [28.36,-88.52; 28.84,-86.06; 29.36,-86.18; 28.88,-88.65; 28.87, -87.36]; %[O;P;Q;R;C]
+    
     dy = 0.1; dx = 0.1;
     %% Target area
     scatterm(cor(1,1),cor(1,2), 30,[0 0 .5],'filled'); textm(cor(1,1)-dy,cor(1,2),'O','FontSize',fsize,'FontName','CMU Serif Roman'); % O
@@ -50,17 +50,25 @@ function targetarea_map_1(fsize)
 end
 
 function targetarea_map_2(fsize)
-    cor = [30.161421459,-89.903288309; 28.319386246,-88.161090341; 28.446506933,-87.984930547; 30.290794451, -89.726117031; 29.30735,-88.93587]; % OPQRC
-    dy = 0.1*[-1.2,0,-1,0,-0.5];
-    dx = 0.1*[-0.5,-1.3,0,1,0.5];
+    cor = [29.1616, -88.9576; 28.319386246,-88.161090341; 28.446506933,-87.984930547; 29.2897,-88.7810; 28.8043,-88.4712]; % OPQRC
+    dy = 0.1*[-1.2,  -1,-1, 0, 1];
+    dx = 0.1*[-0.8,-1.3, 0, 1,-1];
     %% target area
-    mark = ['O';'P';'Q';'R';'C'];
+    mark = {'O';'P';'Q';'R';'C'};
     for n = 1 : 5
         scatterm(cor(n,1),cor(n,2), 30,[0 0 .5],'filled')
-        textm(cor(n,1)+dy(n),cor(n,2)+dx(n),mark(n),'FontSize',fsize,'FontName','CMU Serif Roman')
+        textm(cor(n,1)+dy(n),cor(n,2)+dx(n),mark(n),'FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
     end
     for n = 1 : 4
         plotm([cor(n,1),cor(1+mod(n,4),1)],[cor(n,2),cor(1+mod(n,4),2)],'k','Linewidth',1)
     end
-    plot_para('Filename','output/rig_local2','Maximize',true)
+    cor = [30.161421459,-89.903288309;29.1616, -88.9576;29.2897,-88.7810; 30.290794451, -89.726117031]; %[O';O;R;R']
+    for n = 1 : 4
+        plotm([cor(n,1),cor(1+mod(n,4),1)],[cor(n,2),cor(1+mod(n,4),2)],'k--','Linewidth',1)
+        scatterm(cor(n,1),cor(n,2), 30,[0 0 .5],'filled')
+    end
+    textm(cor(1,1)+dy(1),cor(1,2)+dx(1),'O$^\prime$','FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    textm(cor(4,1)+dy(4),cor(4,2)+dx(4),'R$^\prime$','FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    
+    plot_para('Filename','rig_local2','Maximize',true)
 end
