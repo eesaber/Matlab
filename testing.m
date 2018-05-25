@@ -23,6 +23,55 @@ disp(det(T))
 T = [0.1, 10j; -10j, 0.4];
 p = real(1/(2*pi)*exp(-a'*inv(T)*a));
 disp(p)
+global dir task;
+im_size = [41864 12369];
+fid = fopen([dir task '_CX_01.hgt'],'r','ieee-le');
+hgt = rot90(single(fread(fid, im_size,'real*4')));
+
+%%
+ phi = 20*pi/180; % Look angle
+% atan2(Y,X), returns values in the closed interval [-pi,pi]
+% atan(X), returns values in the closed interval [-pi/2,pi/2]
+
+theta = 1/4*(atan2(-2*real(hh_hv - conj(hv_vv)), -(hh_hh+vv_vv-hh_vv-conj(hh_vv))/2 + 2*hv_hv )+pi);
+a = theta > pi/4;
+theta(a) = theta(a) - pi/2;
+clear a
+
+figure
+imagesc(theta)
+set(gca,'Ydir','normal','Clim',[-pi/4, pi/4])
+colormap gray
+
+%%
+phi = 0;
+omega = 0:1:80;
+gamma = 20;
+plot(atan2(-tand(omega), -tand(gamma).*cosd(30) + sind(30)));
+%xlim([0 80])
+%ylim([-100 0])
+grid on
+%%
+figure
+yyaxis left
+plot(hgt(:,100))
+yyaxis right
+plot(gN(:,100))
+
+%%
+close all
+A = ones(501,801);
+a_test = 35;
+r_A = imrotate(A,a_test,method);
+disp(size(r_A))
+figure
+imagesc(r_A)
+r_A = imrotate(r_A,-a_test,method);
+disp(size(r_A))
+figure
+imagesc(r_A)
+figure
+imagesc(r_A>=1)
 %% Plot Each Region onto H/alpha diagram
 % bare soil
 fan = [343,461;214,368]; % [row, row; col, col]

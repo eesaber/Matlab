@@ -1,5 +1,9 @@
-function Plotsetting_1(Clim)
-    n = 4;
+function Plotsetting_1(Clim, varargin)
+    parse_ = inputParser;
+	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{});
+	addParameter(parse_,'Colorbar_unit',[],validationFcn_1_);
+	parse(parse_,varargin{:})
+    n = 1;
     set(gca,'Ydir','normal','Clim',Clim)
     switch n
         case 1
@@ -20,5 +24,9 @@ function Plotsetting_1(Clim)
         otherwise
             1;
     end
-    colormap jet; colorbar    
+    colormap jet; colorbar
+    
+    if parse_.Results.Colorbar_unit
+        title(colorbar,'(dB)','Position', parse_.Results.Colorbar_unit)
+    end
 end

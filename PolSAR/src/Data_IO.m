@@ -8,9 +8,11 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
+    validationFcn_4_ = @(x) validateattributes(x,{'double'},{'scalar'});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test','',validationFcn_2_);
     addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
+    addParameter(parse_,'MissionNum',0,validationFcn_4_);
 	parse(parse_,varargin{:})
 
 	chk_pw()
@@ -19,7 +21,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
     disp(['Using ' typ ' as input!'])    
 	% mission
     global dir task im_size
-	mission_num = 8;
+    mission_num = parse_.Results.MissionNum;
 	switch mission_num
 		case 1
 			disp('UAVSAR Mission: Aso volcano, 熊本、日本')
@@ -67,45 +69,51 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Beaufort/';
 			task = 'beaufo_01105_15148_004_151006_L090';
         case 8 
-            disp('UAVSAR Mission: Golf of Mexico Scen.1')
+            disp('UAVSAR Mission: Gulf of Mexico Scen.1')
             im_size = [3300, 31696];
             im_size_c = im_size.*[2,1];
-            dir = '/media/akb/2026EF9426EF696C/raw_data/Mexico_Golf_1/';
+            dir = '/media/akb/2026EF9426EF696C/raw_data/Mexico_Gulf_1/';
 			task = 'GOMoil_07601_10052_102_100622_L090';
+		case 9
+			disp('UAVSAR Mission: Gulf of Mexico Scen.2')
+            im_size = [3300, 36842];
+            im_size_c = im_size.*[2,1];
+            dir = '/media/akb/2026EF9426EF696C/raw_data/Mexico_Gulf_2/';
+			task = 'gulfco_14010_10054_100_100623_L090';
 		otherwise 
 			error('You need to select a mission')
 	end
 	
 	if(parse_.Results.ReadNewFile)
 		disp('Parsing input file...')
-		fid = fopen([dir task 'HHHH_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'HHHH_CX_05' typ],'r','ieee-le'); 
 		hh_hh = (single(fread(fid, im_size,'real*4')));
 		%hh_hh = single((fread(fid, im_size,'real*4')));
         %hh_hh = hh_hh(:,im_size(2)/2);
         
-		fid = fopen([dir task 'HVHV_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'HVHV_CX_05' typ],'r','ieee-le'); 
 		hv_hv = (single(fread(fid, im_size,'real*4')));
         %hv_hv = single((fread(fid, im_size,'real*4')));
         %hv_hv = hv_hv(:,im_size(2)/2);
         
-		fid = fopen([dir task 'VVVV_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'VVVV_CX_05' typ],'r','ieee-le'); 
 		vv_vv = (single(fread(fid, im_size,'real*4')));
         %vv_vv = single((fread(fid, im_size,'real*4')));
 		%vv_vv = vv_vv(:,im_size(2)/2);
         
-		fid = fopen([dir task 'HVVV_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'HVVV_CX_05' typ],'r','ieee-le'); 
 		hv_vv = fread(fid,im_size_c,'real*4');
 		hv_vv = (single(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
         %hv_vv = single((hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
         %hv_vv = hv_vv(:,im_size(2)/2);
 		
-		fid = fopen([dir task 'HHVV_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'HHVV_CX_05' typ],'r','ieee-le'); 
 		hh_vv = single(fread(fid,im_size_c,'real*4'));
 		hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
 		%hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
         %hh_vv = hh_vv(:,im_size(2)/2);
 		
-		fid = fopen([dir task 'HHHV_CX_01' typ],'r','ieee-le'); 
+		fid = fopen([dir task 'HHHV_CX_05' typ],'r','ieee-le'); 
 		hh_hv = single(fread(fid,im_size_c,'real*4'));
 		hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
 		%hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
@@ -118,8 +126,9 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	else
 		if numel(parse_.Results.Test) ~= 0
 			if exist([dir parse_.Results.Test '.mat'], 'file')
-				disp('Loading test.mat  ...')
+				disp(['Loading ' parse_.Results.Test '.mat  ...'])
 				load([dir parse_.Results.Test '.mat']);
+                im_size = size(hh_hh);
 			else
 				error('You have to do CutBatch First!')	
 			end
