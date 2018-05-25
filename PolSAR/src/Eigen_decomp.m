@@ -65,7 +65,7 @@ function [H, alpha_bar] = Eigen_decomp(varargin)
     figure
         imagesc(A_2)
         %Plotsetting_GOM1([0 1])
-        Plotsetting_GOM2([0 1],1)
+        Plotsetting_GOM2([0.6 1],1)
         plot_para('Filename','Anisotropy2', 'Maximize',true)
 end
 function ann_GOM1()

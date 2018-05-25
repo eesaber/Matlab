@@ -37,7 +37,15 @@ figure
     imagesc(10*log10(hv_hv))
     Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
     plot_para('Filename','S_hv', 'Maximize',true, 'Ratio',[4 3 1])
+%% Find egde
+temp = 10*log10(span);
+temp(10*log10(span)<-40) = -40;
+temp(10*log10(span)>0) = 0;
+temp = temp+30;
 
+BW = edge(temp,'approxcanny');
+figure
+imagesc(BW)
 %% Pauli decomposition
 figure
     %Pauli_decomp(2*T_22, T_33, 2*T_11, 'Filename','Pauli_decomp','saibu',false)
@@ -47,7 +55,7 @@ close all
 if sub_map == 0
     [H, alpha_bar] = Eigen_decomp('FileName','eigen');
 else
-    [H, alpha_bar] = Eigen_decomp('FileName','eigen_area1');
+    [~] = Eigen_decomp('FileName','eigen_area1');
 end
 %% Obtain terrain slope in azimuth and induced angle by terrain slope. 
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
@@ -122,17 +130,19 @@ figure
     imagesc((T_22-T_33)./(T_22+T_33))
     Plotsetting_GOM2([0 1],1)
     annotation('rectangle',[0.45 0.17 0.14 0.275],'Color','k','Linewidth',2)
-        annotation('textbox',[0.4 0.2 0.1 0.1],'String','$A_1$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+        annotation('textbox',[0.4 0.2 0.1 0.1],'String','$A_{r 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.65 0.15 0.275],'Color','k','Linewidth',2)
-        annotation('textbox',[0.55 0.75 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+        annotation('textbox',[0.55 0.75 0.1 0.1],'String','$A_{r 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     plot_para('Filename','para_roughness', 'Maximize',true)
 %%
 figure
     %imagesc(atand((T_22+T_33)./T_11))
     imagesc((T_22+T_33)./T_11)
     Plotsetting_GOM2([0 1],1)
+    annotation('rectangle',[0.3 0.35 0.04 0.35],'Color','k','Linewidth',2)
+        annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_{\epsilon 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.25 0.18 0.675],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\epsilon 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\epsilon 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     plot_para('Filename','para_dielectric', 'Maximize',true)
 %%
 figure

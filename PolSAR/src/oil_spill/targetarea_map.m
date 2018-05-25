@@ -1,21 +1,22 @@
 function targetarea_map()
     % Function TARGETAREA_MAP is used to plot the target area in the Gulf of Mexico.
     % The target area is enclosed by the rectangular, and rigs is marked by 'x'.
-    oclayer = wmsfind('Oceans/Seas','SearchFields','layertitle');
-    latlim = [28, 31];
-    lonlim = [-90,-85.5];
-    imageLength = 3000;
     fsize = 24;
-    
-    figure
-    [A, R] = wmsread(oclayer(2),'Latlim', latlim, 'Lonlim', lonlim, ...
-        'ImageHeight', imageLength, 'ImageWidth', imageLength);
-    axesm('MapProjection','mercator','MapLatLimit',latlim,'MapLonLimit', lonlim,...
-            'Frame','on','Grid', 'on','MlineLocation',1,'PlineLocation',1,...
-            'MeridianLabel','on','ParallelLabel','on','FontName','CMU Serif Roman', 'FontSize', fsize)
-    geoshow(A,R)
-    tightmap
-    axis off
+    n = 2;
+    switch n
+        case 1
+            latlim = [28, 31];
+            lonlim = [-90,-85.5];
+            basemap(latlim, lonlim)
+            targetarea_map_1(fsize)
+            fname = 'rig_loc';
+        case 2
+            latlim = [28, 28];
+            lonlim = [-90,-85.5];
+            basemap(latlim, lonlim)
+            targetarea_map_2(fsize)
+            fname = 'rig_loc2';
+    end
     annotation('arrow',[.5 .5],[.6 .65],'HeadStyle','plain','HeadWidth',5,'LineWidth',2)
     annotation('textarrow',[.5 .5],[.65 .6],'string','N','Fontsize',fsize,'FontName','CMU Sans Serif','HeadStyle','plain','HeadWidth',0.00000000001,'LineWidth',0.5)
     %% Rigs location
@@ -31,10 +32,25 @@ function targetarea_map()
     yoffset = -0.05;
     pos(2) = pos(2) + yoffset;
     set(gca, 'Position', pos)
-    targetarea_map_2(fsize)
+    plot_para('Filename',fname','Maximize',true)
 end
+
+function basemap(latlim, lonlim)
+    oclayer = wmsfind('Oceans/Seas','SearchFields','layertitle');
+    imageLength = 3000;
+    figure
+    [A, R] = wmsread(oclayer(2),'Latlim', latlim, 'Lonlim', lonlim, ...
+        'ImageHeight', imageLength, 'ImageWidth', imageLength);
+    axesm('MapProjection','mercator','MapLatLimit',latlim,'MapLonLimit', lonlim,...
+            'Frame','on','Grid', 'on','MlineLocation',1,'PlineLocation',1,...
+            'MeridianLabel','on','ParallelLabel','on','FontName','CMU Serif Roman', 'FontSize', fsize)
+    geoshow(A,R)
+    tightmap
+    axis off
+end
+
 function targetarea_map_1(fsize)
-    
+    cor = [28.36,-88.52; 28.84,-86.06; 29.36,-86.18; 28.88,-88.65; 28.87, -87.36]; %[O;P;Q;R;C]
     dy = 0.1; dx = 0.1;
     %% Target area
     scatterm(cor(1,1),cor(1,2), 30,[0 0 .5],'filled'); textm(cor(1,1)-dy,cor(1,2),'O','FontSize',fsize,'FontName','CMU Serif Roman'); % O
@@ -46,7 +62,7 @@ function targetarea_map_1(fsize)
     plotm([28.36 28.88],[-88.52 -88.65],'k','Linewidth',1) % R-O
     plotm([28.84 28.36],[-86.06 -88.52],'k','Linewidth',1) % O-P
     plotm([29.36 28.84],[-86.18 -86.06],'k','Linewidth',1) % P-Q
-    plot_para('Filename','output/rig_local','Maximize',true)
+    
 end
 
 function targetarea_map_2(fsize)
@@ -70,5 +86,4 @@ function targetarea_map_2(fsize)
     textm(cor(1,1)+dy(1),cor(1,2)+dx(1),'O$^\prime$','FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
     textm(cor(4,1)+dy(4),cor(4,2)+dx(4),'R$^\prime$','FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
     
-    plot_para('Filename','rig_local2','Maximize',true)
 end

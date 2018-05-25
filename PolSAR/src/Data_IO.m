@@ -9,15 +9,17 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_3_ = @(x) validateattributes(x,{'logical'},{'scalar'});
     validationFcn_4_ = @(x) validateattributes(x,{'double'},{'scalar'});
+    validationFcn_5_ = @(x) validateattributes(x,{'char'},{});
 	addParameter(parse_,'CutBatch',[],validationFcn_1_);
 	addParameter(parse_,'Test','',validationFcn_2_);
     addParameter(parse_,'ReadNewFile',0,validationFcn_3_);
     addParameter(parse_,'MissionNum',0,validationFcn_4_);
+    addParameter(parse_,'Type','.grd',validationFcn_5_);
 	parse(parse_,varargin{:})
 
 	chk_pw()
     % file type   
-    typ = '.mlc';
+    typ = parse_.Results.Type;
     disp(['Using ' typ ' as input!'])    
 	% mission
     global dir task im_size

@@ -74,25 +74,25 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-            Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('single', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename', ['output/' filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('double', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename',['output/' filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-            Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
-            Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_c']);
