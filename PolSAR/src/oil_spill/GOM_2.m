@@ -14,7 +14,7 @@ end
 [N_az, N_ra] = size(hh_hh);
 size_N = numel(hh_hh);
 span = hh_hh+vv_vv+2*hv_hv;
-% 4-component decomposition
+%% 4-component decomposition
 FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
 figure
