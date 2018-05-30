@@ -133,8 +133,9 @@ global im_size
 figure
     plot(atand(linspace(4602.29004, 4602.29004+22490.8262, im_size(1))/12497),'k', 'Linewidth',3)
     xlim([1 3300])
+    set(gca,'XTick',0:600:3300, 'Xticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
     ylim([20 65])
-    xlabel('range bin')
+    xlabel('Range (km)')
     ylabel('$\phi$ (deg)','Interpreter', 'latex')
     grid on
     pos = get(gca, 'Position');
@@ -155,15 +156,13 @@ figure
     a = plot(theta, abs(B_hh_sea),'b--', theta, abs(B_vv_sea),'b','Linewidth',3);
     hold on 
     b = plot(theta, abs(B_hh_oil),'k--', theta, abs(B_vv_oil),'k','Linewidth',3);
-    c = plot([65, 65], [0,10],'r', 'Linewidth',3);
-    d = plot([20, 20], [0,10],'r', 'Linewidth',3);
-    legend({'sea: $B_{hh}$', 'sea: $B_{vv}$','oil: $B_{hh}$','oil: $B_{vv}$'},'Interpreter','latex','Location','bestoutside')
-    legend('boxoff')
+    %legend({'sea: $B_{hh}$', 'sea: $B_{vv}$','oil: $B_{hh}$','oil: $B_{vv}$'},'Interpreter','latex','Location','bestoutside')
+    %legend('boxoff')
     grid on
     hold off
     set(gca,'Xlim',[0 90],'Ylim',[0,10])
     xlabel('$\phi$ (deg)','Interpreter', 'latex')
-    ylabel('Bragg coefficient')
+    ylabel('Bragg Coefficient')
     plot_para('Filename','die_angle', 'Maximize',true, 'Ratio',[4 3 1])
 %%
 figure
@@ -174,7 +173,7 @@ figure
 figure
     plot(theta,2*pi./((physconst('LightSpeed')/1.2575e9)/2./sind(theta)), 'k', 'Linewidth',3)
     grid on
-    xlabel('incident angle (deg)')
-    ylabel('Bragg wavenumber (rad/m)','Interpreter', 'latex')
+    xlabel('$\phi$ (deg)','Interpreter', 'latex')
+    ylabel('$(2 \pi)/\Lambda$ (rad/m)','Interpreter', 'latex')
     xlim([20, 65])
-    plot_para('Filename','braggwavenum', 'Maximize',true)
+    plot_para('Filename','braggwavenum', 'Maximize',true, 'Ratio',[4 3 1])

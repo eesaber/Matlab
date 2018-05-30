@@ -17,7 +17,6 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
     addParameter(parse_,'Type','.grd',validationFcn_5_);
 	parse(parse_,varargin{:})
 
-	chk_pw()
     % file type   
     typ = parse_.Results.Type;
     disp(['Using ' typ ' as input!'])    

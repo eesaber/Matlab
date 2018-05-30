@@ -6,7 +6,6 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
 % S_{hh}S^*_{hv}, C(:,:,5) is S_{hh}S_{vv}^2 and C(:,:,6) is
 % S_{hv}S^*_{vv}.
 	
-    chk_pw() % change pwd
 
     % f_ is the scattering matrix coefficient. The subscript
     % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
@@ -71,28 +70,30 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     f_d(ind_d) = f_t(ind_d) - f_v(ind_d) - f_c(ind_d);
     f_s(ind_d) = 0;
     clear ind_d
+    
+    pow_range = [-35 5];
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
-            %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
+            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM1([-40 0],'Colorbar_unit',[40 -70])
 			%title('single', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename', ['output/' filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('double', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename',['output/' filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
-            %Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', ['output/' filename, '_c']);

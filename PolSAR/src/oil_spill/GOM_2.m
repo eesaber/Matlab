@@ -14,28 +14,38 @@ end
 [N_az, N_ra] = size(hh_hh);
 size_N = numel(hh_hh);
 span = hh_hh+vv_vv+2*hv_hv;
+
 %% 4-component decomposition
 FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
+pow_range = [-35 5];
 figure
     imagesc(10*log10(span))
-    Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
-    annotation('rectangle',[0.3 0.15 0.04 0.775],'Color','k','Linewidth',2)
+    Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
+    colormap gray
+    %{
+    annotation('rectangle',[0.15 0.2 0.07 0.725],'Color','k','Linewidth',2)
         annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_1$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.15 0.18 0.775],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    annotation('rectangle',[0.37 0.2 0.36 0.725],'Color','k','Linewidth',2)
+        annotation('textbox',[0.75 0.5 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     plot_para('Filename','span', 'Maximize',true)
+    %}
+    Section_GOM2(10*log10(span),x,y,'span')
+%%
 figure
     imagesc(10*log10(hh_hh))
-    Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+    Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
+    colormap gray
     plot_para('Filename','S_hh', 'Maximize',true, 'Ratio',[4 3 1])
 figure
     imagesc(10*log10(vv_vv))
-    Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+    Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',[40 -70])
+    colormap gray
     plot_para('Filename','S_vv', 'Maximize',true, 'Ratio',[4 3 1])
 figure
     imagesc(10*log10(hv_hv))
-    Plotsetting_GOM2([-40 0],1,'Colorbar_unit',[40 -70])
+    Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',[40 -70])
+    colormap gray
     plot_para('Filename','S_hv', 'Maximize',true, 'Ratio',[4 3 1])
 %% Find egde
 temp = 10*log10(span);
@@ -50,7 +60,6 @@ imagesc(BW)
 figure
     %Pauli_decomp(2*T_22, T_33, 2*T_11, 'Filename','Pauli_decomp','saibu',false)
     Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp')
-close all
 %% Eigen-decomposition
 if sub_map == 0
     [H, alpha_bar] = Eigen_decomp('FileName','eigen');
@@ -80,6 +89,8 @@ T_13 = hh_hv + conj(hv_vv);
 T_23 = hh_hv - conj(hv_vv);
 
 %% Indicator
+x = [1900, 4200, 5100];
+y = [3100, 1600, 500];
 %{
 figure
     imagesc(H+alpha_bar/180*pi+A_1+abs(hh_vv)./sqrt(hh_hh.*vv_vv))
@@ -89,63 +100,86 @@ figure
     plot_para('Filename','para_F', 'Maximize',true)
 %}
 %%
+close all
+f_name = 'para_confomty';
 figure
     imagesc(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv))
     Plotsetting_GOM2([-1 1],1)
+    Section_GOM2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),x,y, f_name)
+    
+    %{
     annotation('rectangle',[0.3 0.15 0.04 0.775],'Color','k','Linewidth',2)
         annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_{\mu 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.15 0.18 0.775],'Color','k','Linewidth',2)
         annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\mu 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    plot_para('Filename','para_confomty', 'Maximize',true)
+    %}
 %%
 figure
     imagesc(-(hv_hv>abs(real(hh_vv))))
     Plotsetting_GOM2([-1 0],1)
+    colormap gray; colorbar off
+    %{
     annotation('rectangle',[0.13 0.8 0.05 0.125],'Color','k','Linewidth',2)
         annotation('textbox',[0.18 0.8 0.1 0.1],'String','$A_{k 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.57 0.45 0.05 0.2],'Color','k','Linewidth',2)
         annotation('textbox',[0.5 0.55 0.1 0.1],'String','$A_{k 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.8 0.18 0.125],'Color','k','Linewidth',2)
         annotation('textbox',[0.6 0.8 0.1 0.1],'String','$A_{k 3}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    colormap gray; colorbar off    
-    plot_para('Filename',para_muller', 'Maximize',true)
+    %}    
+    plot_para('Filename', 'para_muller', 'Maximize',true)
 %%
+close all
+f_name = 'para_corelation12';
 figure
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
     Plotsetting_GOM2([0 1],1)
+    Section_GOM2(abs(T_12)./sqrt(T_11.*T_22),x,y,f_name)
+    %{
     annotation('rectangle',[0.3 0.45 0.04 0.475],'Color','k','Linewidth',2)
         annotation('textbox',[0.25 0.6 0.1 0.1],'String','$A_{\gamma 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.45 0.18 0.475],'Color','k','Linewidth',2)
         annotation('textbox',[0.6 0.6 0.1 0.1],'String','$A_{\gamma 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    plot_para('Filename','para_corelation12', 'Maximize',true)
+    %}
 %%
+f_name = 'para_moisture';
 figure
     imagesc((T_11-T_22)./(T_11+T_22))
     Plotsetting_GOM2([0 1],1)
+    Section_GOM2((T_11-T_22)./(T_11+T_22),x,y,f_name)
+    %{
     annotation('rectangle',[0.44 0.3 0.13 0.325],'Color','k','Linewidth',2)
         annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{m 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    plot_para('Filename','para_moisture', 'Maximize',true)
+    %}
+    
 %%
+close all
+f_name = 'para_roughness';
 figure
     imagesc((T_22-T_33)./(T_22+T_33))
     Plotsetting_GOM2([0 1],1)
+    Section_GOM2((T_22-T_33)./(T_22+T_33),x,y, f_name)
+    %{
     annotation('rectangle',[0.45 0.17 0.14 0.275],'Color','k','Linewidth',2)
         annotation('textbox',[0.4 0.2 0.1 0.1],'String','$A_{r 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.65 0.15 0.275],'Color','k','Linewidth',2)
         annotation('textbox',[0.55 0.75 0.1 0.1],'String','$A_{r 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    plot_para('Filename','para_roughness', 'Maximize',true)
+    %}
 %%
 figure
     %imagesc(atand((T_22+T_33)./T_11))
     imagesc((T_22+T_33)./T_11)
     Plotsetting_GOM2([0 1],1)
+    Section_GOM2((T_22+T_33)./T_11,x,y)
+    %{
     annotation('rectangle',[0.3 0.35 0.04 0.35],'Color','k','Linewidth',2)
         annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_{\epsilon 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     annotation('rectangle',[0.4 0.25 0.18 0.675],'Color','k','Linewidth',2)
         annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\epsilon 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
+    %}
     plot_para('Filename','para_dielectric', 'Maximize',true)
 %%
 figure
     imagesc(sqrt(atand((T_22+T_33)./T_11)))
     Plotsetting_GOM2([0 10],1)
+    Section_GOM2(sqrt(atand((T_22+T_33)./T_11)),x,y)
     plot_para('Filename','para_braggalpha', 'Maximize',true)

@@ -12,5 +12,5 @@ function get_polangle(T)
     figure
         imagesc(sig_angle/pi*180)
         Plotsetting_GOM2([-15, 15],1)
-        plot_para('Filename','output/angle_sig_1', 'Maximize',true)
+        plot_para('Filename','angle_sig_1', 'Maximize',true)
 end

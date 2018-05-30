@@ -51,10 +51,10 @@ function rig_local()
     rig = [28.866,-88.056; 29.108,-87.944; 28.755,-88.267; 28.481,-88.204; 28.695,-87.931; ...
     28.893,-87.985; 28.509,-88.031; 28.445,-88.277; 28.785,-88.089; 28.784,-88.235; 28.859,-88.044];
     for r = 1 : numel(rig)/2
-        scatterm(rig(r,1),rig(r,2), 30, [2 35 209]/255, 'filled')
+        scatterm(rig(r,1),rig(r,2), 90, [2 35 209]/255, 'filled')
     end
-    scatterm(28.738,-88.366, 90, [255 45 45]/255, 'x') % The explosion BP Deep Horizontal
-    scatterm(28.962, -88.696, 45, [255 45 45]/255, '^','filled') % The Bouy 
+    scatterm(28.738,-88.366, 270, [255 45 45]/255, 'v','filled') % The explosion BP Deep Horizontal
+    scatterm(28.962, -88.696, 135, [255 45 45]/255, '^','filled') % The Bouy 
 end
 
 function fig_setting(fsize)
@@ -95,7 +95,7 @@ function targetarea_map_2(fsize, c)
     %% Truncated Target area
     mark = {'O';'P';'Q';'R';'C'};
     for n = 1 : 5
-        scatterm(cor(n,1),cor(n,2), 30,[0 0 .5],'filled')
+        scatterm(cor(n,1),cor(n,2), 90,[0 0 .5],'filled')
         textm(cor(n,1)+dy(n),cor(n,2)+dx(n),mark(n),'color',c,'FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
     end
     for n = 1 : 4
