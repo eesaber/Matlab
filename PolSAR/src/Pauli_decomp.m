@@ -8,7 +8,6 @@ function Pauli_decomp(R, G, B, varargin)
     addParameter(parse_,'Filename','',validationFcn_3_);
 	parse(parse_,varargin{:})
 
-    chk_pw()
     %%
     up_ = 10; low_ = -50;
     
@@ -44,7 +43,7 @@ function Pauli_decomp(R, G, B, varargin)
     Plotsetting_GOM2([-40 0],1)
     colorbar off
     if numel(parse_.Results.Filename)
-        plot_para('Maximize',true,'Filename',['output/' parse_.Results.Filename]);
+        plot_para('Maximize',true,'Filename', parse_.Results.Filename);
     end
     
     if parse_.Results.Saibu
