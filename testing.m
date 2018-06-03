@@ -1,3 +1,30 @@
+
+temp = 10*log10(span./(trimmean(span,3,2)*ones(1,8000)));
+%temp(temp>=0) = 0;
+temp(temp<-1) = -5;
+%temp=temp+5;
+BW = edge(temp,'log',0.35);
+figure(1)
+imagesc(BW)
+hold on 
+%%
+limx = [2400 3400];
+limy = [2500 3100];
+figure(2)
+    imagesc(10*log10(span))
+    caxis([-35 5])
+    colormap gray
+    title('raw')
+    set(gca,'Ydir','normal','Xlim',limx,'Ylim',limy)
+figure(3)
+    %imagesc(10*log10(span./(trimmean(span,3,2)*ones(1,8000))))
+    imagesc(10*log10(conv2(span,ones(3,3)/9, 'same')))
+    caxis([-35 5])
+    title('boxcar')
+    colormap gray
+    set(gca,'Ydir','normal','Xlim',limx,'Ylim',limy)
+   
+%%
 global dir task;
 im_size = [41864 12369];
 fid = fopen([dir task '_CX_01.hgt'],'r','ieee-le');
