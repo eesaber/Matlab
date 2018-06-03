@@ -46,14 +46,15 @@ function [H, alpha_bar] = Eigen_decomp(varargin)
     else 
         load([dir parse_.Results.FileName '.mat'])
     end
-
+    %%
     figure
         imagesc(H)
         %Plotsetting_GOM1([0 1])
         %ann_GOM1()
-        ann_GOM2()
+        %ann_GOM2()
         Plotsetting_GOM2([0 1],1)
         plot_para('Filename','Entropy', 'Maximize',true)
+    %%
     figure
         imagesc(10*log10(lambda_1))
         Plotsetting_GOM2([-35 -5],1)

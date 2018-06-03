@@ -16,7 +16,7 @@ function targetarea_map()
         case 2
             chk_pw('output_GulfMexico2/area1')
             latlim = [28, 29.5];
-            lonlim = [-90,-87.5];
+            lonlim = [-90,-88];
             fname = 'rig_loc2';
             %% map
             basemap(latlim, lonlim, fsize)
@@ -58,8 +58,8 @@ function rig_local()
 end
 
 function fig_setting(fsize)
-    annotation('arrow',[.8 .8],[.7 .75],'HeadStyle','plain','HeadWidth',5,'LineWidth',2)
-    annotation('textarrow',[.8 .8],[.75 .7],'string','N','Fontsize',fsize,'FontName','CMU Sans Serif','HeadStyle','plain','HeadWidth',0.00000000001,'LineWidth',0.5)
+    annotation('arrow',[.7 .7],[.7 .75],'HeadStyle','plain','HeadWidth',5,'LineWidth',2)
+    annotation('textarrow',[.7 .7],[.75 .7],'string','N','Fontsize',fsize,'FontName','CMU Sans Serif','HeadStyle','plain','HeadWidth',0.00000000001,'LineWidth',0.5)
     %% Move figure downward
     pos = get(gca, 'Position');
     yoffset = -0.05;
@@ -83,13 +83,30 @@ function targetarea_map_1(fsize)
     plotm([29.36 28.84],[-86.18 -86.06],'k','Linewidth',1) % P-Q
 end
 
+
 function targetarea_map_2(fsize, c)
+    %% 影像範圍 target area 2 
+    %           原始資料                      舊範圍 (PQ 沒變)                     新範圍
+    %   O = [30.1614, -89.9033]   ;   O' = [29.1616, -88.9576]     ;   O'' [28.9757, -88.7802]
+    %   P = [28.3194, -88.1611]   ;   P' = [28.3194, -88.1611]     ;   P'' [28.5758, -88.4019]
+    %   Q = [28.4465, -87.9849]   ;   Q' = [28.4465, -87.9849]     ;   Q'' [28.7032, -88.2256]
+    %   R = [30.2908, -89.7261]   ;   R' = [29.2897, -88.7810]     ;   R'' [29.1036, -88.6036]
+    % 
+    % O = [30.1614, -89.9033];  
+    % P = [28.3194, -88.1611];
+    % Q = [28.4465, -87.9849];
+    % R = [30.2908, -89.7261];
+    % Opp = 1/36842*(O*13142 + P*23699);
+    % Rpp = 1/36842*(R*13142 + Q*23699);
+    % Ppp = 1/36842*(O*5143 + P*31698);
+    % Qpp = 1/36842*(R*5143 + Q*31698);
+    %%
     switch nargin
         case 1
             c = 'k';
     end
     rig_local()
-    cor = [29.1616, -88.9576; 28.319386246,-88.161090341; 28.446506933,-87.984930547; 29.2897,-88.7810; 28.8043,-88.4712]; % OPQRC
+    cor = [28.9757, -88.7802; 28.5758, -88.4019; 28.7032, -88.2256; 29.1036, -88.6036; 28.8396, -88.5028]; % OPQRC
     dy = 0.1*[0.5,  -1,-1, 0, 1];
     dx = 0.1*[-0.5,-1.3, 0, 1,-1];
     %% Truncated Target area

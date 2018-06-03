@@ -19,7 +19,7 @@ function Section_GOM2(I, x, y, f_name)
     %fvtool(lpFilt)
     linew = 0.5;
     font_size = 40;
-    movavg = ones(9,1);
+    movavg = ones(100,1);
     movavg = movavg/numel(movavg);
     % Range
     figure

@@ -18,9 +18,12 @@ span = hh_hh+vv_vv+2*hv_hv;
 %% 4-component decomposition
 FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
-pow_range = [-35 5];
+x = [1900, 4200, 5100];
+y = [3100, 1600, 500];
+pow_range = [-10 5];
 figure
-    imagesc(10*log10(span))
+    %imagesc(10*log10(span./(trimmean(span,1,2)*ones(1,8000))))
+    
     Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
     colormap gray
     %{
@@ -30,7 +33,7 @@ figure
         annotation('textbox',[0.75 0.5 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
     plot_para('Filename','span', 'Maximize',true)
     %}
-    Section_GOM2(10*log10(span),x,y,'span')
+    Section_GOM2(10*log10(span./(trimmean(span,1,2)*ones(1,8000))),x,y,'span')
 %%
 figure
     imagesc(10*log10(hh_hh))
@@ -64,7 +67,7 @@ figure
 if sub_map == 0
     [H, alpha_bar] = Eigen_decomp('FileName','eigen');
 else
-    [~] = Eigen_decomp('FileName','eigen_area1');
+    [H, alpha_bar] = Eigen_decomp('FileName','eigen_area1');
 end
 %% Obtain terrain slope in azimuth and induced angle by terrain slope. 
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
@@ -89,8 +92,7 @@ T_13 = hh_hv + conj(hv_vv);
 T_23 = hh_hv - conj(hv_vv);
 
 %% Indicator
-x = [1900, 4200, 5100];
-y = [3100, 1600, 500];
+
 %{
 figure
     imagesc(H+alpha_bar/180*pi+A_1+abs(hh_vv)./sqrt(hh_hh.*vv_vv))
@@ -103,9 +105,10 @@ figure
 close all
 f_name = 'para_confomty';
 figure
-    imagesc(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv))
+    %imagesc(2*(real(hh_vv)-hv_hv)./(hh_hh + 2*hv_hv + vv_vv))
+    imagesc(conv2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),ones(3,3)/9,'same'))
     Plotsetting_GOM2([-1 1],1)
-    Section_GOM2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),x,y, f_name)
+    %Section_GOM2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),x,y, f_name)
     
     %{
     annotation('rectangle',[0.3 0.15 0.04 0.775],'Color','k','Linewidth',2)
