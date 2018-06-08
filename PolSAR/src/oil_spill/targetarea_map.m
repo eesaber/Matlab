@@ -17,7 +17,7 @@ function targetarea_map()
             chk_pw('output_GulfMexico2/area1')
             latlim = [28, 29.5];
             lonlim = [-90,-88];
-            fname = 'rig_loc2';
+            fname = 'rig_local2';
             %% map
             basemap(latlim, lonlim, fsize)
             targetarea_map_2(fsize)
@@ -53,7 +53,7 @@ function rig_local()
     for r = 1 : numel(rig)/2
         scatterm(rig(r,1),rig(r,2), 90, [2 35 209]/255, 'filled')
     end
-    scatterm(28.738,-88.366, 270, [255 45 45]/255, 'v','filled') % The explosion BP Deep Horizontal
+    scatterm(28.738,-88.366, 135, [255 45 45]/255, 'd','filled') % The explosion BP Deep Horizontal
     scatterm(28.962, -88.696, 135, [255 45 45]/255, '^','filled') % The Bouy 
 end
 
@@ -111,9 +111,10 @@ function targetarea_map_2(fsize, c)
     dx = 0.1*[-0.5,-1.3, 0, 1,-1];
     %% Truncated Target area
     mark = {'O';'P';'Q';'R';'C'};
+    cor_m = [28.9757, -88.8472; 28.5558, -88.3719; 28.7032, -88.2056; 29.1036, -88.5936; 28.8496, -88.5598];
     for n = 1 : 5
         scatterm(cor(n,1),cor(n,2), 90,[0 0 .5],'filled')
-        textm(cor(n,1)+dy(n),cor(n,2)+dx(n),mark(n),'color',c,'FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+        textm(cor_m(n,1),cor_m(n,2),mark(n),'color',c,'FontSize',fsize,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
     end
     for n = 1 : 4
         plotm([cor(n,1),cor(1+mod(n,4),1)],[cor(n,2),cor(1+mod(n,4),2)],'color',c,'Linewidth',1)

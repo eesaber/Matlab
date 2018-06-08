@@ -1,23 +1,27 @@
-function Section_GOM2(I, x, y, f_name)
+function Section_GOM2(I, x, y, y_label,f_name)
     global im_size;
     linew = 2;
 
     hold on
-    plot([1, im_size(2)], y(1)*ones(2,1),'-k','Linewidth', linew)
-    plot([1, im_size(2)], y(2)*ones(2,1), '--k','Linewidth', linew)
-    plot([1, im_size(2)], y(3)*ones(2,1), '-.k','Linewidth', linew)
-
+    plot([1, im_size(2)], y(1)*ones(2,1),'k','Linewidth', linew)
+    plot([1, im_size(2)], y(2)*ones(2,1), 'k','Linewidth', linew)
+    plot([1, im_size(2)], y(3)*ones(2,1), 'k','Linewidth', linew)
+    text(100, y(1)-150,'$L_1$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    text(100, y(2)-150,'$L_2$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    text(100, y(3)-150,'$L_3$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    %{
     plot(x(1)*ones(2,1), [1, im_size(1)], '-k','Linewidth', linew)
     plot(x(2)*ones(2,1), [1, im_size(1)], '--k','Linewidth', linew)
     plot(x(3)*ones(2,1), [1, im_size(1)], '-.k','Linewidth', linew)
     hold off
+    %}
     plot_para('Filename',f_name, 'Maximize',true)
     
-    linew = 0.5;
     font_size = 40;
     movavg = ones(100,1);
     movavg = movavg/numel(movavg);
-    % Range
+    %{
+    % Along range
     figure
         plot(conv(I(:, x(1)), movavg, 'same'), 'k','Linewidth', linew)
         xlim([1,im_size(1)])
@@ -38,19 +42,21 @@ function Section_GOM2(I, x, y, f_name)
         plot(I(:,x(3)), '-.k','Linewidth', linew)
         hold off
         plot_para('Maximize',true,'Filename',[f_name '_r'])
-    
-    % Azimuth
+    %}
+    % Along azimuth
     figure
         if 1
             segmentAzimuth(conv(I(y(1),:), movavg, 'same'), 1, 'k', linew)
+            set(gca,'XTick',1:1000:8000, 'Xticklabel',cellstr(int2str((0:1000*7:8000*7)'/1000))','FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
             %plot(conv(I(y(1),:), movavg, 'same'), 'k','Linewidth', linew)
-            hold on 
             segmentAzimuth(conv(I(y(2),:), movavg, 'same'), 2, 'r', linew)
             %plot(conv(I(y(2),:), movavg, 'same'), 'r','Linewidth', linew)
             segmentAzimuth(conv(I(y(3),:), movavg, 'same'), 3, 'b', linew)
             %plot(conv(I(y(3),:), movavg, 'same'), 'b','Linewidth', linew)
+            grid on
             hold off
             xlabel('Azimuth (km)')
+            ylabel(y_label,'Interpreter','latex')
         else 
             subplot(3,1,1);
             %plot(conv(I(y(1),:), movavg, 'same'), 'k','Linewidth', linew)
@@ -66,10 +72,11 @@ function Section_GOM2(I, x, y, f_name)
             %plot(conv(I(y(3),:), movavg, 'same'), 'b','Linewidth', linew)
             segmentAzimuth(conv(I(y(1),:), movavg, 'same'), 1, 'k', linew)            
             xlabel('Azimuth (km)')
+            ylabel(y_label,'Interpreter','latex')
             set(gca,'XTick',1:1000:8000, 'Xticklabel',cellstr(int2str((0:1000*7:8000*7)'/1000))')
             %Ylim([0 1])
         end
-        plot_para('Maximize',true,'Filename',[f_name '_am'])
+        plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])
     figure
         if 1
             plot(I(y(1),:), 'k','Linewidth', linew)
@@ -78,6 +85,7 @@ function Section_GOM2(I, x, y, f_name)
             plot(I(y(3),:), 'b','Linewidth', linew)
             hold off
             xlabel('Azimuth (km)')
+            ylabel(y_label,'Interpreter','latex')
         else 
             subplot(3,1,1);
             plot(I(y(1),:), 'k','Linewidth', linew)
@@ -90,16 +98,24 @@ function Section_GOM2(I, x, y, f_name)
             subplot(3,1,3);
             plot(I(y(3),:), 'b','Linewidth', linew)
             xlabel('Azimuth (km)')
+            ylabel(y_label,'Interpreter','latex')            
             set(gca,'XTick',1:1000:8000, 'Xticklabel',cellstr(int2str((0:1000*7:8000*7)'/1000))')
             %Ylim([0 1])
         end
         plot_para('Maximize',true,'Filename',[f_name '_a'])
 end
 function segmentAzimuth(y, pos, linecolor, linewidth)
+    linewidth = linewidth+0.5;
     seg = [2672, 5447; 3597, 6300; 4050, 6393]; % corresponding range bins: 3100,1600,500
-    plot(1: seg(pos, 1),y(1: seg(pos, 1)), [linecolor '--'], 'Linewidth',linewidth)
+    plot(1: seg(pos, 1),y(1: seg(pos, 1)), [linecolor ':'], 'Linewidth',linewidth)
     hold on 
     plot(seg(pos, 1): seg(pos, 2), y(seg(pos, 1): seg(pos, 2)), linecolor, 'Linewidth', linewidth)
-    plot(seg(pos, 2): numel(y), y(seg(pos, 2): end), [linecolor '--'], 'Linewidth', linewidth)
-    hold off
+    plot(seg(pos, 2): numel(y), y(seg(pos, 2): end), [linecolor ':'], 'Linewidth', linewidth)
+    %{
+    annotation('arrow',[0.519 0.519],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
+    annotation('arrow',[0.68 0.68],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
+
+
+    annotation('arrow',[0.519 0.519],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
+    %}  
 end

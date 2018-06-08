@@ -8,7 +8,7 @@ disp('loading data...')
 [N_az, N_ra] = size(hh_hh);
 size_N = numel(hh_hh);
 span = hh_hh+vv_vv+2*hv_hv;
-% 4-component decomposition
+%% 4-component decomposition
 FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
 figure
@@ -28,22 +28,30 @@ figure
     %Pauli_decomp(2*T_22, T_33, 2*T_11, 'Filename','Pauli_decomp','saibu',false)
     Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp')
 close all
-%% Eigen-decomposition
-[H, alpha_bar] = Eigen_decomp('FileName', 'eigen');
-close all
-%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
-T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
-T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
-T_33 = 2*hv_hv;
-T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
-T_13 = hh_hv + conj(hv_vv);
-T_23 = hh_hv - conj(hv_vv);
+
+%% Use moving Average T_mn 
+mask = ones(3,3)/9;
+T_11 = conv2((hh_hh+vv_vv+hh_vv+conj(hh_vv))/2, mask, 'same');
+T_22 = conv2((hh_hh+vv_vv-hh_vv-conj(hh_vv))/2, mask, 'same');
+T_33 = conv2(2*hv_hv, mask, 'same');
+T_12 = conv2((hh_hh-vv_vv-hh_vv+conj(hh_vv))/2, mask, 'same');
+T_13 = conv2(hh_hv + conj(hv_vv), mask, 'same');
+T_23 = conv2(hh_hv - conj(hv_vv), mask, 'same');
 %clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 close all
 temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
 clear T_11 T_22 T_33 T_12 T_13 T_23 
+%% Eigen-decomposition
+read = 0;
+if read 
+    [H, alpha_bar] = Eigen_decomp('FileName', 'eigen');
+else
+    [~] = Eigen_decomp('T',temp_T,'Calculate',true,'FileName','eigen_avg');
+end
+close all
+%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
 get_polangle(temp_T);
 clear temp_T
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
@@ -130,11 +138,17 @@ figure
  
 %% Incident angle and Bragg wavenumber
 global im_size
+r_phi = atand(linspace(4602.29004, 4602.29004+22490.8262, im_size(1))/12497);
 figure
-    plot(atand(linspace(4602.29004, 4602.29004+22490.8262, im_size(1))/12497),'k', 'Linewidth',3)
+    plot(r_phi,'k', 'Linewidth',3)
     xlim([1 3300])
-    set(gca,'XTick',0:600:3300, 'Xticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
     ylim([20 65])
+    set(gca,'XTick',0:600:3300, 'Xticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
+    hold on
+    scatter(500,r_phi(500),100,'o','r','filled')
+    scatter(1600,r_phi(1600),100,'o','r','filled')
+    scatter(3100,r_phi(3100),100,'o','r','filled')
+    hold off
     xlabel('Range (km)')
     ylabel('$\phi$ (deg)','Interpreter', 'latex')
     grid on
@@ -153,17 +167,26 @@ B_vv_oil = ((epsilon_oil-1)*(sind(theta).^2 - epsilon_oil*(1 + sind(theta).^2)))
 B_hh_sea = (cosd(theta)-sqrt(epsilon_sea-sind(theta).^2))./(cosd(theta)+sqrt(epsilon_sea-sind(theta).^2));
 B_vv_sea = ((epsilon_sea-1)*(sind(theta).^2 - epsilon_sea*(1 + sind(theta).^2)))./(epsilon_sea*cosd(theta)+sqrt(epsilon_sea-sind(theta).^2)).^2;
 figure
-    a = plot(theta, abs(B_hh_sea),'b--', theta, abs(B_vv_sea),'b','Linewidth',3);
+    a = plot(theta, abs(B_hh_sea),'k--', theta, abs(B_vv_sea),'k','Linewidth',3);
     hold on 
-    b = plot(theta, abs(B_hh_oil),'k--', theta, abs(B_vv_oil),'k','Linewidth',3);
+    b = plot(theta, abs(B_hh_oil),'k-.', theta, abs(B_vv_oil),'k:','Linewidth',3);
     %legend({'sea: $B_{hh}$', 'sea: $B_{vv}$','oil: $B_{hh}$','oil: $B_{vv}$'},'Interpreter','latex','Location','bestoutside')
     %legend('boxoff')
     grid on
     hold off
-    set(gca,'Xlim',[0 90],'Ylim',[0,10])
+    set(gca,'Xlim',[0 80],'Ylim',[0,10])
     xlabel('$\phi$ (deg)','Interpreter', 'latex')
-    ylabel('Bragg Coefficient')
+    ylabel('$B_{vv}$, $B_{hh}$','Interpreter', 'latex')
     plot_para('Filename','die_angle', 'Maximize',true, 'Ratio',[4 3 1])
+    
+R = abs().^2
+figure
+    plot(theta, 20*log10(abs(B_vv_sea./B_hh_sea)),'k--',......
+    theta, 20*log10(abs(B_vv_oil./B_hh_oil)),'k','Linewidth',2.5)
+    xlabel('$\phi$ (deg)','Interpreter', 'latex')
+    ylabel('$|S_{vv}|^2 / |S_{hh}|^2$ (dB)','Interpreter', 'latex')
+    set(gca,'Xlim',[0 80],'Ylim',[0 30],'xGrid','on','yGrid','on')
+    plot_para('Filename','hv_ratio_thm', 'Maximize',true, 'Ratio',[4 3 1])
 %%
 figure
     plot(theta,atand(abs((B_hh-B_vv)./(B_hh+B_vv))),'k')

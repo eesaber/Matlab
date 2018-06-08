@@ -20,6 +20,7 @@ function [H, alpha_bar] = Eigen_decomp(varargin)
         [~,~,num]= size(parse_.Results.T);
         T = parse_.Results.T;
         H = zeros(1, num); A_1 = zeros(1, num); A_2 = zeros(1, num); lambda_1 = zeros(1,num);
+        
         alpha_bar = zeros(1, num);
         parfor r = 1 : num
             %if sum(sum(parse_.Results.T(:,:,r)== zeros(3,3))) == 9

@@ -20,76 +20,75 @@ FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 %% Span
 x = [1900, 4200, 5100];
 y = [3100, 1600, 500];
-pow_range = [-10 5];
+pow_range = [-35 5];
 figure
-    %imagesc(10*log10(span./(trimmean(span,1,2)*ones(1,8000))))
-    
+    imagesc(10*log10(span))
     Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
     colormap gray
-    %{
-    annotation('rectangle',[0.15 0.2 0.07 0.725],'Color','k','Linewidth',2)
-        annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_1$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.37 0.2 0.36 0.725],'Color','k','Linewidth',2)
-        annotation('textbox',[0.75 0.5 0.1 0.1],'String','$A_2$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    plot_para('Filename','span', 'Maximize',true)
-    %}
-    Section_GOM2(10*log10(span./(trimmean(span,1,2)*ones(1,8000))),x,y,'span')
+    %plot_para('Filename','span', 'Maximize',true)
+    Section_GOM2(10*log10(span./(trimmean(span,3,2)*ones(1,8000))),x,y,'Span($\bar{\bar{S}}) / \mu$ (dB)' ,'span')
 %%
 figure
     imagesc(10*log10(hh_hh))
     Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
     colormap gray
-    plot_para('Filename','S_hh', 'Maximize',true, 'Ratio',[4 3 1])
+    plot_para('Ratio',[4 3 1])
+    Section_GOM2(10*log10(hh_hh./(trimmean(hh_hh,3,2)*ones(1,8000))),x,y,'$|S_{hh}|^2/ \mu $ (dB)','hh_hh')
+    %plot_para('Filename','S_hh', 'Maximize',true, 'Ratio',[4 3 1])
+%%
 figure
     imagesc(10*log10(vv_vv))
     Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',[40 -70])
     colormap gray
-    plot_para('Filename','S_vv', 'Maximize',true, 'Ratio',[4 3 1])
+    plot_para('Ratio',[4 3 1])
+    Section_GOM2(10*log10(vv_vv./(trimmean(vv_vv,3,2)*ones(1,8000))),x,y,'$|S_{vv}|^2/ \mu $ (dB)','vv_vv')
+    %plot_para('Filename','S_vv', 'Maximize',true, 'Ratio',[4 3 1])
+%%
 figure
     imagesc(10*log10(hv_hv))
     Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',[40 -70])
+    plot_para('Ratio',[4 3 1])
     colormap gray
-    plot_para('Filename','S_hv', 'Maximize',true, 'Ratio',[4 3 1])
-%% Find egde
-temp = 10*log10(span);
-temp(10*log10(span)<-40) = -40;
-temp(10*log10(span)>0) = 0;
-temp = temp+30;
+    Section_GOM2(10*log10(hv_hv./(trimmean(hv_hv,3,2)*ones(1,8000))),x,y,'$|S_{hv}|^2$ (dB)','hv_hv')
+    %plot_para('Filename','S_hv', 'Maximize',true, 'Ratio',[4 3 1])
 
-BW = edge(temp,'approxcanny');
-figure
-imagesc(BW)
 %% Pauli decomposition
 figure
-    %Pauli_decomp(2*T_22, T_33, 2*T_11, 'Filename','Pauli_decomp','saibu',false)
-    Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp')
-%% Eigen-decomposition
-if sub_map == 0
-    [H, alpha_bar] = Eigen_decomp('FileName','eigen');
-else
-    [H, alpha_bar] = Eigen_decomp('FileName','eigen_area1');
-end
-%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
-T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
-T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
-T_33 = 2*hv_hv;
-T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
-T_13 = hh_hv + conj(hv_vv);
-T_23 = hh_hv - conj(hv_vv);
+Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp','saibu',false)
+%% Use moving Average T_mn 
+mask = ones(3,3)/9;
+T_11 = conv2((hh_hh+vv_vv+hh_vv+conj(hh_vv))/2, mask, 'same');
+T_22 = conv2((hh_hh+vv_vv-hh_vv-conj(hh_vv))/2, mask, 'same');
+T_33 = conv2(2*hv_hv, mask, 'same');
+T_12 = conv2((hh_hh-vv_vv-hh_vv+conj(hh_vv))/2, mask, 'same');
+T_13 = conv2(hh_hv + conj(hv_vv), mask, 'same');
+T_23 = conv2(hh_hv - conj(hv_vv), mask, 'same');
 %clear  hh_hh hv_hv vv_vv hh_hv hh_vv hv_vv
 close all
 temp_T = cat(1,cat(2, reshape(T_11,[1,1,size_N]), reshape(T_12,[1,1,size_N]), reshape(T_13,[1,1,size_N])), ......
              cat(2,reshape(conj(T_12),[1,1,size_N]), reshape(T_22,[1,1,size_N]), reshape(T_23,[1,1,size_N])),.......
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
 clear T_11 T_22 T_33 T_12 T_13 T_23 
-get_polangle(temp_T);
+%% Eigen-decomposition
+read = 1;
+if read
+    f_name = 'eigen_avg';
+    [~] = Eigen_decomp('FileName', f_name);
+else
+    f_name = 'eigen_avg';
+    [~] = Eigen_decomp('T',temp_T,'Calculate',true,'FileName',f_name);
+end
 clear temp_T
+close all
+%% Obtain terrain slope in azimuth and induced angle by terrain slope. 
+get_polangle(temp_T);
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
 T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
 T_33 = 2*hv_hv;
 T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
 T_13 = hh_hv + conj(hv_vv);
 T_23 = hh_hv - conj(hv_vv);
+close all
 
 %% Indicator
 
@@ -109,26 +108,13 @@ figure
     imagesc(conv2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),ones(3,3)/9,'same'))
     Plotsetting_GOM2([-1 1],1)
     %Section_GOM2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),x,y, f_name)
-    
-    %{
-    annotation('rectangle',[0.3 0.15 0.04 0.775],'Color','k','Linewidth',2)
-        annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_{\mu 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.15 0.18 0.775],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\mu 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}
+    Section_GOM2((2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv))./(trimmean( (2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv)) ,3,2)*ones(1,8000)),x,y, f_name)    
 %%
 figure
     imagesc(-(hv_hv>abs(real(hh_vv))))
     Plotsetting_GOM2([-1 0],1)
     colormap gray; colorbar off
-    %{
-    annotation('rectangle',[0.13 0.8 0.05 0.125],'Color','k','Linewidth',2)
-        annotation('textbox',[0.18 0.8 0.1 0.1],'String','$A_{k 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.57 0.45 0.05 0.2],'Color','k','Linewidth',2)
-        annotation('textbox',[0.5 0.55 0.1 0.1],'String','$A_{k 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.8 0.18 0.125],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.8 0.1 0.1],'String','$A_{k 3}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}    
+    
     plot_para('Filename', 'para_muller', 'Maximize',true)
 %%
 close all
@@ -137,23 +123,12 @@ figure
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
     Plotsetting_GOM2([0 1],1)
     Section_GOM2(abs(T_12)./sqrt(T_11.*T_22),x,y,f_name)
-    %{
-    annotation('rectangle',[0.3 0.45 0.04 0.475],'Color','k','Linewidth',2)
-        annotation('textbox',[0.25 0.6 0.1 0.1],'String','$A_{\gamma 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.45 0.18 0.475],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.6 0.1 0.1],'String','$A_{\gamma 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}
 %%
 f_name = 'para_moisture';
 figure
     imagesc((T_11-T_22)./(T_11+T_22))
     Plotsetting_GOM2([0 1],1)
-    Section_GOM2((T_11-T_22)./(T_11+T_22),x,y,f_name)
-    %{
-    annotation('rectangle',[0.44 0.3 0.13 0.325],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{m 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}
-    
+    Section_GOM2((T_11-T_22)./(T_11+T_22),x,y,f_name)   
 %%
 close all
 f_name = 'para_roughness';
@@ -161,28 +136,24 @@ figure
     imagesc((T_22-T_33)./(T_22+T_33))
     Plotsetting_GOM2([0 1],1)
     Section_GOM2((T_22-T_33)./(T_22+T_33),x,y, f_name)
-    %{
-    annotation('rectangle',[0.45 0.17 0.14 0.275],'Color','k','Linewidth',2)
-        annotation('textbox',[0.4 0.2 0.1 0.1],'String','$A_{r 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.65 0.15 0.275],'Color','k','Linewidth',2)
-        annotation('textbox',[0.55 0.75 0.1 0.1],'String','$A_{r 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}
 %%
+
+f_name = 'para_dielectric';
 figure
     %imagesc(atand((T_22+T_33)./T_11))
     imagesc((T_22+T_33)./T_11)
     Plotsetting_GOM2([0 1],1)
-    Section_GOM2((T_22+T_33)./T_11,x,y)
-    %{
-    annotation('rectangle',[0.3 0.35 0.04 0.35],'Color','k','Linewidth',2)
-        annotation('textbox',[0.25 0.5 0.1 0.1],'String','$A_{\epsilon 1}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    annotation('rectangle',[0.4 0.25 0.18 0.675],'Color','k','Linewidth',2)
-        annotation('textbox',[0.6 0.5 0.1 0.1],'String','$A_{\epsilon 2}$','Linestyle','none','Fontsize',40,'Interpreter', 'latex')
-    %}
-    plot_para('Filename','para_dielectric', 'Maximize',true)
+    Section_GOM2((T_22+T_33)./T_11,x,y, '$m (\phi, \epsilon_r)$',f_name)
 %%
 figure
     imagesc(sqrt(atand((T_22+T_33)./T_11)))
     Plotsetting_GOM2([0 10],1)
     Section_GOM2(sqrt(atand((T_22+T_33)./T_11)),x,y)
-    plot_para('Filename','para_braggalpha', 'Maximize',true)
+    %plot_para('Filename','para_braggalpha', 'Maximize',true)
+%%
+f_name = 'hvratio';
+figure 
+    imagesc(10*log10(conv2(vv_vv./hh_hh, ones(3,3), 'same')/9))
+    %imagesc(vv_vv./hh_hh)
+    Plotsetting_GOM2([0 15],1)
+    Section_GOM2(10*log10(conv2(vv_vv./hh_hh, ones(3,3), 'same')/9),x,y,'$|S_{vv}|^2 / |S_{hh}|^2$ (dB)',f_name)
