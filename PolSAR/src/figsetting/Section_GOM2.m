@@ -76,7 +76,8 @@ function Section_GOM2(I, x, y, y_label,f_name)
             set(gca,'XTick',1:1000:8000, 'Xticklabel',cellstr(int2str((0:1000*7:8000*7)'/1000))')
             %Ylim([0 1])
         end
-        plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])
+        %plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])
+    %{
     figure
         if 1
             plot(I(y(1),:), 'k','Linewidth', linew)
@@ -103,6 +104,7 @@ function Section_GOM2(I, x, y, y_label,f_name)
             %Ylim([0 1])
         end
         plot_para('Maximize',true,'Filename',[f_name '_a'])
+        %}
 end
 function segmentAzimuth(y, pos, linecolor, linewidth)
     linewidth = linewidth+0.5;
@@ -111,11 +113,4 @@ function segmentAzimuth(y, pos, linecolor, linewidth)
     hold on 
     plot(seg(pos, 1): seg(pos, 2), y(seg(pos, 1): seg(pos, 2)), linecolor, 'Linewidth', linewidth)
     plot(seg(pos, 2): numel(y), y(seg(pos, 2): end), [linecolor ':'], 'Linewidth', linewidth)
-    %{
-    annotation('arrow',[0.519 0.519],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
-    annotation('arrow',[0.68 0.68],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
-
-
-    annotation('arrow',[0.519 0.519],[0.1 0.2],'Headwidth',6,'Headstyle','vback2')
-    %}  
 end

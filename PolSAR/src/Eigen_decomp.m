@@ -36,13 +36,14 @@ function [H, alpha_bar] = Eigen_decomp(varargin)
             alpha_bar(r) = sum(P'.*acosd(abs(U(1,:))));
         end
         e = cputime -t;
-        disp(e)
+        disp(['Execution time:' num2str(e)])
         %%
         H = single(real(reshape(H, im_size)));
         A_1 = single(reshape(A_1, im_size));
         A_2 = single(reshape(A_2, im_size));
         alpha_bar = single(reshape(alpha_bar, im_size));
         lambda_1 = single(reshape(lambda_1, im_size));
+        disp('Saving results....')
         save([dir parse_.Results.FileName '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'lambda_1','alpha_bar');
     else 
         load([dir parse_.Results.FileName '.mat'])

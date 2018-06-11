@@ -25,8 +25,7 @@ figure
     plot_para('Filename','output/span', 'Maximize',true)
 %% Pauli decomposition
 figure
-    %Pauli_decomp(2*T_22, T_33, 2*T_11, 'Filename','Pauli_decomp','saibu',false)
-    Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp')
+Pauli_decomp((hh_hh+vv_vv-hh_vv-conj(hh_vv)), 2*hv_hv,(hh_hh+vv_vv+hh_vv+conj(hh_vv)),'Filename','Pauli_decomp')
 close all
 
 %% Use moving Average T_mn 
@@ -135,7 +134,12 @@ figure
     imagesc(sqrt(atand((T_22+T_33)./T_11)))
     Plotsetting_GOM1([0 10])
     plot_para('Filename','output/para_braggalpha', 'Maximize',true)
- 
+%%
+figure
+    imagesc(10*log10(conv2(vv_vv./hh_hh, ones(3,3), 'same')/9))
+    Plotsetting_GOM1([0 15],1)
+
+
 %% Incident angle and Bragg wavenumber
 global im_size
 r_phi = atand(linspace(4602.29004, 4602.29004+22490.8262, im_size(1))/12497);

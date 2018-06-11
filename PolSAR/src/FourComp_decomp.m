@@ -78,25 +78,25 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_GOM1([-40 0],'Colorbar_unit',[40 -70])
 			%title('single', 'Interpreter', 'latex')
-            plot_para('Maximize',true,'Filename', ['output/' filename,'_s']);
+            plot_para('Maximize',true,'Filename', [filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
+            %Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('double', 'Interpreter', 'latex')
-            plot_para('Maximize',true,'Filename',['output/' filename, '_d']);
+            plot_para('Maximize',true,'Filename',[filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
             Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
-            plot_para('Maximize',true, 'Filename', ['output/' filename, '_v']);
+            plot_para('Maximize',true, 'Filename', [filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
             Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
             %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
 			%title('volume', 'Interpreter', 'latex')
-            plot_para('Maximize',true, 'Filename', ['output/' filename, '_c']);
+            plot_para('Maximize',true, 'Filename', [filename, '_c']);
     end
 
     if(1)	% Plot the 4-component decomposition.
@@ -115,7 +115,7 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
             set(gca,'Ydir','normal')
             xlabel('Azimuth (pixel)', 'Interpreter', 'latex')
             ylabel('Range (pixel)', 'Interpreter', 'latex')
-            plot_para('Filename',['output/' filename],'Maximize',true);
+            plot_para('Filename',filename,'Maximize',true);
         clear img 
     end
 
