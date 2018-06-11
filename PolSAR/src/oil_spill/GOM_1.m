@@ -162,43 +162,49 @@ figure
     set(gca, 'Position', pos)
     plot_para('Filename','incidence_angle', 'Maximize',true, 'Ratio',[4 3 1])
 %% Bragg scattering coefficient 
-epsilon_oil = 2;
-epsilon_sea = 40;
-theta = 0:1:90;
-beta = 2*pi/(physconst('LightSpeed')/1.2575e9);
-B_hh_oil = (cosd(theta)-sqrt(epsilon_oil-sind(theta).^2))./(cosd(theta)+sqrt(epsilon_oil-sind(theta).^2));
-B_vv_oil = ((epsilon_oil-1)*(sind(theta).^2 - epsilon_oil*(1 + sind(theta).^2)))./(epsilon_oil*cosd(theta)+sqrt(epsilon_oil-sind(theta).^2)).^2;
-B_hh_sea = (cosd(theta)-sqrt(epsilon_sea-sind(theta).^2))./(cosd(theta)+sqrt(epsilon_sea-sind(theta).^2));
-B_vv_sea = ((epsilon_sea-1)*(sind(theta).^2 - epsilon_sea*(1 + sind(theta).^2)))./(epsilon_sea*cosd(theta)+sqrt(epsilon_sea-sind(theta).^2)).^2;
+epsilon_oil = 2.3-1j*0.02;
+epsilon_sea = 70-1j*50;
+k = 2*pi/(physconst('LightSpeed')/1.2575e9);
+phi = 0:1:89;
+theta = 15.2;
+zeta = theta;
+phi_i = acosd(cosd(phi+theta)*cosd(zeta));
+B_hh_oil = (cosd(phi)-sqrt(epsilon_oil-sind(phi).^2))./(cosd(phi)+sqrt(epsilon_oil-sind(phi).^2));
+B_vv_oil = ((epsilon_oil-1)*(sind(phi).^2 - epsilon_oil*(1 + sind(phi).^2)))./(epsilon_oil*cosd(phi)+sqrt(epsilon_oil-sind(phi).^2)).^2;
+B_hh_sea = (cosd(phi)-sqrt(epsilon_sea-sind(phi).^2))./(cosd(phi)+sqrt(epsilon_sea-sind(phi).^2));
+B_vv_sea = ((epsilon_sea-1)*(sind(phi).^2 - epsilon_sea*(1 + sind(phi).^2)))./(epsilon_sea*cosd(phi)+sqrt(epsilon_sea-sind(phi).^2)).^2;
+
+S_hh_oil = cosd(phi_i).^4.* abs((sind(phi+theta)*cosd(zeta)./sind(phi_i)).^2.*B_hh_oil + (sind(zeta)./sind(phi_i)).^2.*B_vv_oil).^2;
+S_vv_oil = cosd(phi_i).^4.* abs((sind(phi+theta)*cosd(zeta)./sind(phi_i)).^2.*B_vv_oil + (sind(zeta)./sind(phi_i)).^2.*B_hh_oil).^2;
+S_hh_sea = cosd(phi_i).^4.* abs((sind(phi+theta)*cosd(zeta)./sind(phi_i)).^2.*B_hh_sea + (sind(zeta)./sind(phi_i)).^2.*B_vv_sea).^2;
+S_vv_sea = cosd(phi_i).^4.* abs((sind(phi+theta)*cosd(zeta)./sind(phi_i)).^2.*B_vv_sea + (sind(zeta)./sind(phi_i)).^2.*B_hh_sea).^2;
 figure
-    a = plot(theta, abs(B_hh_sea),'k--', theta, abs(B_vv_sea),'k','Linewidth',3);
+    a = plot(phi, abs(S_hh_sea),'b--', phi, abs(S_vv_sea),'b','Linewidth',3);
     hold on 
-    b = plot(theta, abs(B_hh_oil),'k-.', theta, abs(B_vv_oil),'k:','Linewidth',3);
-    %legend({'sea: $B_{hh}$', 'sea: $B_{vv}$','oil: $B_{hh}$','oil: $B_{vv}$'},'Interpreter','latex','Location','bestoutside')
-    %legend('boxoff')
+    b = plot(phi, abs(S_hh_oil),'k-.', phi, abs(S_vv_oil),'k:','Linewidth',3);
     grid on
     hold off
-    set(gca,'Xlim',[0 80],'Ylim',[0,10])
-    xlabel('$\phi$ (deg)','Interpreter', 'latex')
-    ylabel('$B_{vv}$, $B_{hh}$','Interpreter', 'latex')
-    plot_para('Filename','die_angle', 'Maximize',true, 'Ratio',[4 3 1])
     
-R = abs().^2
+	set(gca,'Xlim',[0 80],'Ylim',[0,1])
+    xlabel('$\phi$ (deg)','Interpreter', 'latex')
+    ylabel('$S_{vv}$, $S_{hh}$','Interpreter', 'latex')
+    plot_para('Filename','die_angle', 'Maximize',true, 'Ratio',[4 3 1])
+
 figure
-    plot(theta, 20*log10(abs(B_vv_sea./B_hh_sea)),'k--',......
-    theta, 20*log10(abs(B_vv_oil./B_hh_oil)),'k','Linewidth',2.5)
+    plot(phi, 20*log10(abs(S_vv_sea./S_hh_sea)),'k--',......
+    phi, 20*log10(abs(S_vv_oil./S_hh_oil)),'k','Linewidth',2.5)
     xlabel('$\phi$ (deg)','Interpreter', 'latex')
     ylabel('$|S_{vv}|^2 / |S_{hh}|^2$ (dB)','Interpreter', 'latex')
     set(gca,'Xlim',[0 80],'Ylim',[0 30],'xGrid','on','yGrid','on')
     plot_para('Filename','hv_ratio_thm', 'Maximize',true, 'Ratio',[4 3 1])
 %%
 figure
-    plot(theta,atand(abs((B_hh-B_vv)./(B_hh+B_vv))),'k')
+    plot(phi,atand(abs((B_hh-B_vv)./(B_hh+B_vv))),'k')
     grid on
     xlabel('angle (deg)')
 %%  
 figure
-    plot(theta,2*pi./((physconst('LightSpeed')/1.2575e9)/2./sind(theta)), 'k', 'Linewidth',3)
+    plot(phi,2*pi./((physconst('LightSpeed')/1.2575e9)/2./sind(phi)), 'k', 'Linewidth',3)
     grid on
     xlabel('$\phi$ (deg)','Interpreter', 'latex')
     ylabel('$(2 \pi)/\Lambda$ (rad/m)','Interpreter', 'latex')
