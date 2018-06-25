@@ -55,6 +55,7 @@ function Section_GOM2(I, x, y, y_label,f_name)
             %plot(conv(I(y(3),:), movavg, 'same'), 'b','Linewidth', linew)
             grid on
             hold off
+            set(gca, 'Ylim', [0.5, 0.8])
             xlabel('Azimuth (km)')
             ylabel(y_label,'Interpreter','latex')
         else 

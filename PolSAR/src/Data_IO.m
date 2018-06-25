@@ -1,9 +1,34 @@
 function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
-	% Data spec:
-	% [row, col]: 8735*23499, without header 
-	% mlc_mag.row_mult (m/pixel) = 4.99654098 (7.2) ; MLC S (azimuth) Slant Post Spacing
-	% mlc_mag.col_mult (m/pixel) = 7.2 (4.99654098) ; MLC C (range) Slant Post Spacing
-	% NOTICE! The data is rotated for 90 degree ! 
+    % DATA_IO('MissionNum', m, 'Type', ty, 'ReadNewFile', r, 'Test', te,
+    % 'CutBatch', c). 'MissionNum': specify which dataset to read. 'Type':
+    % enter filename extension c_string with ty = 'grd' or ty = 'mlc'.
+    % 'ReadNewFile': If the dataset is read first time, set r = true
+    %
+	% Mission list:  
+	% ---------------------------------------------------------------------
+    % 1     | Aso volcano, 熊本、日本
+    % ---------------------------------------------------------------------
+    % 2     | HaywardFault, CA USA
+    % ---------------------------------------------------------------------
+    % 3     | SMAPVEX12, CAN', Soil Moisture Experiment
+    % ---------------------------------------------------------------------
+    % 4     | Aleutian Volcanoes
+    % ---------------------------------------------------------------------
+    % 5     |
+    % ---------------------------------------------------------------------
+    % 6     |
+    % ---------------------------------------------------------------------
+    % 7     |
+    % ---------------------------------------------------------------------
+    % 8     | Gulf of Mexico, Scene No.1
+    % ---------------------------------------------------------------------
+    % 9     | Gulf of Mexico, Scene No.2
+	% ---------------------------------------------------------------------
+	% 10 	|
+	% ---------------------------------------------------------------------
+	% 11	| North Sea, Scene No.1
+    % ---------------------------------------------------------------------
+    
 	parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'double'},{'nonnegative'}); 
 	validationFcn_2_ = @(x) validateattributes(x,{'char'},{});
@@ -26,8 +51,13 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	switch mission_num
 		case 1
 			disp('UAVSAR Mission: Aso volcano, 熊本、日本')
-			im_size = [23499,8735];
-			im_size_c = im_size.*[2 ,1];
+            if strcmp(parse_.Results.Type, 'grd')
+                im_size = [23499,8735];
+                im_size_c = im_size.*[2 ,1];
+            else
+                im_size = [3300, 16719];
+                im_size_c = im_size.*[2 ,1];
+            end
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Aso_Kumamoto/';
 			task = 'PiSAR2_07507_13170_009_131109_L090';
 			verid = '01';
@@ -95,6 +125,13 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
             dir = '/media/akb/2026EF9426EF696C/raw_data/Mexico_Gulf_4/';
 			task = 'GOMoil_14201_10053_000_100622_L090';
 			verid = '02';
+		case 11
+			disp('UAVSAR Mission: Oil spill experiment in North Sea, Norway')
+            im_size = [3300, 7132];
+            im_size_c = im_size.*[2,1];
+            dir = '/media/akb/2026EF9426EF696C/raw_data/North_Sea_1/';
+			task = 'norway_18710_15091_003_150610_L090';
+			verid = '01';
 		otherwise 
 			error('You need to select a mission')
 	end

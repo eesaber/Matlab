@@ -1,12 +1,17 @@
-function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
+function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename, varargin)
 % FOUCOMP_DECOMP implements the original 4-component decomposition.
 %
 % FOUCOMP_DECOMP(C), C is a matrix with size row x col x 6, and C(:,:,1) is
 % |S_{hh}|^2, C(:,:,2) is |S_{hv}|^2, C(:,:,3) is |S_{vv}|^2, C(:,:,4) is
 % S_{hh}S^*_{hv}, C(:,:,5) is S_{hh}S_{vv}^2 and C(:,:,6) is
 % S_{hv}S^*_{vv}.
-	
-
+    parse_ = inputParser;
+    validationFcn_1_ = @(x) validateattributes(x,{'function_handle'},{});
+    validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{});
+    addParameter(parse_,'Plotsetting',@(x) 0,validationFcn_1_);
+    addParameter(parse_,'Powrange',[],validationFcn_2_);
+    parse(parse_,varargin{:})
+    
     % f_ is the scattering matrix coefficient. The subscript
     % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
     % f_t: total power
@@ -71,30 +76,26 @@ function FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, filename)
     f_s(ind_d) = 0;
     clear ind_d
     
-    pow_range = [-35 5];
+    
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
-            %Plotsetting_GOM1([-40 0],'Colorbar_unit',[40 -70])
+            parse_.Results.Plotsetting(parse_.Results.Powrange, 1, 'Colorbar_unit', "(dB)")
 			%title('single', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename', [filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            %Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
-            %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
+            parse_.Results.Plotsetting(parse_.Results.Powrange, 1, 'Colorbar_unit', "(dB)")
 			%title('double', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename',[filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
-            %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
+            parse_.Results.Plotsetting(parse_.Results.Powrange, 1, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', [filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
-            Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',[40 -70])
-            %Plotsetting_1([-40 0],'Colorbar_unit',[40 -70])
+            parse_.Results.Plotsetting(parse_.Results.Powrange, 1, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', [filename, '_c']);
     end

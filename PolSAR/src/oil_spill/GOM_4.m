@@ -20,7 +20,7 @@ FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp')
 pow_range = [-35 5];
 figure
     imagesc(10*log10(span))
-    Plotsetting_GOM4(pow_range, 1, 'Colorbar_unit',[40 -70])
+    Plotsetting_GOM4(pow_range,'Colorbar_unit',[40 -70])
     colormap gray
     plot_para('Filename','span', 'Maximize',true)
 %%
@@ -71,7 +71,7 @@ else
 end
 
 %% Obtain terrain slope in azimuth and induced angle by terrain slope. 
-get_polangle(temp_T);
+%get_polangle(temp_T);
 clear temp_T
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
 T_22 = (hh_hh+vv_vv-hh_vv-conj(hh_vv))/2;
@@ -80,3 +80,21 @@ T_12 = (hh_hh-vv_vv-hh_vv+conj(hh_vv))/2;
 T_13 = hh_hv + conj(hv_vv);
 T_23 = hh_hv - conj(hv_vv);
 close all
+
+
+%%
+close all
+f_name = 'para_confomty';
+figure
+    imagesc(conv2(2*(hv_hv-real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv),ones(3,3)/9,'same'))
+    Plotsetting_GOM4([-1 1])
+    plot_para('Filename', [f_name '_am'], 'Maximize',true,'Ratio',[4 3 1])
+%%
+f_name = 'hvratio';
+figure 
+    imagesc(10*log10(conv2(vv_vv./hh_hh, ones(3,3), 'same')/9))
+    %imagesc(vv_vv./hh_hh)
+    Plotsetting_GOM4([0 15])
+    colormap gray
+    %Section_GOM2(10*log10(conv2(vv_vv./hh_hh, ones(3,3), 'same')/9),x,y,'$|S_{vv}|^2 / |S_{hh}|^2$ (dB)',f_name)
+    %plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])

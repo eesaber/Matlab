@@ -1,12 +1,14 @@
-function [H, alpha_bar] = Eigen_decomp(varargin)
+function [H, alpha_bar, A_1] = Eigen_decomp(varargin)
     %% H_alpha plot
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
     validationFcn_2_ = @(x) validateattributes(x,{'char'},{'nonempty'});
     validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'3d'});
+    validationFcn_4_ = @(x) validateattributes(x,{'function_handle'},{});
     addParameter(parse_,'Calculate',0,validationFcn_1_);
-    addParameter(parse_,'FileName','',validationFcn_2_);
+    addParameter(parse_,'Filename','',validationFcn_2_);
     addParameter(parse_,'T',[],validationFcn_3_);
+    addParameter(parse_,'Plotsetting',@(x) 0,validationFcn_4_);
     parse(parse_,varargin{:})
     
     global dir im_size
@@ -44,37 +46,37 @@ function [H, alpha_bar] = Eigen_decomp(varargin)
         alpha_bar = single(reshape(alpha_bar, im_size));
         lambda_1 = single(reshape(lambda_1, im_size));
         disp('Saving results....')
-        save([dir parse_.Results.FileName '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'lambda_1','alpha_bar');
+        save([dir parse_.Results.Filename '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'lambda_1','alpha_bar');
     else 
-        load([dir parse_.Results.FileName '.mat'])
+        load([dir parse_.Results.Filename '.mat'])
     end
     %%
+    x = [1900, 4200, 5100];
+    y = [3100, 1600, 500];
     figure
         imagesc(H)
-        %Plotsetting_GOM1([0 1])
-        %ann_GOM1()
-        %ann_GOM2()
-        Plotsetting_GOM2([0 1],1)
-        plot_para('Filename','Entropy', 'Maximize',true)
+        parse_.Results.Plotsetting([0 1],1)
+        plot_para('Filename','Entropy_am', 'Maximize',true)
     %%
     figure
         imagesc(10*log10(lambda_1))
-        Plotsetting_GOM2([-35 -5],1)
+        parse_.Results.Plotsetting([-35 -5],1,'Colorbar_unit',"(dB)")
+        %GOM2()
         plot_para('Filename','lambda_1', 'Maximize',true)
     figure
         imagesc(alpha_bar)
-        %Plotsetting_GOM1([0 90])
-        Plotsetting_GOM2([0 90],1)
+        parse_.Results.Plotsetting([0 60],1,'Colorbar_unit',"(deg)")
+        %GOM2()
         plot_para('Filename','alpha', 'Maximize',true)
     figure
         imagesc(A_1)
-        %Plotsetting_GOM1([0 0.4])
-        Plotsetting_GOM2([0 0.8],1)
+        parse_.Results.Plotsetting([0 0.5],1)
+        %GOM2()
         plot_para('Filename','Anisotropy1', 'Maximize',true)
     figure
         imagesc(A_2)
-        %Plotsetting_GOM1([0 1])
-        Plotsetting_GOM2([0.6 1],1)
+        parse_.Results.Plotsetting([0.6 1],1)
+        %GOM2()
         plot_para('Filename','Anisotropy2', 'Maximize',true)
 end
 function ann_GOM1()
@@ -85,9 +87,16 @@ function ann_GOM1()
     annotation('rectangle',[0.78 0.5 0.06 0.425],'Color','k','Linewidth',2)
         annotation('textbox',[0.78 0.4 0.1 0.1],'String','$A_{e 3}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
 end
-function ann_GOM2()
-    annotation('rectangle',[0.15 0.55 0.07 0.375],'Color','k','Linewidth',2)
-        annotation('textbox',[0.25 0.7 0.1 0.1],'String','$A_{e 1}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-    annotation('rectangle',[0.37 0.55 0.33 0.375],'Color','k','Linewidth',2)
-        annotation('textbox',[0.75 0.7 0.1 0.1],'String','$A_{e 2}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-end
+function GOM2()
+    global im_size
+    y =  [3100, 1600, 500];
+    linew = 2;
+    hold on
+    plot([1, im_size(2)], y(1)*ones(2,1),'k','Linewidth', linew)
+    plot([1, im_size(2)], y(2)*ones(2,1), 'k','Linewidth', linew)
+    plot([1, im_size(2)], y(3)*ones(2,1), 'k','Linewidth', linew)
+    text(100, y(1)-150,'$L_1$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    text(100, y(2)-150,'$L_2$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    text(100, y(3)-150,'$L_3$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
+    hold off
+end    
