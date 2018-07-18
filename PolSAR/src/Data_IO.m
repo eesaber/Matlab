@@ -12,7 +12,7 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
     % ---------------------------------------------------------------------
     % 3     | SMAPVEX12, CAN', Soil Moisture Experiment
     % ---------------------------------------------------------------------
-    % 4     | Aleutian Volcanoes
+    % 4     | 
     % ---------------------------------------------------------------------
     % 5     |
     % ---------------------------------------------------------------------
@@ -77,12 +77,12 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			dir = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12/';
 			task = 'winnip_31605_12056_002_120705_L090';
         case 4
-            disp('UAVSAR Mission: Aleutian Volcanoes')
-			im_size = [53672, 17186];
+            im_size = [15915, 6179];
 			im_size_c = im_size.*[2 ,1];
-			dir = '/media/akb/2026EF9426EF696C/raw_data/Aleutian/';
-			task = 'aleutn_09103_09077_000_090930_L090';
+			dir = '/media/akb/2026EF9426EF696C/raw_data/Grand Mesa/0308/';
+			task = 'grmesa_26006_17026_001_170308_L090';
 			verid = '01';
+			
         case 5
             disp('UAVSAR Mission: Manu National Park')
 			im_size = [21947, 24787];
@@ -92,7 +92,8 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			verid = '01';
 		case 6
 			disp('UAVSAR Mission: PPA')
-			im_size = [4920, 34191];
+			%im_size = [4920, 34191];
+			im_size = [3300, 29184];
 			im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/PPA/';
 			task = 'PPAtst_18013_11046_003_110707_L090';
@@ -126,11 +127,18 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			task = 'GOMoil_14201_10053_000_100622_L090';
 			verid = '02';
 		case 11
-			disp('UAVSAR Mission: Oil spill experiment in North Sea, Norway')
+			disp('UAVSAR Mission: Oil spill experiment in North Sea, Norway, scene 1')
             im_size = [3300, 7132];
             im_size_c = im_size.*[2,1];
             dir = '/media/akb/2026EF9426EF696C/raw_data/North_Sea_1/';
 			task = 'norway_18710_15091_003_150610_L090';
+			verid = '01';
+		case 12
+			disp('UAVSAR Mission: Oil spill experiment in North Sea, Norway, scene 2')
+			im_size = [3300, 7175];
+            im_size_c = im_size.*[2,1];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/North_Sea_2/';
+			task = 'norway_00709_15091_004_150610_L090';
 			verid = '01';
 		otherwise 
 			error('You need to select a mission')
