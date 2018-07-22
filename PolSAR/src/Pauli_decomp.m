@@ -7,32 +7,10 @@ function Pauli_decomp(R, G, B, varargin)
     addParameter(parse_,'Saibu',false,validationFcn_2_);
     addParameter(parse_,'Filename','',validationFcn_3_);
 	parse(parse_,varargin{:})
+    %% Pauli-decomposition	
+    image(cat(3, reshape(stat(R), size(R)), reshape(stat(G), size(G)), ......
+        reshape(stat(B), size(B)))) % Explicit explanation is in stat() 
 
-    %%
-    up_ = 10; low_ = -50;
-    
-	Pauli = zeros([size(R), 3]);	
-	% |S_vv - S_hh|^2 -> double bounce scattering 
-	t_p = 10*log10(R);	
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
-	% |S_hv|^2 -> volume scattering
-	t_p= 10*log10(G);
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,2) = (t_p-low_)/(up_-low_);
-	% |S_vv + S_hh|^2 -> single scattering
-	t_p = 10*log10(B);
-	t_p(t_p < low_) = low_;
-	t_p(t_p > up_ ) = up_;
-	Pauli(:,:,3) = (t_p-low_)/(up_-low_);
-    image(Pauli)
-	
-    %image((cat(3, 10*log10(sqrt(R)), 10*log10(sqrt(G)), 10*log10(sqrt(B)))-low_)/(up_-low_))
-
-    %image(cat(3, 10*log10(sqrt(R)), 10*log10(sqrt(G)), 10*log10(sqrt(B))))
-    %image((cat(3, R, G, B)+0)/(0.05))
     if numel(parse_.Results.Contour) ~= 0
         hold on 
         [rr1,rr2] = contour(parse_.Results.Contour,100:100:500,'LineColor','y','Linewidth',1,'ShowText','on');
@@ -78,4 +56,25 @@ function Pauli_decomp(R, G, B, varargin)
         end
 
     end
+end
+function [p] = stat(A)
+    % STAT function is used to scale the image.
+    % USAGE:
+    % [p] = STAT(A), A is the image matrix and p is the 1-d array, which 
+    % can be recovered to image size by using RESHAPE(p, SIZE(A)). The
+    % return value is unsigned 8-bit integer.
+    % ALGORITHM:
+    % 1. Turn matrix A to dB unit.
+    % 2. Determines the mean and standard deviation of whole image.
+    % 3. Map range [μ-2σ, μ+2σ] to [0 255], set the value which is smaller
+    %    than μ-2σ to μ-2σ; and set the value which is larger than μ+2σ to
+    %    μ+2σ.
+    %....................................................................%
+    
+    p = reshape(10*log10(A),[1,numel(A)]);
+    p_sigma = std(p(~isinf(p)),'omitnan');
+    p_mean = mean(p(~isinf(p)),'omitnan');
+    p(p > p_mean+2*p_sigma) = p_mean+2*p_sigma;
+    p(p < p_mean-2*p_sigma) = p_mean-2*p_sigma;
+    p = uint8((p - (p_mean-2*p_sigma))*255/(4*p_sigma));
 end
