@@ -7,10 +7,35 @@ function Pauli_decomp(R, G, B, varargin)
     addParameter(parse_,'Saibu',false,validationFcn_2_);
     addParameter(parse_,'Filename','',validationFcn_3_);
 	parse(parse_,varargin{:})
-    %% Pauli-decomposition	
-    image(cat(3, reshape(stat(R), size(R)), reshape(stat(G), size(G)), ......
-        reshape(stat(B), size(B)))) % Explicit explanation is in stat() 
-
+    %% Pauli-decomposition
+    method = '2sigma';
+    if strcmp(method, '2sigma')
+        % Show the Pauli vector with scaleing each component to [0, 255].
+        image(cat(3, reshape(Stat(10*log10(R)), size(R)), ......
+            reshape(Stat(10*log10(G)), size(G)), reshape(Stat(10*log10(B)), size(B))))
+    else
+        % Show the Pauli vector based on its power without scaleing each
+        % component to [0, 255].
+        up_ = 10; low_ = -35;
+        Pauli = zeros([size(R), 3]);	
+        % |S_vv - S_hh|^2 -> double bounce scattering 
+        t_p = 10*log10(R);	
+        t_p(t_p < low_) = low_;
+        t_p(t_p > up_ ) = up_;
+        Pauli(:,:,1) = (t_p-low_)/(up_-low_);	
+        % |S_hv|^2 -> volume scattering
+        t_p= 10*log10(G);
+        t_p(t_p < low_) = low_;
+        t_p(t_p > up_ ) = up_;
+        Pauli(:,:,2) = (t_p-low_)/(up_-low_);
+        % |S_vv + S_hh|^2 -> single scattering
+        t_p = 10*log10(B);
+        t_p(t_p < low_) = low_;
+        t_p(t_p > up_ ) = up_;
+        Pauli(:,:,3) = (t_p-low_)/(up_-low_);
+        image(Pauli)
+    end
+    %%
     if numel(parse_.Results.Contour) ~= 0
         hold on 
         [rr1,rr2] = contour(parse_.Results.Contour,100:100:500,'LineColor','y','Linewidth',1,'ShowText','on');
@@ -18,11 +43,13 @@ function Pauli_decomp(R, G, B, varargin)
         hold off
     end
     if numel(parse_.Results.Filename)
+        set(gca,'Ydir','normal')
         plot_para('Maximize',true,'Filename', parse_.Results.Filename);
     end
     
+    %% Plot the dominant channel
     if parse_.Results.Saibu
-        %% Plot the dominant channel
+        
         dum = ones(size(R));
         figure
         imagesc(dum.*(R>G).*(R>B))
@@ -56,25 +83,4 @@ function Pauli_decomp(R, G, B, varargin)
         end
 
     end
-end
-function [p] = stat(A)
-    % STAT function is used to scale the image.
-    % USAGE:
-    % [p] = STAT(A), A is the image matrix and p is the 1-d array, which 
-    % can be recovered to image size by using RESHAPE(p, SIZE(A)). The
-    % return value is unsigned 8-bit integer.
-    % ALGORITHM:
-    % 1. Turn matrix A to dB unit.
-    % 2. Determines the mean and standard deviation of whole image.
-    % 3. Map range [μ-2σ, μ+2σ] to [0 255], set the value which is smaller
-    %    than μ-2σ to μ-2σ; and set the value which is larger than μ+2σ to
-    %    μ+2σ.
-    %....................................................................%
-    
-    p = reshape(10*log10(A),[1,numel(A)]);
-    p_sigma = std(p(~isinf(p)),'omitnan');
-    p_mean = mean(p(~isinf(p)),'omitnan');
-    p(p > p_mean+2*p_sigma) = p_mean+2*p_sigma;
-    p(p < p_mean-2*p_sigma) = p_mean-2*p_sigma;
-    p = uint8((p - (p_mean-2*p_sigma))*255/(4*p_sigma));
 end

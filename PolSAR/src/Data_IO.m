@@ -77,10 +77,10 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			dir = '/media/akb/2026EF9426EF696C/raw_data/SMAPVEX12/';
 			task = 'winnip_31605_12056_002_120705_L090';
         case 4
-            im_size = [15915, 6179];
+            im_size = [17883, 6711];
 			im_size_c = im_size.*[2 ,1];
-			dir = '/media/akb/2026EF9426EF696C/raw_data/Grand Mesa/0308/';
-			task = 'grmesa_26006_17026_001_170308_L090';
+			dir = '/media/akb/2026EF9426EF696C/raw_data/Grand_Mesa/0308/';
+			task = 'grmesa_07805_17026_005_170308_L090';
 			verid = '01';
 			
         case 5
@@ -100,7 +100,8 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
         case 7
             disp('UAVSAR Mission: Beaufort')
             %im_size = [17186 53672];
-            im_size = [17186 53672/4];
+			%im_size = [17186 53672/4];
+			im_size = [3300, 46342];
             im_size_c = im_size.*[2 ,1];
 			dir = '/media/akb/2026EF9426EF696C/raw_data/Beaufort/';
 			task = 'beaufo_01105_15148_004_151006_L090';
