@@ -22,5 +22,5 @@ function [mu_1, kai_2, kai_3] = Logcumulant(A)
     mu_3 = conv2(mu_3, mask, 'same');
     % κ_2 and κ_3
     kai_2 = mu_2 - mu_1.^2;
-    kai_3 = mu_3 - 3*mu_1.*mu_2 + 2*mu_1;
+    kai_3 = mu_3 - 3*mu_1.*mu_2 + 2*mu_1.^3;
 end

@@ -1,4 +1,8 @@
-function [H, lambda] = Eigen_decomp(varargin)
+function [H, alpha_bar] = Eigen_decomp(varargin)
+    % EIGEN_DECOPM(varagin) is used to do eigen-decopmosition. It will
+    % return [H, alpha_bar], where H is polarimetric entropy and alpha_bar
+    % is the average alpha angle.
+    
     %% H_alpha plot
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
@@ -57,25 +61,23 @@ function [H, lambda] = Eigen_decomp(varargin)
     y = [3100, 1600, 500];
     figure
         imagesc(H)
-        parse_.Results.Plotsetting([0 1],1)
-        
+        parse_.Results.Plotsetting([0 1])
         plot_para('Filename','Entropy_am', 'Maximize',true)
-    %%
     figure
         imagesc(10*log10(abs(lambda(:,:,1))))
-        parse_.Results.Plotsetting([-35 -5],1,'Colorbar_unit',"(dB)")
+        parse_.Results.Plotsetting([-35 -5],'Colorbar_unit',"(dB)")
         plot_para('Filename','lambda_1', 'Maximize',true)
     figure
         imagesc(alpha_bar)
-        parse_.Results.Plotsetting([0 60],1,'Colorbar_unit',"(deg)")
+        parse_.Results.Plotsetting([0 60],'Colorbar_unit',"(deg)")
         plot_para('Filename','alpha', 'Maximize',true)
     figure
         imagesc(A_1)
-        parse_.Results.Plotsetting([0 0.5],1)
+        parse_.Results.Plotsetting([0 0.5])
         plot_para('Filename','Anisotropy1', 'Maximize',true)
     figure
         imagesc(A_2)
-        parse_.Results.Plotsetting([0.6 1],1)
+        parse_.Results.Plotsetting([0.6 1])
         plot_para('Filename','Anisotropy2', 'Maximize',true)
 end
 function ann_GOM1()

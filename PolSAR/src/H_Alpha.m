@@ -3,11 +3,13 @@ function H_Alpha(T, varargin)
 % T is matrix with size 3x3xn.
     parse_ = inputParser;
 	validationFcn_1_ = @(x) validateattributes(x,{'char'},{}); 
+	validationFcn_2_ = @(x) validateattributes(x,{'char'},{}); 
 	addParameter(parse_,'Pointcolor','b',validationFcn_1_);
+	addParameter(parse_,'Seglinestyle','--',validationFcn_2_);
 	parse(parse_,varargin{:})
     
     
-	[~,~,num]= size(T);
+	num= numel(T)/9;
 	hold on
 	for r = 1 : num
 		[U, L] = eig(T(:,:,r));
@@ -32,20 +34,20 @@ function H_Alpha(T, varargin)
 	H = -sum(P.*log(P)/log(3),1);
 	plot(H(n/2+1:end), acosd(0)*2./(2*x(n/2+1:end)+1),'k','Linewidth',2)
     % Plot segmetation lines
-	plot([0.5,0.5],[0, 90],'--','Linewidth', 2)
-	plot([0.9, 0.9],[0 90],'--','Linewidth', 2)
-	plot([0,0.5],[47.5, 47.5],'--','Linewidth', 2)
-	plot([0,0.5],[42.5, 42.5],'--','Linewidth', 2)
-	plot([0.5,0.9],[50, 50],'--','Linewidth', 2)
-	plot([0.5,1],[40, 40],'--','Linewidth', 2)
-	plot([0.9, 1], [57.5, 57.5],'--','Linewidth', 2)
+	plot([0.5,0.5],[0, 90],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0.9, 0.9],[0 90],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0,0.5],[47.5, 47.5],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0,0.5],[42.5, 42.5],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0.5,0.9],[50, 50],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0.5,1],[40, 40],parse_.Results.Seglinestyle,'Linewidth', 2)
+	plot([0.9, 1], [57.5, 57.5],parse_.Results.Seglinestyle,'Linewidth', 2)
 	% Image setting
 	set(gca,'Xlim', [0, 1], 'Ylim', [0, 90], 'XTick', 0:0.2:1,'YTick',0:15:90,'Box','On')
 	hold off
-    xlabel('entropy $H$','Interpreter', 'latex')
-	ylabel('$\langle \alpha \rangle^\circ$','Interpreter', 'latex')
+    xlabel('$H$','Interpreter', 'latex')
+	ylabel('$\langle \alpha \rangle$ $(^\circ)$','Interpreter', 'latex')
     plot_para('Maximize',true,'Filename', 'H_alpha_decomp')
-    movefile 'H_alpha_decomp.jpg' output
+    
 end
 
 %{

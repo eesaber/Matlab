@@ -1,4 +1,4 @@
-function targetarea_map_2()
+function map_northsea2()
     % Function TARGETAREA_MAP is used to plot the target area in the North Sea.
     % The target area is enclosed by the rectangular, and rigs is marked by 'x'.
     fsize = 24;

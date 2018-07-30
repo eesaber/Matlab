@@ -1,4 +1,4 @@
-function targetarea_map()
+function map_gom2()
     % Function TARGETAREA_MAP is used to plot the target area in the Gulf of Mexico.
     % The target area is enclosed by the rectangular, and rigs is marked by 'x'.
     fsize = 24;
