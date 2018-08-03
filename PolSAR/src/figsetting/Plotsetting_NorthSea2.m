@@ -1,9 +1,11 @@
-function Plotsetting_NorthSea2(Clim, sub_map, varargin)
+function Plotsetting_NorthSea2(Clim, varargin)
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'string'},{});
+    validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
     addParameter(parse_,'Colorbar_unit','',validationFcn_1_);
+    addParameter(parse_,'Submap',0,validationFcn_2_);
     parse(parse_,varargin{:})
-    if sub_map == 0
+    if parse_.Results.Submap == 0
         set(gca,'XTick',0:1000:7000, 'Xticklabel',cellstr(int2str((0:1000*7:7000*7)'/1000))')
         set(gca,'YTick',0:600:3300, 'Yticklabel',cellstr(int2str((0:600*5:3300*5)'/1000))')
     else

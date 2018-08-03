@@ -1,7 +1,9 @@
 function Plotsetting_GOM1(Clim, varargin)
     parse_ = inputParser;
-	validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{});
-	addParameter(parse_,'Colorbar_unit',[],validationFcn_1_);
+    validationFcn_1_ = @(x) validateattributes(x,{'string'},{});
+    validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
+    addParameter(parse_,'Colorbar_unit','',validationFcn_1_);
+    addParameter(parse_,'Submap',0,validationFcn_2_);
 	parse(parse_,varargin{:})  
     set(gca,'Ydir','normal','Clim',Clim)
     set(gca,'XTick',0:5000:30000, 'Xticklabel',cellstr(int2str((0:5000*7:30000*7)'/1000))')
@@ -10,7 +12,7 @@ function Plotsetting_GOM1(Clim, varargin)
     xlabel('Azimuth (km)')
     ylabel('Range (km)') 
     
-    if parse_.Results.Colorbar_unit
-        title(colorbar,'(dB)','Position', parse_.Results.Colorbar_unit)
+    if ~strcmp(parse_.Results.Colorbar_unit, '')
+        title(colorbar,parse_.Results.Colorbar_unit,'Position', [40 -70])
     end
 end
