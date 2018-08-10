@@ -1,7 +1,7 @@
-function [H, alpha_bar] = Eigen_decomp(varargin)
-    % EIGEN_DECOMP is used to do eigen-decopmosition.
+function [H, alpha_bar] = eigenDecomp(varargin)
+    % EIGENDECOMP is used to do eigen-decopmosition.
     %
-    % Syntax:  [H,alpha_bar] = Eigen_decomp(NAME, VALUE)
+    % Syntax:  [H,alpha_bar] = eigenDecomp(NAME, VALUE)
     % Specifies function properties using one or more Name,Value pair arguments. 
     % Name-value pair settings apply to all the lines plotted. 
     %
