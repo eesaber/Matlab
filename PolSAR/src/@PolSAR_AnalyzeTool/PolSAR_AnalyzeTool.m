@@ -47,6 +47,8 @@ classdef PolSAR_AnalyzeTool < handle
         RCS(obj, varargin)
         isSNR(obj, NSZE, varargin)
         %
+        coh2cov(obj)
+        cov2coh(obj)
         getPolAngle(obj, T, plot_set, ang_range)
         %paraRatioVVHH(obj, vv_vv, hh_hh)
         %paraGamma12(obj, T_11, T_12, T_13)

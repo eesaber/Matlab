@@ -21,9 +21,9 @@ function readPolsarData(obj)
     end
 end
 function palsar(obj)
+	%% Check the image size is correct
     type([obj.INPUT_PATH '/config.txt'])
-    % PALSAR() reads ALOS PALSAR data.
-
+    %% Read ALOS PALSAR data.
     % 1/2 |S_{hh} + S_{vv}|^2
     fid = fopen([obj.INPUT_PATH '/' 'T11.bin'],'r','ieee-le'); 
     obj.T_11 = (single(fread(fid, obj.IMAGE_SIZE,'real*4')));
@@ -48,16 +48,10 @@ function palsar(obj)
     obj.T_23 = (single(fread(fid, obj.IMAGE_SIZE,'real*4')));
     fid = fopen([obj.INPUT_PATH '/' 'T23_imag.bin'],'r','ieee-le'); 
     obj.T_23 = obj.T_23 + 1j*(single(fread(fid, obj.IMAGE_SIZE,'real*4')));
-
-    if ~obj.IS_BIGFILE
-        obj.hh_hh = (obj.T_11 + obj.T_12 + obj.T_22 + conj(obj.T_12))/2;
-        obj.hv_hv = obj.T_33/2;
-        obj.vv_vv = (obj.T_11 - obj.T_12 + obj.T_22 - conj(obj.T_12))/2;
-        obj.hh_hv = (obj.T_13 + obj.T_23)/2;
-        obj.hh_vv = (obj.T_11 - obj.T_12 + conj(obj.T_12) - obj.T_22)/2;
-        obj.hv_vv = (conj(obj.T_13) - conj(obj.T_23))/2;
-    end
+	
+	%% Convert coherency matrix to covariance matrix
+    obj.coh2cov()
 end
 function uavsar(obj)
-    % UAVSAR() reads UAVSAR data.
+    % Read UAVSAR data.
 end
