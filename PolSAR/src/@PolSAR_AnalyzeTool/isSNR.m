@@ -1,4 +1,4 @@
-function isSNR(obj, NESZ)
+function isSNR(obj, NESZ, varargin)
     % ISSNR is used to check if the signal is above the signal-to-noise
     % ratio.
     %
@@ -32,9 +32,9 @@ function isSNR(obj, NESZ)
     %------------- <<<<< >>>>>--------------
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
-    addParameter(parse_,'vv',@(x) 0,validationFcn_1_);
-    addParameter(parse_,'hh',@(x) 0,validationFcn_1_);
-    addParameter(parse_,'hv',@(x) 0,validationFcn_1_);
+    addParameter(parse_,'vv', 0,validationFcn_1_);
+    addParameter(parse_,'hh', 0,validationFcn_1_);
+    addParameter(parse_,'hv', 0,validationFcn_1_);
     parse(parse_,varargin{:})
 
     if parse_.Results.vv

@@ -24,14 +24,17 @@ figure
     Plotsetting_dummy(pow_range)
     colormap gray
     plot_para('Maximize',true,'Filename','Span')
+    %%
 figure
     imagesc(10*log10(vv_vv))
     Plotsetting_dummy(pow_range)
     plot_para('Maximize',true,'Filename','sigma_vv')
+    %%
 figure
     imagesc(10*log10(hh_hh))
     Plotsetting_dummy(pow_range)
     plot_para('Maximize',true,'Filename','sigma_hh')
+    %%
 figure
     imagesc(10*log10(hv_hv))
     Plotsetting_dummy([-45 -20])
@@ -160,7 +163,7 @@ end
 figure
     histogram2(reshape(H, [1 numel(H)]), reshape(alpha, [1 numel(alpha)])......
     ,'DisplayStyle','tile','YBinLimits',[0 90],'XBinLimits',[0 1],'NumBins',[900 2700]);
-    colormap jet
+    colormap jet imagesc(conv2(vv_vv./hh_hh, mask(9), 'same'))
     set(gca,'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
     hold on 
     H_Alpha([],'Seglinestyle','w')
@@ -185,4 +188,10 @@ figure
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
     Plotsetting_dummy([0 1])
     xlim([range(1) range(end)])
+    plot_para('Maximize',true,'Filename',f_name)
+%% σ_vv/ σ_hh
+f_name = 'para_hvratio_g';
+figure
+    imagesc(conv2(vv_vv./hh_hh, mask(9), 'same'))
+    Plotsetting_dummy([0 10])
     plot_para('Maximize',true,'Filename',f_name)

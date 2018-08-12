@@ -24,7 +24,7 @@ function plot_para(varargin)
             font_size = 28;
         end
     end
-    set(gca,'FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
+    set(gca,'Ydir','normal','FontSize',font_size,'Fontname','CMU Serif Roman','Linewidth',2)
     %set(gca,'FontSize',font_size,'Fontname','CMU Sans Serif','Linewidth',2)
     
 	if parse_.Results.Ratio(1)

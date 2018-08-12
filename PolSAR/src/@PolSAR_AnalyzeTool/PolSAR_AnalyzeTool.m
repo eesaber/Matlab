@@ -45,7 +45,7 @@ classdef PolSAR_AnalyzeTool < handle
         HAlphaDiagram(obj, H, alpha_bar, varargin)
         %
         RCS(obj, varargin)
-        isSNR(obj, NSZE)
+        isSNR(obj, NSZE, varargin)
         %
         getPolAngle(obj, T, plot_set, ang_range)
         %paraRatioVVHH(obj, vv_vv, hh_hh)

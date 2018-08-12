@@ -21,7 +21,7 @@ function readPolsarData(obj)
     end
 end
 function palsar(obj)
-    type config.txt
+    type([obj.INPUT_PATH '/config.txt'])
     % PALSAR() reads ALOS PALSAR data.
 
     % 1/2 |S_{hh} + S_{vv}|^2
