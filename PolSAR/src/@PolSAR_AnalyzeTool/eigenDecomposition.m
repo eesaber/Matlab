@@ -1,5 +1,5 @@
-function [H, alpha_bar] = eigenDecomp(varargin)
-    % EIGENDECOMP is used to do eigen-decopmosition.
+function [H, alpha_bar] = eigenDecomposition(obj, varargin)
+    % EIGENDECOMPOSITION implement eigen-decomposition.
     %
     % Syntax:  [H,alpha_bar] = eigenDecomp(NAME, VALUE)
     % Specifies function properties using one or more Name,Value pair arguments. 
@@ -41,13 +41,7 @@ function [H, alpha_bar] = eigenDecomp(varargin)
     addParameter(parse_,'Plotsetting',@(x) 0,validationFcn_4_);
     parse(parse_,varargin{:})
     
-    global dir im_size
     if parse_.Results.Calculate
-        %ind_ = randperm(im_size(1)*im_size(2));
-        %figure
-        %    H_Alpha(parse_.Results.T(:,:,ind_(1:2000)))
-        %clear ind_
-        % Plot each entropy of each pixel
         t = cputime;
         [~,~,num]= size(parse_.Results.T);
         T = parse_.Results.T;
@@ -72,58 +66,34 @@ function [H, alpha_bar] = eigenDecomp(varargin)
             e = cputime -t;
             disp(['Execution time:' num2str(e)])
             %%
-            H = single(real(reshape(H, im_size)));
-            A_1 = single(reshape(A_1, im_size));
-            A_2 = single(reshape(A_2, im_size));
-            alpha_bar = single(reshape(alpha_bar, im_size));
-            lambda = single(reshape(lambda.', [im_size 3]));
+            H = single(real(reshape(H, obj.IMAGE_SIZE)));
+            A_1 = single(reshape(A_1, obj.IMAGE_SIZE));
+            A_2 = single(reshape(A_2, obj.IMAGE_SIZE));
+            alpha_bar = single(reshape(alpha_bar, obj.IMAGE_SIZE));
+            lambda = single(reshape(lambda.', [obj.IMAGE_SIZE 3]));
             disp('Saving results....')
             save([dir parse_.Results.Filename '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'lambda','alpha_bar');
     else 
         load([dir parse_.Results.Filename '.mat'])
     end
-    %%
-    x = [1900, 4200, 5100];
-    y = [3100, 1600, 500];
     figure
         imagesc(H)
-        parse_.Results.Plotsetting([0 1])
-        plot_para('Filename','Entropy_am', 'Maximize',true)
+        obj.plotSetting([0 1])
+        plot_para('Filename','Entropy', 'Maximize',true)
     figure
         imagesc(10*log10(abs(lambda(:,:,1))))
-        parse_.Results.Plotsetting([-35 -5],'Colorbar_unit',"(dB)")
+        obj.plotSetting([-35 -5],'Colorbar_unit',"(dB)")
         plot_para('Filename','lambda_1', 'Maximize',true)
     figure
         imagesc(alpha_bar)
-        parse_.Results.Plotsetting([0 60],'Colorbar_unit',"(deg)")
+        obj.plotSetting([0 60],'Colorbar_unit',"(deg)")
         plot_para('Filename','alpha', 'Maximize',true)
     figure
         imagesc(A_1)
-        parse_.Results.Plotsetting([0 0.5])
+        obj.plotSetting([0 0.5])
         plot_para('Filename','Anisotropy1', 'Maximize',true)
     figure
         imagesc(A_2)
-        parse_.Results.Plotsetting([0.6 1])
+        obj.plotSetting([0.6 1])
         plot_para('Filename','Anisotropy2', 'Maximize',true)
 end
-function ann_GOM1()
-    annotation('rectangle',[0.125 0.5 0.04 0.425],'Color','k','Linewidth',2)
-        annotation('textbox',[0.17 0.71 0.1 0.1],'String','$A_{e 1}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-    annotation('rectangle',[0.7 0.525 0.06 0.4],'Color','k','Linewidth',2)   
-        annotation('textbox',[0.7 0.4 0.1 0.1],'String','$A_{e 2}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-    annotation('rectangle',[0.78 0.5 0.06 0.425],'Color','k','Linewidth',2)
-        annotation('textbox',[0.78 0.4 0.1 0.1],'String','$A_{e 3}$','Linestyle','none','Fontsize',40,'Color','w','Interpreter', 'latex')
-end
-function GOM2()
-    global im_size
-    y =  [3100, 1600, 500];
-    linew = 2;
-    hold on
-    plot([1, im_size(2)], y(1)*ones(2,1),'k','Linewidth', linew)
-    plot([1, im_size(2)], y(2)*ones(2,1), 'k','Linewidth', linew)
-    plot([1, im_size(2)], y(3)*ones(2,1), 'k','Linewidth', linew)
-    text(100, y(1)-150,'$L_1$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
-    text(100, y(2)-150,'$L_2$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
-    text(100, y(3)-150,'$L_3$','FontSize',36,'FontName','CMU Serif Roman', 'Interpreter', 'latex')
-    hold off
-end    
