@@ -13,7 +13,7 @@ function paraRatioVVHH(obj, x , y)
     end
 
     disp('σ_vv/ σ_hh')
-    f_name = 'para_hvratio_g';
+    f_name = 'para_hvratio';
     figure
     imagesc(10*log10(conv2(obj.vv_vv./ obj.hh_hh, mask, 'same')))
     obj.plotSetting([-3 3])

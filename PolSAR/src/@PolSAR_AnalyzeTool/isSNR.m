@@ -42,14 +42,14 @@ function isSNR(obj, NESZ, varargin)
         imagesc(10*log10(obj.vv_vv)-NESZ>6)
         title('\sigma_{vv}')
         colormap gray
-        plot_para('Maximize',true,'Filename','SNR_sigma_hv')
+        plot_para('Maximize',true,'Filename','SNR_sigma_vv')
     end
     if parse_.Results.hh
         figure
         imagesc(10*log10(obj.hh_hh)-NESZ>6)
         title('\sigma_{hh}')
         colormap gray
-        plot_para('Maximize',true,'Filename','SNR_sigma_hv')
+        plot_para('Maximize',true,'Filename','SNR_sigma_hh')
     end
     if parse_.Results.hv
         figure

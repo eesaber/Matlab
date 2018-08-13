@@ -1,10 +1,10 @@
-%%
+%% sea ice 
 clc; clear;
 plotSetting = @ Plotsetting_dummy;
-po = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921500-L1.1/T3';
-pi = '/home/akb/Code/Matlab/PolSAR/output';
-x = PolSAR_AnalyzeTool([624 4608],'ALOS PALSAR',plotSetting,...
-    'inputDataDir', po,  'outputDataDir', pi);
+po = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921520-L1.1/T3_grd';
+pi = '/home/akb/Code/Matlab/PolSAR/output/20090811';
+x = PolSAR_AnalyzeTool([4114 5712],'ALOS PALSAR',plotSetting,...
+    'inputDataDir', po,  'outputDataDir', pi); % [#col, #row]
 %% Radar-cross section
 x.RCS('vv',true,'Span',true,'hh',true,'hv',true)
 NESZ = -29; % (dB)
@@ -21,10 +21,9 @@ x.paraRatioVVHH(3, 3) % σ_vv/ σ_hh
 x.paraGamma12(3, 3) % gamma_12
 
 %% Log-cumulant
-[kai_1, kai_2, kai_3] = x.logCumulant(); % Log cumulant
-
-%%
 close all
+[kai_1, kai_2, kai_3] = x.logCumulant(); % Log cumulant
+%%
 figure
 scatter3(kai_1(:), kai_2(:), kai_3(:),'filled')
 xlabel('\kappa_1')
@@ -41,10 +40,30 @@ xlabel('\kappa_2')
 ylabel('\kappa_1')
 
 figure
-    histogram2(reshape(kai_3,[1 numel(kai_3)]), reshape(kai_2,[1 numel(kai_2)])......
+    histogram2(reshape(kai_3,[1 numel(kai_3)]), reshape(kai_2,[1 numel(kai_2)])...
         ,'DisplayStyle','tile','YBinLimits',[0 1],'XBinLimits',[-2 2])
+%% Segementation
+temp = cat(3, reshape(Stat(kai_1,'uint16'), x.IMAGE_SIZE),...
+    reshape(Stat(kai_2, 'uint16'), x.IMAGE_SIZE), ...
+    reshape(Stat(kai_3, 'uint16'), x.IMAGE_SIZE));
+lab_I = rgb2lab(temp);
+clear temp
+ab = lab_I(:,:,2:3);
+nrows = size(ab,1);
+ncols = size(ab,2);
+ab = reshape(ab,size(ab,1)* size(ab,2),2);
+nColors = 4;
+% repeat the clustering 3 times to avoid local minima
+[cluster_idx, cluster_center] = kmeans(ab,nColors,'distance','sqEuclidean', ...
+                                      'Replicates',3);
+pixel_labels = uint8(reshape(cluster_idx,nrows,ncols));
+clear ab
+%%
+figure
+%imshow(pixel_labels,[],'Border','tight')
+imagesc(pixel_labels)
+    
 %{
-%% Statistic analysis
 sigma_hh = hh_hh(:,range);
 sigma_vv = vv_vv(:,range);
 % Histogram
@@ -60,6 +79,7 @@ figure
     xlabel('$\sigma_{vv}/\sigma_{hh}$', 'interpreter', 'latex')
     ylabel('Pr$(x = \sigma_{vv}/\sigma_{hh})$', 'interpreter', 'latex')
     plot_para('FileName','histo_vhratio','Maximize',true)
+
 %%
 bin_limit = [1e-5, 0.025];
 figure
@@ -78,12 +98,8 @@ figure
     imagesc(kai_3)
     set(gca,'Ydir','normal','clim',[-1.5 1.5],'xlim',[15001 30000])
     plot_para('Maximize',true,'Filename','kappa_3rd')
-figure
-    histogram2(reshape(kai_3,[1 numel(kai_3)]), reshape(kai_2,[1 numel(kai_2)])......
-        ,'DisplayStyle','tile','YBinLimits',[0 1],'XBinLimits',[-2 2])
-%}
 
-%% meteorology
+%% 2009/08/11 meteorology
 fid = fopen('/media/akb/2026EF9426EF696C/raw_data/20090811/eng-hourly-08012009-08312009.csv','r');
 C = textscan(fid,'%q %q %q %q %q %q %*[^\n]',320,'HeaderLines',16,'Delimiter',',');
 fclose(fid);
@@ -102,3 +118,4 @@ xlim([datetime('Aug 03, 2009, 00:00:00','InputFormat','MMM dd, yyyy, hh:mm:ss') 
 	datetime('Aug 12, 2009, 00:00:00','InputFormat','MMM dd, yyyy, hh:mm:ss')])
 xtickformat('dd')
 plot_para('Filename','meteorology2','Maximize',true)
+%}

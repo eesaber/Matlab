@@ -4,7 +4,7 @@ classdef PolSAR_AnalyzeTool < handle
         INPUT_PATH;
         IMAGE_SIZE;
         PLATFORM;
-        POW_RANGE = [-35 5];
+        POW_RANGE = [-30 5];
         plotSetting;
         IS_BIGFILE = false;
         hh_hh; hv_hv; vv_vv; hh_hv; hh_vv; hv_vv;
@@ -55,5 +55,7 @@ classdef PolSAR_AnalyzeTool < handle
         %
         paraRatioVVHH(obj, x, y)
         paraGamma12(obj, x, y)
+        %
+        geocode(obj)
    end
 end
