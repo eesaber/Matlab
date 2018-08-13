@@ -38,9 +38,9 @@ classdef PolSAR_AnalyzeTool < handle
         end
         % class function declearation
         readPolsarData(obj);
-        [H, alpha_bar] = eigenDecomposition(obj,varargin) 
-        [kai_1, kai_2, kai_3] = logCumulant(obj, A)
-        pauliDecompotion(obj, R, G, B, varargin)
+        [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+        [kai_1, kai_2, kai_3] = logCumulant(obj)
+        pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)
         %
@@ -49,8 +49,11 @@ classdef PolSAR_AnalyzeTool < handle
         %
         coh2cov(obj)
         cov2coh(obj)
+        setCov2Zero(obj)
+        setCoh2Zero(obj)
         getPolAngle(obj, T, plot_set, ang_range)
-        %paraRatioVVHH(obj, vv_vv, hh_hh)
-        %paraGamma12(obj, T_11, T_12, T_13)
+        %
+        paraRatioVVHH(obj, x, y)
+        paraGamma12(obj, x, y)
    end
 end

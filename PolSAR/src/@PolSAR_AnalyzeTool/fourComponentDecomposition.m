@@ -28,18 +28,14 @@ function fourComponentDecomposition(obj, varargin)
     %------------- <<<<< >>>>>--------------
 
     parse_ = inputParser;
-    validationFcn_1_ = @(x) validateattributes(x,{'function_handle'},{});
-    validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{});
-    validationFcn_3_ = @(x) validateattributes(x,{'char'},{});
-    addParameter(parse_,'Plotsetting',@(x) 0,validationFcn_1_);
-    addParameter(parse_,'Powrange',[],validationFcn_2_);
-    addParameter(parse_,'Filename','',validationFcn_3_);
+    validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'});
+    addParameter(parse_,'Filename','4comp',validationFcn_1_);
     parse(parse_,varargin{:})
     
     % f_ is the scattering matrix coefficient. The subscript
     % f_s: surface, f_d: double-bounce, f_v: volume, f_c: helix 
     % f_t: total power
-    f_t = obj.obj.hh_hh + obj.vv_vv + 2*obj.hv_hv;
+    f_t = obj.hh_hh + obj.vv_vv + 2*obj.hv_hv;
     f_c = 2 *abs(imag(obj.hh_hv - conj(obj.hv_vv)));
 
     % Decide which volume scattering model is used.
@@ -104,22 +100,22 @@ function fourComponentDecomposition(obj, varargin)
     if(1)
         figure
             imagesc(10*log10(abs(f_s)))
-            parse_.Results.Plotsetting(parse_.Results.Powrange, 'Colorbar_unit', "(dB)")
+            obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('single', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename', [parse_.Results.Filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
-            parse_.Results.Plotsetting(parse_.Results.Powrange, 'Colorbar_unit', "(dB)")
+            obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('double', 'Interpreter', 'latex')
             plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
-            parse_.Results.Plotsetting(parse_.Results.Powrange, 'Colorbar_unit', "(dB)")
+            obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', [parse_.Results.Filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
-            parse_.Results.Plotsetting(parse_.Results.Powrange, 'Colorbar_unit', "(dB)")
+            obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
             plot_para('Maximize',true, 'Filename', [parse_.Results.Filename, '_c']);
     end
