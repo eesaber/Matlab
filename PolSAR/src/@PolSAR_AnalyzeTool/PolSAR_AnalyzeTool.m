@@ -4,7 +4,7 @@ classdef PolSAR_AnalyzeTool < handle
         INPUT_PATH;
         IMAGE_SIZE;
         PLATFORM;
-        POW_RANGE = [-30 5];
+        POW_RANGE = [-25 -5];
         plotSetting;
         IS_BIGFILE = false;
         hh_hh; hv_hv; vv_vv; hh_hv; hh_vv; hv_vv;
@@ -14,9 +14,14 @@ classdef PolSAR_AnalyzeTool < handle
         function obj = PolSAR_AnalyzeTool(image_size, carrier, plotSetting, varargin)
             parse_ = inputParser;
             validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'});
+            validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
             addParameter(parse_,'inputDataDir','',validationFcn_1_);
             addParameter(parse_,'outputDataDir','',validationFcn_1_);
+            addParameter(parse_,'null', false,validationFcn_2_);
             parse(parse_,varargin{:})
+            if parse_.Results.null 
+                return
+            end
 
             if strcmp(parse_.Results.inputDataDir,'')
                 obj.INPUT_PATH = uigetdir('/media/akb/2026EF9426EF696C/raw_data',...
@@ -29,6 +34,9 @@ classdef PolSAR_AnalyzeTool < handle
                     'Select the folder for saving output files');
             else
                 obj.OUTPUT_PATH = parse_.Results.outputDataDir;
+                if exist(obj.OUTPUT_PATH) == 0
+                    mkdir(obj.OUTPUT_PATH)
+                end
             end
             obj.plotSetting = plotSetting;
             obj.IMAGE_SIZE = image_size;
@@ -53,8 +61,9 @@ classdef PolSAR_AnalyzeTool < handle
         setCoh2Zero(obj)
         getPolAngle(obj, T, plot_set, ang_range)
         %
+        paraMoisture(obj, x, y)
         paraRatioVVHH(obj, x, y)
-        paraGamma12(obj, x, y)
+        paraRoughness1(obj, x, y)
         %
         geocode(obj)
    end

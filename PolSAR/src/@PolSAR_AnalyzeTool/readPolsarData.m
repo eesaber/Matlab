@@ -16,6 +16,8 @@ function readPolsarData(obj)
             palsar(obj);
         case 'UAVSAR'
             uavsar(obj);
+        case 'ERS-2'
+            ers2(obj);
         otherwise
             error('The platform is not support!')
     end
@@ -52,6 +54,14 @@ function palsar(obj)
 	%% Convert coherency matrix to covariance matrix
     obj.coh2cov()
 end
+function ers2(obj)
+    [obj.vv_vv,~] = geotiffread(obj.INPUT_PATH);
+    obj.IMAGE_SIZE = size(obj.vv_vv);
+end
 function uavsar(obj)
     % Read UAVSAR data.
+    cd(obj.INPUT_PATH)
+    META_NAME = ls('*.ann');
+    fid = fopen(META_NAME,'r');
+    spec = fscanf(fid,'%s %s %s %s \n');
 end

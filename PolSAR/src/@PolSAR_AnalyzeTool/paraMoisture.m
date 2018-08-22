@@ -1,5 +1,6 @@
-function paraGamma12(obj, x, y)
-    %% correlation ratio |T_11|/sqrt{T_11 T_22}
+function paraMoisture(obj, x, y)
+    %% correlation ratio (T_22 + T_33)/ T_11
+    disp('Soil moisture by (T_22 + T_33)/ T_11')
     switch nargin
     case 2
         mask = ones(x,y)/(x*y);
@@ -11,9 +12,9 @@ function paraGamma12(obj, x, y)
     if numel(obj.T_11)==0 || numel(obj.T_22)==0 || numel(obj.T_12)==0
         error('T_11 can not be empty')
     end
-    f_name = 'para_gamma12';
+    f_name = 'para_moisture';
     figure
-    imagesc(conv2(abs(obj.T_12)./sqrt(obj.T_11.* obj.T_22), mask, 'same'))
+    imagesc(conv2((obj.T_22 + obj.T_33)./obj.T_11, mask, 'same'))
     obj.plotSetting([0 1])
     plot_para('Maximize',true,'Filename',f_name)
 end

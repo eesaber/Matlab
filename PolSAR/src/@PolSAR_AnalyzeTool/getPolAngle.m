@@ -1,16 +1,41 @@
-function getPolAngle(obj, T, plot_set, ang_range)
-% GETPOLANGLE implements the algorithm [1] that obtain the oreintatation angle 
-% from covaraince matrix C
-% 
-% [1] "On the Estimation of Radar Polarization Orientation Shifts Induced by Terrain Slopes"   
+function getPolAngle(obj, ang_range)
+    % GETPOLANGLE implements the algorithm [1] that obtain the oreintatation angle 
+    % from covaraince matrix C
+    %
+    % Syntax: 
+    % * GETPOLANGLE(ang_range)
+    %
+    % Inputs:
+    %    * ang_range - 1x2 array, Specify angle of limits as a 
+    %      two-element vector of the form [xmin xmax], where xmax is 
+    %      greater than xmin.
+    %    
+    % Example: 
+    %    1. GETPOLANGLE([0 90])
+    %       Set the angle range = [0 90].
+    %
+    % Reference :
+    % [1] "On the Estimation of Radar Polarization Orientation Shifts 
+    %      Induced by Terrain Slopes"   
+    %
+    % Other m-files required: none
+    % Subfunctions: none
+    % MAT-files required: none
+    %
+    %------------- <<<<< >>>>>--------------
+    % Author: K.S. Yang
+    % email: fbookzone@gmail.com
+    %------------- <<<<< >>>>>--------------
     
     % atan2(Y,X), returns values in the closed interval [-pi,pi]
     % atan(X), returns values in the closed interval [-pi/2,pi/2]
-    theta = squeeze(1/4*(atan2(-4*real(T(2,3,:)), -T(2,2,:)+T(3,3,:))+pi)).';
+    mask = ones(2,4)/8;
+    %theta = 1/4*(atan2(-4*real(obj.T_23), -obj.T_22 + obj.T_33)+pi);
+    theta = 1/4*(atan2(-4*real(conv2(obj.T_23,mask,'same')), -conv2(obj.T_22,mask,'same') + conv2(obj.T_33,mask,'same'))+pi);
     theta(theta > pi/4) = theta(theta > pi/4) - pi/2;
-    sig_angle = reshape(theta, obj.im_size);
+    %theta = conv2(theta, ones(2,2)/4, 'same');
     figure
-        imagesc(sig_angle/pi*180)
-        plot_set(ang_range,1)
-        plot_para('Filename','angle_sig_1', 'Maximize',true)
+        imagesc(theta/pi*180)
+        obj.plotSetting(ang_range)
+        plot_para('Filename','polAngle', 'Maximize',true)
 end

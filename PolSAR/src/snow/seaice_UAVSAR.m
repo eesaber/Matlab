@@ -157,13 +157,14 @@ else
              cat(2,reshape(conj(T_13),[1,1,size_N]), reshape(conj(T_23),[1,1,size_N]), reshape(T_33,[1,1,size_N])));
     clear T_11 T_22 T_33 T_12 T_13 T_23 
     [H, alpha] = Eigen_decomp('T',temp_T,'Calculate',true,'Filename',f_name, 'Plotsetting', plot_set);
-    [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',mission_num); % Read image again
+    %[hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO('MissionNum',mission_num); % Read image again
 end
 %% Histogram of H/alpha
 figure
-    histogram2(reshape(H, [1 numel(H)]), reshape(alpha, [1 numel(alpha)])......
-    ,'DisplayStyle','tile','YBinLimits',[0 90],'XBinLimits',[0 1],'NumBins',[900 2700]);
-    colormap jet imagesc(conv2(vv_vv./hh_hh, mask(9), 'same'))
+    histogram2(H(:), alpha(:), 'DisplayStyle','tile','YBinLimits',[0 90],...
+        'XBinLimits',[0 1],'NumBins',[700 2100]);
+    caxis([0 3000])
+    colormap jet; colorbar
     set(gca,'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
     hold on 
     H_Alpha([],'Seglinestyle','w')
