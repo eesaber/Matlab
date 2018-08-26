@@ -65,6 +65,6 @@ function HAlphaDiagram(obj, H, alpha_bar, varargin)
 	set(gca,'Color', 0.8*ones(3,1));
     xlabel('$H$','Interpreter', 'latex')
 	ylabel('$\langle \alpha \rangle$ $(^\circ)$','Interpreter', 'latex')
-    plot_para('Maximize',true,'Filename', 'H_alpha')
+    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/H_alpha'])
     
 end

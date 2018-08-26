@@ -78,23 +78,23 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     figure
         imagesc(H)
         obj.plotSetting([0 1])
-        plot_para('Filename','Entropy', 'Maximize',true)
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/Entropy'])
     figure
         imagesc(10*log10(abs(lambda(:,:,1))))
         obj.plotSetting([-35 -5],'Colorbar_unit',"(dB)")
-        plot_para('Filename','lambda_1', 'Maximize',true)
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/lambda_1'])
     figure
         imagesc(alpha_bar)
         obj.plotSetting([0 60],'Colorbar_unit',"(deg)")
-        plot_para('Filename','alpha', 'Maximize',true)
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/alpha'])
     figure
         imagesc(A_1)
         obj.plotSetting([0 0.5])
-        plot_para('Filename','Anisotropy1', 'Maximize',true)
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/Anisotropy1'])
     figure
         imagesc(A_2)
         obj.plotSetting([0.6 1])
-        plot_para('Filename','Anisotropy2', 'Maximize',true) 
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/Anisotropy2'])
 	if obj.IS_BIGFILE
 		clear A_1 A_2 lambda
 		obj.readPolsarData();

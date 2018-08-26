@@ -48,6 +48,8 @@ classdef PolSAR_AnalyzeTool < handle
         readPolsarData(obj);
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         [kai_1, kai_2, kai_3] = logCumulant(obj)
+        logCumulantDiagram(obj)
+        segmentation(obj)
         pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)

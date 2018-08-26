@@ -3,7 +3,7 @@ function readPolsarData(obj)
     %
     % Syntax: READPOLSARDATA()
     % Other m-files required: none
-    % Subfunctions: UAVSAR() and PALSAR()
+    % Subfunctions: UAVSAR(obj), PALSAR(obj), ERS(obj)
     % MAT-files required: none
     %
     %------------- <<<<< >>>>>--------------
@@ -56,7 +56,9 @@ function palsar(obj)
 end
 function ers2(obj)
     [obj.vv_vv,~] = geotiffread(obj.INPUT_PATH);
+    %obj.vv_vv = flipud(rot90(obj.vv_vv));
     obj.IMAGE_SIZE = size(obj.vv_vv);
+
 end
 function uavsar(obj)
     % Read UAVSAR data.

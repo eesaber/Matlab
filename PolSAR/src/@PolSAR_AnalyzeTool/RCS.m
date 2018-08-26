@@ -10,28 +10,28 @@ function RCS(obj, varargin)
         figure
         imagesc(10*log10(obj.vv_vv + obj.hh_hh + 2*obj.hv_hv))
         obj.plotSetting(obj.POW_RANGE)
-        colormap gray
-        plot_para('Maximize',true,'Filename','Span')
+        colorbar off; colormap gray
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH , '/span'])
     end
     if parse_.Results.vv
         figure
         imagesc(10*log10(obj.vv_vv))
         obj.plotSetting(obj.POW_RANGE)
-        colormap gray
-        plot_para('Maximize',true,'Filename','sigma_vv')
+        colorbar off; colormap gray
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH , '/sigma_vv'])
     end
     if parse_.Results.hh
         figure
         imagesc(10*log10(obj.hh_hh))
         obj.plotSetting(obj.POW_RANGE)
-        colormap gray
-        plot_para('Maximize',true,'Filename','sigma_hh')
+        colorbar off; colormap gray
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH , '/sigma_hh'])
     end
     if parse_.Results.hv
         figure
         imagesc(10*log10(obj.hv_hv))
         obj.plotSetting([-30 -15])
         colormap gray
-        plot_para('Maximize',true,'Filename','sigma_hv')
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH , '/sigma_hv'])
     end
 end

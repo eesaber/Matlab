@@ -17,5 +17,5 @@ function paraRatioVVHH(obj, x , y)
     figure
     imagesc(10*log10(conv2(obj.vv_vv./ obj.hh_hh, mask, 'same')))
     obj.plotSetting([-3 3])
-    plot_para('Maximize',true,'Filename',f_name)
+    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' f_name])
 end

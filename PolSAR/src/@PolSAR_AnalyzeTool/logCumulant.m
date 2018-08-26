@@ -60,5 +60,5 @@ function [mu_1, kai_2, kai_3] = logCumulant(obj)
             reshape(Stat(kai_2), obj.IMAGE_SIZE),...
             reshape(Stat(kai_3), obj.IMAGE_SIZE)))
     set(gca,'Ydir','normal')
-    plot_para('Maximize',true,'Filename','logcumulant')
+    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/logcumulant'])
 end

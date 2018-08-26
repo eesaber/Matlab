@@ -36,6 +36,6 @@ function getPolAngle(obj, ang_range)
     %theta = conv2(theta, ones(2,2)/4, 'same');
     figure
         imagesc(theta/pi*180)
-        obj.plotSetting(ang_range)
-        plot_para('Filename','polAngle', 'Maximize',true)
+        obj.plotSetting(ang_range,'Colorbar_unit',"(deg)")
+        plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/polAngle'])
 end

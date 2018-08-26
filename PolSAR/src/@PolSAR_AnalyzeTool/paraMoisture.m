@@ -16,5 +16,5 @@ function paraMoisture(obj, x, y)
     figure
     imagesc(conv2((obj.T_22 + obj.T_33)./obj.T_11, mask, 'same'))
     obj.plotSetting([0 1])
-    plot_para('Maximize',true,'Filename',f_name)
+    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' f_name])
 end

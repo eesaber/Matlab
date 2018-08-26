@@ -1,8 +1,11 @@
 %% ALOS PALSAR sea ice 
-clc; clear; close all;
+clc; clear;
 plotSetting = @ Plotsetting_dummy;
-fin = '/media/akb/2026EF9426EF696C/raw_data/20070426/ALPSRP066691480-L1.1/T3';
-fout = '/home/akb/Code/Matlab/PolSAR/output/20070426/480';
+%%
+winter = '/media/akb/2026EF9426EF696C/raw_data/20070426/ALPSRP066691460-L1.1/T3'; % 420~540
+advance_melt = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921520-L1.1/T3'; % 500~520
+fin = winter;
+fout = '/home/akb/Code/Matlab/PolSAR/output/20070426/460';
 x = PolSAR_AnalyzeTool([624 4608],'ALOS PALSAR', plotSetting,...
     'inputDataDir', fin,  'outputDataDir', fout); % [#col, #row]
 
@@ -35,8 +38,8 @@ histogram2(kai_3(:), kai_2(:), 750,...
 colormap jet
 set(gca,'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
 hold on 
-var = linspace(0,4,1000);
-plot(psi(3,var), -psi(2,var), 'w' , -psi(3,var), -psi(2,var), 'w--', 'Linewidth',2.5)
+var = [linspace(0,10,100), linspace(10,2000,4000)];
+plot(psi(2,var), psi(1,var), 'w' , -psi(2,var), psi(1,var), 'w--', 'Linewidth',2.5)
 set(gca, 'Xtick', -5:5,'xlim',[-3 3], 'ylim', [0 2])
 xlabel('$\kappa_3$','interpreter','latex')
 ylabel('$\kappa_2$','interpreter','latex')
@@ -55,7 +58,7 @@ ncols = size(ab,2);
 ab = reshape(ab,size(ab,1)* size(ab,2),2);
 nColors = 3;
 % repeat the clustering 3 times to avoid local minima
-[cluster_idx, cluster_center] = kmeans(ab,nColors,'distance','sqeuclidean', ...
+[cluster_idx, cluster_center] = kmeans(ab,nColors,'distance','cityblock', ...
                                       'Replicates',5,'MaxIter',500);
 pixel_labels = uint8(reshape(cluster_idx,nrows,ncols));
 clear ab
@@ -63,7 +66,14 @@ clear ab
 figure
 %imshow(pixel_labels,[],'Border','tight')
 imagesc(pixel_labels)
-cmap  = flag(nColors);
+%imagesc(labels)
+caxis([1 nColors])
+if nColors <= 4
+    cmap  = flag(nColors);
+else
+    cmap  = pink(nColors);
+end
+cmap = linspecer(nColors,'qualitative');
 colormap(cmap)
 L = line(ones(nColors),ones(nColors), 'LineWidth',2);               % generate line 
 set(L,{'color'},mat2cell(cmap, ones(1,nColors),3)); % set the colors according to cmap
@@ -75,24 +85,28 @@ kai_1 = padarray(kai_1, [1,2], -1,'both');
 kai_2 = padarray(kai_2, [1,2], -1,'both');
 kai_3 = padarray(kai_3, [1,2], -1,'both');
 %%
-bin_limit = [1e-5, 0.15];
+bin_limit = [0, 0.1];
 figure
     hold on 
     for n = 1:nColors
-        histogram(x.vv_vv(labels==n),'BinLimits', bin_limit,'Normalization','probability')
+        % 4e-4   
+        % 1e-3
+        histogram(x.vv_vv(labels==n),'BinLimits', bin_limit, 'BinWidth',1e-5,...
+            'LineWidth',1,'Normalization','probability', 'FaceColor',cmap(n,:))
     end
     hold off
-    legend('label 1','label 2','label 3','label 4', 'label 5')
-    xlabel('$|S_{vv}|^2$', 'interpreter', 'latex')
-    ylabel('Pr$(x = |S_{vv}|^2)$', 'interpreter', 'latex')
-    plot_para('FileName','histo_vv','Maximize',true)
+    legend(strcat('label', num2str((1:nColors)')))
+    ylim([0 0.03])
+    set(gca, 'Box','on', 'Xlim', bin_limit, 'Ygrid', 'on', 'Xgrid','on')
+    xlabel('$\sigma_{vv}$', 'interpreter', 'latex')
+    ylabel('Pr$(x = \sigma_{vv})$', 'interpreter', 'latex')
+    plot_para('FileName','histo_vv','Maximize',true,'Ratio',[4 3 1])
 %% 2D 
 figure
 hold on 
-scatter(kai_3(labels==1), kai_2(labels==1),'filled')
-scatter(kai_3(labels==2), kai_2(labels==2),'filled')
-scatter(kai_3(labels==3), kai_2(labels==3),'filled')
-scatter(kai_3(labels==4), kai_2(labels==4),'filled')
+for n = 1 : nColors
+    scatter(kai_3(labels==n), kai_2(labels==n),'filled')
+end
 hold off
 set(gca, 'Xtick', -5:5,'xlim',[-3 3], 'ylim', [0 2])
 xlabel('$\kappa_3$','interpreter','latex')
@@ -100,10 +114,9 @@ ylabel('$\kappa_2$','interpreter','latex')
 %% 3D
 figure
 hold on 
-scatter3(kai_3(labels==1), kai_2(labels==1), kai_1(labels==1), 'filled')
-scatter3(kai_3(labels==2), kai_2(labels==2), kai_1(labels==2), 'filled')
-scatter3(kai_3(labels==3), kai_2(labels==3), kai_1(labels==3), 'filled')
-scatter3(kai_3(labels==4), kai_2(labels==4), kai_1(labels==4), 'filled')
+for n = 1 : nColors
+    scatter3(kai_3(labels==n), kai_2(labels==n), kai_1(labels==n), 'filled')
+end
 hold off
 %set(gca, 'Xtick', -5:5,'xlim',[-3 3], 'ylim', [0 2])
 xlabel('$\kappa_3$','interpreter','latex')

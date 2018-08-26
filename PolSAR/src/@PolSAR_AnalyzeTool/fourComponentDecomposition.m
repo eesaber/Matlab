@@ -102,22 +102,22 @@ function fourComponentDecomposition(obj, varargin)
             imagesc(10*log10(abs(f_s)))
             obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('single', 'Interpreter', 'latex')
-            plot_para('Maximize',true,'Filename', [parse_.Results.Filename,'_s']);
+            plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' parse_.Results.Filename,'_s']);
         figure 
             imagesc(10*log10(abs(f_d)))
             obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('double', 'Interpreter', 'latex')
-            plot_para('Maximize',true,'Filename',[parse_.Results.Filename, '_d']);
+            plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' parse_.Results.Filename, '_d']);
         figure
             imagesc(10*log10(abs(f_v)))
             obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
-            plot_para('Maximize',true, 'Filename', [parse_.Results.Filename, '_v']);
+            plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' parse_.Results.Filename, '_v']);
         figure
             imagesc(10*log10(abs(f_c)))
             obj.plotSetting(obj.POW_RANGE, 'Colorbar_unit', "(dB)")
 			%title('volume', 'Interpreter', 'latex')
-            plot_para('Maximize',true, 'Filename', [parse_.Results.Filename, '_c']);
+            plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' parse_.Results.Filename, '_c']);
     end
 
     if(1)	% Plot the 4-component decomposition.
@@ -136,7 +136,7 @@ function fourComponentDecomposition(obj, varargin)
             set(gca,'Ydir','normal')
             xlabel('Azimuth (pixel)', 'Interpreter', 'latex')
             ylabel('Range (pixel)', 'Interpreter', 'latex')
-            plot_para('Filename',parse_.Results.Filename,'Maximize',true);
+            plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' parse_.Results.Filename])
         clear img 
     end
 end
