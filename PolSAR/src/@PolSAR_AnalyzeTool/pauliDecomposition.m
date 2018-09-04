@@ -65,6 +65,6 @@ function pauliDecomposition(obj, varargin)
     end 
     set(gca,'Ydir','normal')   
     if numel(parse_.Results.Filename)
-        plot_para('Maximize',true,'Filename', parse_.Results.Filename);
+        plot_para('Maximize',true,'Filename', [obj.OUTPUT_PATH '/' parse_.Results.Filename]);
     end    
 end

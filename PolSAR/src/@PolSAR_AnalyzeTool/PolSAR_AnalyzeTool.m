@@ -42,14 +42,14 @@ classdef PolSAR_AnalyzeTool < handle
             obj.IMAGE_SIZE = image_size;
             obj.PLATFORM =  carrier;
             obj.readPolsarData()
-            cd(obj.OUTPUT_PATH)
+            
         end
         % class function declearation
         readPolsarData(obj);
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         [kai_1, kai_2, kai_3] = logCumulant(obj)
-        logCumulantDiagram(obj)
-        segmentation(obj)
+        logCumulantDiagram(obj, kai_2, kai_3)
+        [labels] = segmentation(obj, kai_1, kai_2, kai_3, ncolors)
         pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)
@@ -66,6 +66,7 @@ classdef PolSAR_AnalyzeTool < handle
         paraMoisture(obj, x, y)
         paraRatioVVHH(obj, x, y)
         paraRoughness1(obj, x, y)
+        paraRoughness2(obj, x, y)
         %
         geocode(obj)
    end

@@ -1,7 +1,10 @@
-function paraRoughness1(obj, x, y)
-    % PARAROUGHNESS1 Correlation ratio |T_11|/sqrt{T_11 T_22}
+function paraRoughness2(obj, x, y)
+    % PARAROUGHNESS2 Circular basis co-polarization coefficient (T_22+T_33)/(T_22 -T_33)
+    % The ratio relates to surface roughness and is independent to 
+    % the permittivity of surface for ks < 1 where k is radio wavenumber and s is 
+    % the rms height of surface [1] [2] [3].
     %
-    % Syntax: PARAROUGHNESS1(x,y)
+    % Syntax: PARAROUGHNESS2(x,y)
     %
     % Inputs:
 	%    x  - row number of boxcar filter with default value 3.
@@ -11,12 +14,15 @@ function paraRoughness1(obj, x, y)
     % Subfunctions: none
     % MAT-files required: none
     %
-    %
+    % Reference 
+    % [1] The effect of surface roughness on multifrequency polarimetric SAR data
+    % [2] Surface roughness and slope mesaruements using polarimetric SAR data
+    % [3] Inversion of surface parameters from polarimetric SAR
     %------------- <<<<< >>>>>--------------
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
-    disp('Surface roughness by \frac{T_11}{\sqrt{T_11 T_22}}')
+    disp('Surface roughness by \frac{T_22 + T_33}{T_22 - T_33}}')
     switch nargin
     case 2
         mask = ones(x,y)/(x*y);

@@ -27,46 +27,48 @@ x.paraMoisture(2, 4) %
 x.getPolAngle([-30 30]); % polarimetric angle
 %% Log-cumulant
 [kai_1, kai_2, kai_3] = x.logCumulant(); % Log cumulant
-%%
+x.logCumulantDiagram(kai_2, kai_3)
+%{
+nColors = 3;
+labels = x.segmentation(kai_1, kai_2, kai_3, nColors);
+%}
+
+%% Segementation
+
+
+
+
+%{
 kai_1 = kai_1(2:end-1,3:end-2);
 kai_2 = kai_2(2:end-1,3:end-2);
 kai_3 = kai_3(2:end-1,3:end-2);
-%%
-figure
-histogram2(kai_3(:), kai_2(:), 750,...
-        'DisplayStyle','tile','YBinLimits',[0 5],'XBinLimits',[-3 3])
-colormap jet
-set(gca,'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
-hold on 
-var = [linspace(0,10,100), linspace(10,2000,4000)];
-plot(psi(2,var), psi(1,var), 'w' , -psi(2,var), psi(1,var), 'w--', 'Linewidth',2.5)
-set(gca, 'Xtick', -5:5,'xlim',[-3 3], 'ylim', [0 2])
-xlabel('$\kappa_3$','interpreter','latex')
-ylabel('$\kappa_2$','interpreter','latex')
-plot_para('Maximize',true,'Filename','log_cumulant_diagram','Ratio',[4 3 1])
-hold off
-%% Segementation
-temp = cat(3, reshape(Stat(kai_1,'uint16'), size(kai_1)),...
-    reshape(Stat(kai_2, 'uint16'), size(kai_1)), ...
-    reshape(Stat(kai_3, 'uint16'), size(kai_1)));
-%temp = cat(3, kai_1, kai_2, kai_3);
-lab_I = rgb2lab(temp);
-clear temp
+temp = cat(3, reshape(Stat(kai_1,'Bit','uint16','Method','truncate','Range',[-13 -4]), size(kai_1)),...
+    reshape(Stat(kai_2,'Bit','uint16','Method','truncate','Range',[0 3]), size(kai_2)), ...
+    reshape(Stat(kai_3,'Bit','uint16','Method','truncate','Range',[-1 1]), size(kai_3)));
+%}
+im = cat(3, reshape(Stat(kai_1,'Bit','uint16'), size(kai_3)),...
+    reshape(Stat(kai_2,'Bit','uint16'), size(kai_2)), ...
+    reshape(Stat(kai_3,'Bit','uint16'), size(kai_1)));
+%temp = temp(2:end-1,3:end-2,:);
+
+lab_I = rgb2lab(im);
 ab = lab_I(:,:,2:3);
 nrows = size(ab,1);
 ncols = size(ab,2);
-ab = reshape(ab,size(ab,1)* size(ab,2),2);
+%ab = reshape(ab,size(ab,1)* size(ab,2),2);
+ab = reshape(lab_I, size(ab,1)* size(ab,2),3);
 nColors = 3;
+
 % repeat the clustering 3 times to avoid local minima
 [cluster_idx, cluster_center] = kmeans(ab,nColors,'distance','cityblock', ...
-                                      'Replicates',5,'MaxIter',500);
+                                      'Replicates',5,'MaxIter',100);
 pixel_labels = uint8(reshape(cluster_idx,nrows,ncols));
+%lab2rgb(cluster_center)
 clear ab
 %%
 figure
 %imshow(pixel_labels,[],'Border','tight')
 imagesc(pixel_labels)
-%imagesc(labels)
 caxis([1 nColors])
 if nColors <= 4
     cmap  = flag(nColors);
@@ -84,6 +86,7 @@ labels = padarray(pixel_labels, [1,2], -1,'both');
 kai_1 = padarray(kai_1, [1,2], -1,'both');
 kai_2 = padarray(kai_2, [1,2], -1,'both');
 kai_3 = padarray(kai_3, [1,2], -1,'both');
+
 %%
 bin_limit = [0, 0.1];
 figure
@@ -91,16 +94,43 @@ figure
     for n = 1:nColors
         % 4e-4   
         % 1e-3
-        histogram(x.vv_vv(labels==n),'BinLimits', bin_limit, 'BinWidth',1e-5,...
+        histogram(x.vv_vv(labels==n),'BinLimits', bin_limit, 'BinWidth',4e-4,...
             'LineWidth',1,'Normalization','probability', 'FaceColor',cmap(n,:))
     end
     hold off
     legend(strcat('label', num2str((1:nColors)')))
-    ylim([0 0.03])
-    set(gca, 'Box','on', 'Xlim', bin_limit, 'Ygrid', 'on', 'Xgrid','on')
+    ylim([0 0.07])
+    set(gca, 'Box','on', 'Xlim', [0 0.1], 'Ygrid', 'on', 'Xgrid','on')
     xlabel('$\sigma_{vv}$', 'interpreter', 'latex')
     ylabel('Pr$(x = \sigma_{vv})$', 'interpreter', 'latex')
     plot_para('FileName','histo_vv','Maximize',true,'Ratio',[4 3 1])
+%% Make old ice to 1 and new ice to 3
+temp = labels;
+labels(temp == 2) = 3;
+labels(temp == 3) = 2;
+figure
+imagesc(labels)
+colormap(cmap)
+set(gca,'ydir','normal','clim',[1 3])
+%%
+figure
+imagesc(labels==1)
+colormap gray
+set(gca,'ydir','normal')
+plot_para('Maximize',true,'Filename','label')
+%%
+var = [linspace(0,10,100), linspace(10,2000,4000)];
+figure
+plot(-psi(2,var), psi(1,var), 'k', 'Linewidth',2.5) % inverse gamma distribution 
+hold on 
+plot(psi(2,var), psi(1,var), 'k--', 'Linewidth',2.5) % gamma distribution
+plot(psi(2,var)+psi(2,var), psi(1,var) + psi(1,var), 'k-.', 'Linewidth',2.5) % K distribution
+set(gca, 'Xtick', -5:5,'xlim',[-3 3], 'ylim', [0 2])
+xlabel('$\kappa_3$','interpreter','latex')
+ylabel('$\kappa_2$','interpreter','latex')
+plot_para('Maximize',true,'Filename','log_cumulant_diagram','Ratio',[4 3 1])
+hold off
+    
 %% 2D 
 figure
 hold on 
