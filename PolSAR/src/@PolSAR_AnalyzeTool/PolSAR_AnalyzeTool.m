@@ -1,5 +1,32 @@
 classdef PolSAR_AnalyzeTool < handle
-   properties
+    % PolSAR_AnalyzeTool is the class which wraps the polarimetric
+    % analysis method.
+    %
+    % Syntax:
+	%	* obj = PolSAR_AnalyzeTool(image_size, carrier, plotSetting, varargin)
+	%
+    % Inputs:
+    %	* image_size  : A 2x1 array which specify the dimension of image.
+    %	* carrier     : A char array which specify the platform name, including 
+    %                   'ERS-2', 'ALOS PALSAR' and 'UAVSAR'.
+    %	* plotSetting : A function pointer.
+    %
+    %  Name-Value Pair Arguments:
+    %	* 'inputDataDir'  - directory of input file
+    %	* 'outputDataDir' - directory of output file
+    %
+    % Outputs:
+    %   Return a PolSAR_AnalyzeTool object.
+    %
+    % Other m-files required:
+    % Subfunctions: none
+    % MAT-files required: none
+    %
+    %------------- <<<<< >>>>>--------------
+    % Author: K.S. Yang
+    % email: fbookzone@gmail.com
+    %------------- <<<<< >>>>>--------------
+    properties
         OUTPUT_PATH;
         INPUT_PATH;
         IMAGE_SIZE;
@@ -9,15 +36,15 @@ classdef PolSAR_AnalyzeTool < handle
         IS_BIGFILE = false;
         hh_hh; hv_hv; vv_vv; hh_hv; hh_vv; hv_vv;
         T_11; T_22; T_33; T_12; T_13; T_23;
-   end
-   methods
+    end
+    methods
         function obj = PolSAR_AnalyzeTool(image_size, carrier, plotSetting, varargin)
             parse_ = inputParser;
             validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'});
             validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
-            addParameter(parse_,'inputDataDir','',validationFcn_1_);
+            addParameter(parse_,'inputDataDir', '',validationFcn_1_);
             addParameter(parse_,'outputDataDir','',validationFcn_1_);
-            addParameter(parse_,'null', false,validationFcn_2_);
+            addParameter(parse_,'null', false     ,validationFcn_2_);
             parse(parse_,varargin{:})
             if parse_.Results.null 
                 return
@@ -46,16 +73,17 @@ classdef PolSAR_AnalyzeTool < handle
         end
         % class function declearation
         readPolsarData(obj);
-        [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+        %
         [kai_1, kai_2, kai_3] = logCumulant(obj)
         logCumulantDiagram(obj, kai_2, kai_3)
-        [labels] = segmentation(obj, kai_1, kai_2, kai_3, ncolors)
+        [X] = HMRF(obj, im, labels, nColors)
+        [labels] = imageKCluster(obj, im, nColors)
+        showLabels(obj, labels, nColors)
+        %
+        [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)
-        %
-        RCS(obj, varargin)
-        isSNR(obj, NSZE, varargin)
         %
         coh2cov(obj)
         cov2coh(obj)
@@ -63,11 +91,13 @@ classdef PolSAR_AnalyzeTool < handle
         setCoh2Zero(obj)
         getPolAngle(obj, T, plot_set, ang_range)
         %
+        RCS(obj, varargin)
+        isSNR(obj, NSZE, varargin)
         paraMoisture(obj, x, y)
         paraRatioVVHH(obj, x, y)
         paraRoughness1(obj, x, y)
         paraRoughness2(obj, x, y)
         %
         geocode(obj)
-   end
+    end
 end

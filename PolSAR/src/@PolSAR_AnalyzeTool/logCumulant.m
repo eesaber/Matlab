@@ -56,23 +56,26 @@ function [mu_1, kai_2, kai_3] = logCumulant(obj)
     kai_2 = mu_2 - mu_1.^2;
     kai_3 = mu_3 - 3*mu_1.*mu_2 + 2*mu_1.^3;
     % Crop the image to prevent the error value at boarder.
-    
+    %{
     mu_1 = mu_1(2:end-1,3:end-2);
     kai_2 = kai_2(2:end-1,3:end-2);
     kai_3 = kai_3(2:end-1,3:end-2);
-    
+    %}
     showIm(obj, mu_1, kai_2, kai_3) % Display RGB image
+    obj.kai_1 = mu_1;
+    obj.kai_2 = kai_2;
+    obj.kai_3 = kai_3;
 end
 function showIm(obj, kai_1, kai_2, kai_3)
     figure
     if 1
-        image(cat(3, reshape(Stat(kai_1), size(kai_1)),...
-            reshape(Stat(kai_2), size(kai_2)),...
-            reshape(Stat(kai_3), size(kai_3))))
+        image(cat(3, reshape(intensityMapping(kai_1), size(kai_1)),...
+            reshape(intensityMapping(kai_2), size(kai_2)),...
+            reshape(intensityMapping(kai_3), size(kai_3))))
     else
-        image(cat(3, reshape(Stat(kai_1,'Bit','uint16','Method','truncate','Range',[-14 -4]), size(kai_1)),...
-        reshape(Stat(kai_2,'Bit','uint16','Method','truncate','Range',[0 3]), size(kai_2)), ...
-        reshape(Stat(kai_3,'Bit','uint16','Method','truncate','Range',[-1 1]), size(kai_3))))
+        image(cat(3, reshape(intensityMapping(kai_1,'Bit','uint16','Method','truncate','Range',[-14 -4]), size(kai_1)),...
+        reshape(intensityMapping(kai_2,'Bit','uint16','Method','truncate','Range',[0 3]), size(kai_2)), ...
+        reshape(intensityMapping(kai_3,'Bit','uint16','Method','truncate','Range',[-1 1]), size(kai_3))))
     end
     set(gca,'Ydir','normal')
     plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/logcumulant'])

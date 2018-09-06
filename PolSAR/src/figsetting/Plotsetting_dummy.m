@@ -7,5 +7,7 @@ function Plotsetting_dummy(Clim, varargin)
     parse(parse_,varargin{:})    
     set(gca,'Ydir','normal','Clim',Clim)
     colormap jet; colorbar
-   
+    if ~strcmp(parse_.Results.Colorbar_unit, '')
+        title(colorbar,parse_.Results.Colorbar_unit,'Position', [40 -70])
+    end
 end

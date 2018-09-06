@@ -82,25 +82,28 @@ set(gca,'Ydir','normal')
 plot_para('Maximize',true,'Filename','y_label_070426_3')
 %%
 old = 10*log10(im_c)>-12;
-nPixel = sum(sum(~isinf(10*log10(im_c))));
 mask = zeros(size(im_c));
 mask(2:end-1,3:end-2) = 1;
-mask = mask+isinf(10*log10(im_c));
-kai_2 = kai_2(2:end-1,3:end-2);
-kai_3 = kai_3(2:end-1,3:end-2);
-Tt = sum(sum( ((labels==1) + (labels==2)).*(old).*mask))/nPixel;
-Ff = sum(sum( (labels==3).*(~old).*mask))/nPixel;
-Tf = sum(sum( ((labels==1) + (labels==2)).*(~old).*mask))/nPixel;
-tF = sum(sum( (labels==3).*(old).*mask))/nPixel;
-fprintf('%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+mask = mask.*(~isinf(10*log10(im_c)));
+nPixel = sum(sum(mask));
+% Without HMRF
+Tt = sum(sum( ((labels==3) + (labels_MRF==2) ).*(old).*mask))/nPixel;
+Ff = sum(sum( (labels==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((labels==3) + (labels_MRF==2) ).*(~old).*mask))/nPixel;
+tF = sum(sum( (labels==1).*(old).*mask))/nPixel;
+fprintf('Before MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+% With HMRF
+Tt = sum(sum( ((labels_MRF==3) ).*(old).*mask))/nPixel;
+Ff = sum(sum( (labels_MRF==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((labels_MRF==3) ).*(~old).*mask))/nPixel;
+tF = sum(sum( (labels_MRF==1).*(old).*mask))/nPixel;
+fprintf('After MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
 %%
 figure
 imagesc((labels==1).*(old).*mask)
 figure
 imagesc((labels==3).*(~old).*mask)
 %% Region B
-y_B.RCS('vv',true)
-%%
 im_b = [y_3.vv_vv(1:600, 2430:2536), y_B.vv_vv(1:600,1:1600)];
 im_b = imrotate(im_b,3.5,'nearest','crop');
 im_b = [zeros(100, size(im_b,2)); im_b];
@@ -120,17 +123,22 @@ set(gca,'Ydir','normal')
 plot_para('Maximize',true,'Filename','y_label_070426_2')
 %%
 old = 10*log10(im_b)>-12;
-nPixel = sum(sum(~isinf(10*log10(im_b))));
 mask = zeros(size(im_b));
 mask(2:end-1,3:end-2) = 1;
-mask = mask+isinf(10*log10(im_b));
-kai_2 = kai_2(2:end-1,3:end-2);
-kai_3 = kai_3(2:end-1,3:end-2);
-Tt = sum(sum( ((labels==1) + (labels==2)).*(old).*mask))/nPixel;
-Ff = sum(sum( (labels==3).*(~old).*mask))/nPixel;
-Tf = sum(sum( ((labels==1) + (labels==2)).*(~old).*mask))/nPixel;
-tF = sum(sum( (labels==3).*(old).*mask))/nPixel;
-fprintf('%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+mask = mask.*(~isinf(10*log10(im_b)));
+nPixel = sum(sum(mask));
+% Without HMRF
+Tt = sum(sum( ((labels==3) + (labels==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (labels==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((labels==3) + (labels==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (labels==1).*(old).*mask))/nPixel;
+fprintf('Before MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+% With HMRF
+Tt = sum(sum( ((labels_MRF==3) + (labels_MRF==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (labels_MRF==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((labels_MRF==3) + (labels_MRF==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (labels_MRF==1).*(old).*mask))/nPixel;
+fprintf('After MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
 %% Region A
 y_A.vv_vv = y_A.vv_vv(780:2329,150:765);
 y_A.RCS('vv',true)

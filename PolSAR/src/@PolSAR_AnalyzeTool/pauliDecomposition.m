@@ -39,8 +39,8 @@ function pauliDecomposition(obj, varargin)
     figure
     if strcmp(parse_.Results.Method, '2sigma')
         % Show the Pauli vector with scaleing each component to [0, 255].
-        image(cat(3, reshape(Stat(10*log10(R)), size(R)), ......
-            reshape(Stat(10*log10(G)), size(G)), reshape(Stat(10*log10(B)), size(B))))
+        image(cat(3, reshape(intensityMapping(10*log10(R)), size(R)), ......
+            reshape(intensityMapping(10*log10(G)), size(G)), reshape(intensityMapping(10*log10(B)), size(B))))
     else
         % Show the Pauli vector based on its power without scaleing each
         % component to [0, 255].
