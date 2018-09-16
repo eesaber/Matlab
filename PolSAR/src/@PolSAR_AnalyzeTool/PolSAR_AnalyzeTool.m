@@ -74,11 +74,12 @@ classdef PolSAR_AnalyzeTool < handle
         % class function declearation
         readPolsarData(obj);
         %
-        [kai_1, kai_2, kai_3] = logCumulant(obj)
+        [kai_1, kai_2, kai_3, kai_4] = logCumulant(obj)
         logCumulantDiagram(obj, kai_2, kai_3)
         [X] = HMRF(obj, im, labels, nColors)
         [labels] = imageKCluster(obj, im, nColors)
         showLabels(obj, labels, nColors)
+        [label, u] = myFCM (obj, x_input, clusterNum, max_iter)
         %
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         pauliDecomposition(obj, varargin)
@@ -89,7 +90,7 @@ classdef PolSAR_AnalyzeTool < handle
         cov2coh(obj)
         setCov2Zero(obj)
         setCoh2Zero(obj)
-        getPolAngle(obj, T, plot_set, ang_range)
+        theta = getPolAngle(obj, ang_range)
         %
         RCS(obj, varargin)
         isSNR(obj, NSZE, varargin)
@@ -97,6 +98,7 @@ classdef PolSAR_AnalyzeTool < handle
         paraRatioVVHH(obj, x, y)
         paraRoughness1(obj, x, y)
         paraRoughness2(obj, x, y)
+        paraCoPolCorrelation(obj, x, y)
         %
         geocode(obj)
     end

@@ -24,7 +24,7 @@ function cov2coh(obj)
 	obj.T_11 = (obj.hh_hh + obj.vv_vv + obj.hh_vv + conj(obj.hh_vv))/2;
 	obj.T_22 = (obj.hh_hh + obj.vv_vv - obj.hh_vv - conj(obj.hh_vv))/2;
 	obj.T_33 = 2*obj.hv_hv;
-	obj.T_12 = (obj.hh_hh - obj.vv_vv - obj.hh_vv + obj.conj(hh_vv))/2;
+	obj.T_12 = (obj.hh_hh - obj.vv_vv - obj.hh_vv + conj(obj.hh_vv))/2;
 	obj.T_13 = obj.hh_hv + conj(obj.hv_vv);
 	obj.T_23 = obj.hh_hv - conj(obj.hv_vv);
 	if obj.IS_BIGFILE

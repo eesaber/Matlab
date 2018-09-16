@@ -30,7 +30,7 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     %------------- <<<<< >>>>>--------------
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
-    addParameter(parse_, 'SaveResults', 1, validationFcn_1_);
+    addParameter(parse_, 'SaveResults', 0, validationFcn_1_);
     
     parse(parse_,varargin{:})
 

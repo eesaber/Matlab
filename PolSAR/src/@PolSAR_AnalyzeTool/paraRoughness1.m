@@ -18,9 +18,9 @@ function paraRoughness1(obj, x, y)
     %------------- <<<<< >>>>>--------------
     disp('Surface roughness by \frac{T_11}{\sqrt{T_11 T_22}}')
     switch nargin
-    case 2
+    case 3
         mask = ones(x,y)/(x*y);
-    case 1
+    case 2
         mask = ones(x,3)/(x*3);
     otherwise
         mask = ones(3,3)/(3*3);
@@ -32,5 +32,5 @@ function paraRoughness1(obj, x, y)
     figure
     imagesc(conv2(abs(obj.T_12)./sqrt(obj.T_11.* obj.T_22), mask, 'same'))
     obj.plotSetting([0 1])
-    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/' f_name])
+    plot_para('Maximize',true,'Ratio', [4 3 1], 'Filename',[obj.OUTPUT_PATH '/' f_name])
 end

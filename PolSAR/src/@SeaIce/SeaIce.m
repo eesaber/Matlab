@@ -27,7 +27,8 @@ classdef SeaIce < PolSAR_AnalyzeTool
     %------------- <<<<< >>>>>--------------
     
     properties
-        kai_1; kai_2; kai_3; % log-cumulant;
+        H;
+        kai_1; kai_2; kai_3; kai_4;% log-cumulant;
         im; % log-cumulant plot
         y_hat; y_hat_MRF;
     end
@@ -47,20 +48,21 @@ classdef SeaIce < PolSAR_AnalyzeTool
         end
 
         function logCumulant(obj)
-            [obj.kai_1, obj.kai_2, obj.kai_3] = ...
+            [obj.kai_1, obj.kai_2, obj.kai_3, obj.kai_4] = ...
                         logCumulant@PolSAR_AnalyzeTool(obj);
         end
 
         function imageKCluster(obj, nColors)
             creatLogCumulantRGB(obj);
             temp = imageKCluster@PolSAR_AnalyzeTool(obj, obj.im, nColors);
-            obj.y_hat = padarray(temp, [1,2], -1,'both');
+            %obj.y_hat = padarray(temp, [1,1], -1,'both');
+            obj.y_hat = temp;
         end
 
         function HMRF(obj, nColors)
-            temp_label = obj.y_hat(2:end-1,3:end-2);
+            temp_label = obj.y_hat;
             temp_label_MRF = HMRF@PolSAR_AnalyzeTool(obj, obj.im, temp_label, nColors);
-            obj.y_hat_MRF = padarray(temp_label_MRF, [1,2], -1,'both');
+            obj.y_hat_MRF = padarray(temp_label_MRF, [1,1], -1,'both');
         end
         
         %%

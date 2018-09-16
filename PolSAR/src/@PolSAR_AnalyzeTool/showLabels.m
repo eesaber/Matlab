@@ -18,6 +18,7 @@ function showLabels(obj, labels, nColors)
         plot_para('Maximize',true,'Ratio',[4 3 1],'Filename',[obj.OUTPUT_PATH '/label'])
     
     %% Histogram of sigma_vv
+    % bin_limit = [0, 0.1];
     bin_limit = [0, 0.1];
     figure
         hold on 
@@ -30,7 +31,7 @@ function showLabels(obj, labels, nColors)
         hold off
         legend(strcat('label', num2str((1:nColors)')))
         ylim([0 0.06])
-        set(gca, 'Box','on', 'Xlim', [0 0.1], 'Ygrid', 'on', 'Xgrid','on')
+        set(gca, 'Box','on', 'Xlim', bin_limit, 'Ygrid', 'on', 'Xgrid','on')
         xlabel('$\sigma_{vv}$', 'interpreter', 'latex')
         ylabel('Pr$(x = \sigma_{vv})$', 'interpreter', 'latex')
         plot_para('Maximize',true,'Ratio',[4 3 1], 'FileName',[obj.OUTPUT_PATH '/histo_vv'])

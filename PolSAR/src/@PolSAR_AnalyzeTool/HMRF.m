@@ -11,7 +11,7 @@ function [X] = HMRF(obj, im, labels, nColors)
         mu(n) = mean(mag(labels==n));
         sigma(n) = std(mag(labels==n));
     end
-    Z = edge(mag, 'Canny', 0.75);
+    Z = edge(mag, 'Canny', 0.7);
     figure
     imagesc(Z)
     colormap gray

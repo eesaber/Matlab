@@ -16,9 +16,11 @@ function [p] = intensityMapping(A, varargin)
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'char'},{});
     validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{'numel', 2});
+    validationFcn_3_ = @(x) validateattributes(x,{'numeric'},{'nonempty'});
     addParameter(parse_,'Bit','uint8',validationFcn_1_);
-    addParameter(parse_,'Method','2sigma',validationFcn_1_);
+    addParameter(parse_,'Method','Sigma',validationFcn_1_);
     addParameter(parse_,'Range',[0 1],validationFcn_2_);
+    addParameter(parse_,'std', 2,validationFcn_3_);
     parse(parse_,varargin{:})
 
     if strcmp(parse_.Results.Bit, 'uint8')
@@ -35,12 +37,12 @@ function [p] = intensityMapping(A, varargin)
     end
 
     p = A(:);
-    if strcmp(parse_.Results.Method, '2sigma')
+    if strcmp(parse_.Results.Method, 'Sigma')
         p_sigma = std(p(~isinf(p)),'omitnan');
         p_mean = mean(p(~isinf(p)),'omitnan');
-        p(p > p_mean+2*p_sigma) = p_mean+2*p_sigma;
-        p(p < p_mean-2*p_sigma) = p_mean-2*p_sigma;
-        p = f((p - (p_mean-2*p_sigma))*scale/(4*p_sigma));
+        p(p > p_mean+parse_.Results.std*p_sigma) = p_mean+parse_.Results.std*p_sigma;
+        p(p < p_mean-parse_.Results.std*p_sigma) = p_mean-parse_.Results.std*p_sigma;
+        p = f((p - (p_mean-parse_.Results.std*p_sigma))*scale/(2*parse_.Results.std*p_sigma));
     elseif strcmp(parse_.Results.Method, 'truncate')
         p(p > parse_.Results.Range(2)) = parse_.Results.Range(2);
         p(p < parse_.Results.Range(1)) = parse_.Results.Range(1);

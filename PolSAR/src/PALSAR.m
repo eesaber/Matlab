@@ -3,9 +3,9 @@ clc; clear;
 plotSetting = @ Plotsetting_dummy;
 %%
 winter = '/media/akb/2026EF9426EF696C/raw_data/20070426/ALPSRP066691460-L1.1/T3'; % 420~540
-advance_melt = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921520-L1.1/T3'; % 500~520
-fin = winter;
-fout = '/home/akb/Code/Matlab/PolSAR/output/20070426/460';
+advance_melt = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921500-L1.1/T3'; % 500~520
+fin = advance_melt ;
+fout = '/home/akb/Code/Matlab/PolSAR/output/20090811/500';
 x = PolSAR_AnalyzeTool([624 4608],'ALOS PALSAR', plotSetting,...
     'inputDataDir', fin,  'outputDataDir', fout); % [#col, #row]
 
