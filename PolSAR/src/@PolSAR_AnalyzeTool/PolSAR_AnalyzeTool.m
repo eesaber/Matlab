@@ -44,10 +44,10 @@ classdef PolSAR_AnalyzeTool < handle
             validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
             addParameter(parse_,'inputDataDir', '',validationFcn_1_);
             addParameter(parse_,'outputDataDir','',validationFcn_1_);
-            addParameter(parse_,'null', false     ,validationFcn_2_);
+            addParameter(parse_,'null', false, validationFcn_2_);
             parse(parse_,varargin{:})
             if parse_.Results.null 
-                return
+                return;
             end
 
             if strcmp(parse_.Results.inputDataDir,'')
