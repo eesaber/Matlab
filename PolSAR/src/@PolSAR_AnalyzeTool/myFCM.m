@@ -1,4 +1,4 @@
-function [label, c] = myFCM (obj, x, clusterNum, max_iter)
+function [label, c] = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
@@ -17,30 +17,51 @@ function [label, c] = myFCM (obj, x, clusterNum, max_iter)
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
     
-    % Data 
+    % input arugument
+    switch nargin
+        case 4
+            subClusterNum  = 1;
+            algo = 'CFCM';
+        case 5
+            algo = 'CFCM';
+    end
+
+    % Algorithm parameters
 	N = size(x,1);
-    DIM = size(x,2);
-	c = zeros(clusterNum, DIM); % cluster centroid
+    rng(100)
 	u = rand(N, clusterNum); % initialzie membership matrix
     u = u./sum(u,2);
-    m = 2;
-    % Algorithm parameters
+    drg_m = 2;
+    drg_n = 2;
     epsilon = 1e-5;
     
-    [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon);
+    switch algo
+        case 'GFCM'
+            [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
+        case 'HFCM'
+            [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
+        case 'GHFCM'
+            [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
+        otherwise
+            [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
+    end
     [~, label] = max(u,[],2);
-	%label = reshape(label, obj.IMAGE_SIZE);
+    %label = reshape(label, obj.IMAGE_SIZE);
+    
 end
 
 %% Generalized FCM
-function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
+function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
+    N_DATA = size(x,1);
+    DIM = size(x,2);
 	window_size = 5;
     obf = 0; obf_prev = 0;
-    weight = zeros(N+1,window_size^2);
-    row = uint32(zeros(N+1,window_size^2));
+    c = zeros(clusterNum, DIM); % cluster centroid
+    weight = zeros(N_DATA+1,window_size^2);
+    row = uint32(zeros(N_DATA+1,window_size^2));
     x = [x; zeros(1,size(x,2))];
-    dim = size(x,2);
-    parfor it_n = 1 : N
+
+    parfor it_n = 1 : N_DATA
         [w, r] = spatialDist(obj, it_n, window_size);
         weight(it_n,:) = w;
         row(it_n,:) = r;
@@ -52,39 +73,39 @@ function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
 
         for it_c = 1 : clusterNum
             % Straight Forward
-            %{ 
+            %{
             dividend = 0; divisor = 0;
-            parfor it_n = 1 : N
+            parfor it_n = 1 : N_DATA
                 [w, r] = spatialDist(obj, it_n, window_size);
-                dividend= dividend + (u(it_n, it_c).^m) *sum(x(r,:).* ...
-                                           repmat(w.',[1,dim]), 1);
+                dividend= dividend + (u(it_n, it_c).^drg_m) *sum(x(r,:).* ...
+                                           repmat(w.',[1,DIM]), 1);
                 
-                divisor = divisor + sum(sum(w)*u(it_n, it_c).^m);
+                divisor = divisor + sum(sum(w)*u(it_n, it_c).^drg_m);
             end
             %}
             % Matrix version
             
-            div = repmat(t_w(:),[1, dim]).*x(t_r(:),:);
-            div = reshape(sum(reshape(div, window_size^2, [])), [], dim);
-            div = sum(repmat(u(:,it_c).^m,[1, dim]).*div, 1);
-			c(it_c,:) = div/sum((u(:,it_c).^m).*sum(weight(1:end-1,:),2));
+            div = repmat(t_w(:),[1, DIM]).*x(t_r(:),:);
+            div = reshape(sum(reshape(div, window_size^2, [])), [], DIM);
+            div = sum(repmat(u(:,it_c).^drg_m,[1, DIM]).*div, 1);
+			c(it_c,:) = div/sum((u(:,it_c).^drg_m).*sum(weight(1:end-1,:),2));
         end
 
         %% update membership (phase 1)
-        dist = pdist2(x,c,'euclidean'); % dist(i,j) is the distance
+        dist = pdist2(x,c,'euclidean').^2;; % dist(i,j) is the distance
                                         % between observation i in X 
                                         % and observation j in Y.
         % Straight forward
         %{
-        for it_n = 1 : N
+        for it_n = 1 : N_DATA
             [w, r] = spatialDist(obj, it_n, window_size);
             for it_c = 1 : clusterNum
                 % denominator
                 temp = 0;
                 for it_cc = 1 : clusterNum
-                    temp = temp + sum((w.*dist(r, it_cc)).^(1/(1-m)));
+                    temp = temp + sum((w.*dist(r, it_cc)).^(1/(1-drg_m)));
                 end
-                u(it_n, it_c) = sum(dist(r, it_c).*w).^(1/(1-m))/temp;
+                u(it_n, it_c) = sum(dist(r, it_c).*w).^(1/(1-drg_m))/temp;
             end
         end
         %}
@@ -92,7 +113,7 @@ function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
         for it_c = 1 : clusterNum
            div = t_w(:).*dist(t_r(:),it_c);
            u(:,it_c) = reshape(sum(reshape(div, window_size^2, [])),...
-                                    [], dim).^(1/(1-m));
+                                    [], DIM).^(1/(1-drg_m));
         end
         u = u./(repmat(sum(u,2), [1, clusterNum]));
 
@@ -101,18 +122,18 @@ function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
         for it_c = 1 : clusterNum
             temp = t_w(:).u(t_r(:),it_c);
             u(:,it_c) = reshape(sum(reshape(temp, window_size^2, [])),...
-                                    [], dim);
+                                    [], DIM);
         end
         u = u./(repmat(sum(u,2), [1, clusterNum]));
         
         % objective function
-        dist4obj = zeros(N,clusterNum);
+        dist4obj = zeros(N_DATA,clusterNum);
         for it_c = 1 : clusterNum
             temp = t_w(:).*dist(t_r(:),it_c);
             dist4obj(:,it_c) = reshape(sum(reshape(temp, window_size^2,...
-                                [])), [], dim);
+                                [])), [], DIM);
         end
-        obf = sum(sum(((u.^m).*dist4obj)));
+        obf = sum(sum(((u.^drg_m).*dist4obj)));
         if abs(obf-obf_prev) < epsilon
             break;
         end
@@ -122,29 +143,78 @@ function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
 end
 
 %% Hierarchical FCM
-function [u, c] = HFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
+function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
+    DIM = size(x,2);
+    N_DATA = size(x,1);
+    v = rand(N_DATA, subClusterNum, clusterNum); % v_{i,k,j}
+    v = v./repmat(sum(v,2),[1,subClusterNum,1]);
+    c = zeros(clusterNum,DIM,subClusterNum);
+    obf = 0; obf_prev = 0;
+    for it = 1 : max_iter
+        % update centroid
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                c(it_c,:,it_cc) = sum(x.*u(:,it_c).^drg_m...
+                        .*v(:,it_cc, it_c).^drg_n, 1);
+                c(it_c,:,it_cc) = c(it_c,:,it_cc)/...
+                    sum(u(:,it_c).^drg_m.*v(:,it_cc, it_c).^drg_n);
+            end
+        end
+        % calculate distance 
+        dist = zeros(N_DATA, subClusterNum, clusterNum);
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                dist(:,it_cc,it_c) = pdist2(x,c(it_c,:,it_cc),'euclidean').^2;
+            end
+        end
+        % update membership
+        for it_c = 1 : clusterNum
+            u(:,it_c) = squeeze(sum(v(:,:,it_c).*...
+                        dist(:,:,it_c),2)).^(1/(1-drg_m));
+        end
+        u = u./repmat(sum(u,2),[1,clusterNum]);
+        % update sub-membership
+        for it_c = 1 : clusterNum
+            v(:,:,it_c) = (repmat(u(:,it_c).^drg_m,[1, subClusterNum])...
+                    .*dist(:,:,it_c)).^drg_n;
+        end
+        v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
+        % objective function
+        obf = sum(sum(u.^drg_m.*squeeze(sum(v.^drg_n.*dist,2))));
+        fprintf('HFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
+        if it~=1 && ((obf-obf_prev)<epsilon)
+            break;
+        end
+        obf_prev = obf;
+    end
 end
 
 %% Generalized Hierarchical FCM
-function [u, c] = GHFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
+function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
+    obf = 0; obf_prev = 0;
+    for it = 1 : max_iter
+
+    end
 end
 
 %% Conventional FCM
-function [u, c] = CFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
-    obf = 0;
-    obf_prev = 0;
+function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
+    obf = 0; obf_prev = 0;
     halt = 0;
+    DIM = size(x,2);
+    c = zeros(clusterNum, DIM); % cluster centroid
+
     for it = 1 : max_iter
 		for it_c = 1 : clusterNum
-			c(it_c,:) = sum(x.*(u(:,it_c).^m), 1) ...
-				./sum(u(:,it_c).^m);
+			c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
+				./sum(u(:,it_c).^drg_m);
 		end
-        dist = pdist2(x,c,'euclidean');
-        temp = dist.^(1/(1-m));
+        dist = pdist2(x,c,'squaredeuclidean');
+        temp = dist.^(1/(1-drg_m));
         u = temp ./ repmat(sum(temp,2), [1, size(x, 2)]);
         u = u./sum(u,2);
-        obf = sum(sum((u.^m).*dist));
-		%fprintf('@Iteration count = %i, obj. fcn = %f \n', it, obf);
+        obf = sum(sum((u.^drg_m).*dist));
+		fprintf('CFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
         if abs(obf-obf_prev) < epsilon
             halt = halt+1;
             if halt> 3
