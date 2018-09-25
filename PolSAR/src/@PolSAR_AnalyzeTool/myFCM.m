@@ -52,7 +52,7 @@ function [u, c] = GFCM(obj, x, m, c, u, N, clusterNum, max_iter, epsilon)
 
         for it_c = 1 : clusterNum
             % Straight Forward
-            %{ 
+            %{
             dividend = 0; divisor = 0;
             parfor it_n = 1 : N
                 [w, r] = spatialDist(obj, it_n, window_size);
