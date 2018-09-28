@@ -28,12 +28,12 @@ function [label, c] = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
 
     % Algorithm parameters
 	N = size(x,1);
-    rng(100)
+    rng(5)
 	u = rand(N, clusterNum); % initialzie membership matrix
     u = u./sum(u,2);
     drg_m = 2;
     drg_n = 2;
-    epsilon = 1e-5;
+    epsilon = 1e-10;
     
     switch algo
         case 'GFCM'
@@ -149,13 +149,13 @@ function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_i
     v = rand(N_DATA, subClusterNum, clusterNum); % v_{i,k,j}
     v = v./repmat(sum(v,2),[1,subClusterNum,1]);
     c = zeros(clusterNum,DIM,subClusterNum);
-    obf = 0; obf_prev = 0;
+    obf = 0; obf_prev = 0; halt = 0;
     for it = 1 : max_iter
         % update centroid
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                c(it_c,:,it_cc) = sum(x.*u(:,it_c).^drg_m...
-                        .*v(:,it_cc, it_c).^drg_n, 1);
+                c(it_c,:,it_cc) = sum(repmat(u(:,it_c).^drg_m.*...
+                    v(:,it_cc, it_c).^drg_n, [1, DIM]).*x, 1);
                 c(it_c,:,it_cc) = c(it_c,:,it_cc)/...
                     sum(u(:,it_c).^drg_m.*v(:,it_cc, it_c).^drg_n);
             end
@@ -164,35 +164,93 @@ function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_i
         dist = zeros(N_DATA, subClusterNum, clusterNum);
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                dist(:,it_cc,it_c) = pdist2(x,c(it_c,:,it_cc),'euclidean').^2;
+                dist(:,it_cc,it_c) = pdist2(x,c(it_c,:,it_cc),'squaredeuclidean');
             end
         end
         % update membership
         for it_c = 1 : clusterNum
-            u(:,it_c) = squeeze(sum(v(:,:,it_c).*...
+            u(:,it_c) = squeeze(sum(v(:,:,it_c).^drg_n.*...
                         dist(:,:,it_c),2)).^(1/(1-drg_m));
         end
-        u = u./repmat(sum(u,2),[1,clusterNum]);
+        u = u./repmat(sum(u,2),[1,clusterNum]);       
         % update sub-membership
         for it_c = 1 : clusterNum
             v(:,:,it_c) = (repmat(u(:,it_c).^drg_m,[1, subClusterNum])...
-                    .*dist(:,:,it_c)).^drg_n;
+                    .*dist(:,:,it_c)).^(1/(1-drg_n));
         end
         v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
+        
         % objective function
         obf = sum(sum(u.^drg_m.*squeeze(sum(v.^drg_n.*dist,2))));
-        fprintf('HFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
-        if it~=1 && ((obf-obf_prev)<epsilon)
-            break;
+        %fprintf('HFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
+        if (obf-obf_prev)<epsilon
+            halt = halt+1;
+            if halt> 100
+                break;
+            end
         end
         obf_prev = obf;
     end
+    fprintf('HFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
 end
 
 %% Generalized Hierarchical FCM
 function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
+    N_DATA = size(x,1);
+    DIM = size(x,2);
+	window_size = 5;
     obf = 0; obf_prev = 0;
+    v = rand(N_DATA, subClusterNum, clusterNum);
+    v = v./repmat(sum(v,2),[1,subClusterNum,1]); % submembership 
+    c = zeros(clusterNum,DIM,subClusterNum); % cluster centroid
+    weight = zeros(N_DATA+1,window_size^2);
+    row = uint32(zeros(N_DATA+1,window_size^2));
+    x = [x; zeros(1, DIM)];
+
+    parfor it_n = 1 : N_DATA
+        [w, r] = spatialDist(obj, it_n, window_size);
+        weight(it_n,:) = w;
+        row(it_n,:) = r;
+    end    
+    weight = weight(1:end-1,:).';
+    row = row(1:end-1,:).';
+    
+    % Iteration 
     for it = 1 : max_iter
+        % update centroid
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                c(it_c,:,it_cc) = reshape(sum(reshape(x(row(:),:), ... 
+                        window_size^2,[])), [], DIM);
+                c(it_c,:,it_cc) = c(it_c,:,it_cc).*sum(u(:,it_c).^drg_m ...
+                        .*v(:,it_cc,it_c).^drg_n);
+                c(it_c,:,it_cc) = c(it_c,:,it_cc)/...
+                    sum(u(:,it_c).^drg_m.*v(:,it_cc, it_c).^drg_n);
+            end
+        end
+        % calculate distance 
+        dist = zeros(N_DATA+1, subClusterNum, clusterNum);
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                dist(1:end-1,it_cc,it_c) = pdist2(x(1:end-1,:), ...
+                        c(it_c,:,it_cc),'squaredeuclidean');
+            end
+        end
+        % update membership (phase 1)
+        for it_c = 1 : clusterNum
+            u(:,it_c) = (v(:,:,it_c).^n.*sum(weight(:).*dist(:,:it_c) )).^(1/(1-drg_m));
+        end
+        u = bsxfun(@rdivide, u, sum(u,2));
+        % update membership (phase 2)
+        temp = u;
+        for it_c = 1 : clusterNum
+            temp(:,it_c) = 
+        end
+        u = temp;
+        u = bsxfun(@rdivide, u, sum(u,2));
+        % update submembership (phase 1)
+
+        % update submembership (phase 2)
 
     end
 end
