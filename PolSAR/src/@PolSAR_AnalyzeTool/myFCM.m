@@ -1,17 +1,31 @@
-function [label, c] = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
+function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
-	%	* [label] = MYFCM(x, clusterNum, max_iter)
+	%  * [label] = MYFCM(x, clusterNum, max_iter)
+	%  * [label,c] = MYFCM(x, clusterNum, max_iter)
+	%  * [label,c,u] = MYFCM(x, clusterNum, max_iter)
 	%
     % Inputs:
-    %	* x           : Traing data
-    %	* clusterNum  : number of center of cluster.
-	%   * m           : m is fuzzy partition matrix exponent for controlling
-	%                   the degree of fuzzy overlap, with m > 1. Fuzzy overlap
-	%					refers to how fuzzy the boundaries between clusters 
-	%					are, that is the number of data points that have 
-	%				    significant membership in more than one cluster.
+    %  * x           : Data, specified as a numeric matrix. The rows of x 
+    %                  correspond to observations, and the columns correspond
+    %                  to variables.
+    %  * clusterNum  : Number of clusters in the data, specified as a positive
+    %                  integer.
+    %  * subClusterNum: Number of sub-clusters of a cluster, specified as a positive integer.
+    %  * max_iter    : Maximum number of iterations, specified as a positive integer.
+    %
+    % Outputs:
+    %  * label  : Final label of each observation, returened as a matrix with N
+    %             rows where N is the number of observation.
+    %  * c      : Cluster centers, returned as a matrix with clusterNum rows containing 
+    %             the coordinates of each cluster center.
+    %  * u      : Memebership matrix, or fuzzy partition matrix, returned as a matrix 
+    %             with N rows and clusterNum columns. 
+    %
+    % References:
+    % [1] Image segmentation by generalized hierarchical fuzzy C-means algorithm
+    %
     %------------- <<<<< >>>>>--------------
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
@@ -25,16 +39,24 @@ function [label, c] = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
         case 5
             algo = 'CFCM';
     end
+    minArgs=1;  
+    maxArgs=3;
+    nargoutchk(minArgs,maxArgs)
 
     % Algorithm parameters
 	N = size(x,1);
     rng(5)
-	u = rand(N, clusterNum); % initialzie membership matrix
+	u = rand(N, clusterNum); % membership matrix
     u = u./sum(u,2);
-    drg_m = 2;
-    drg_n = 2;
-    epsilon = 1e-10;
-    
+    drg_m = 2; % drg_m is fuzzy partition matrix exponent for controlling
+               % the degree of fuzzy overlap, with m > 1. Fuzzy overlap
+	           % refers to how fuzzy the boundaries between clusters 
+	           % are, that is the number of data points that have 
+	           % significant membership in more than one cluster.
+    drg_n = 2; 
+    epsilon = 1e-5;
+
+    % Execute fuzzy c-means clustering
     switch algo
         case 'GFCM'
             [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
@@ -45,9 +67,15 @@ function [label, c] = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
         otherwise
             [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
     end
+
+    % Output results
     [~, label] = max(u,[],2);
-    %label = reshape(label, obj.IMAGE_SIZE);
-    
+    if k>=1, varargout{1} = label;
+        if k>=2, varargout{2} = c;
+            if k>=3, varargout{3} = u;
+            end
+        end
+    end
 end
 
 %% Generalized FCM
@@ -199,7 +227,8 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
     N_DATA = size(x,1);
     DIM = size(x,2);
 	window_size = 5;
-    obf = 0; obf_prev = 0;
+    obf_prev = 0;
+    halt = 3;
     v = rand(N_DATA, subClusterNum, clusterNum);
     v = v./repmat(sum(v,2),[1,subClusterNum,1]); % submembership 
     c = zeros(clusterNum,DIM,subClusterNum); % cluster centroid
@@ -238,20 +267,54 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         end
         % update membership (phase 1)
         for it_c = 1 : clusterNum
-            u(:,it_c) = (v(:,:,it_c).^n.*sum(weight(:).*dist(:,:it_c) )).^(1/(1-drg_m));
+            u(:,it_c) = (v(:,:,it_c).^n.*sum(weight.* ...
+                reshape(dist(row(:),:,it_c), window_size^2,[]).',2)).^(1/(1-drg_m));
         end
         u = bsxfun(@rdivide, u, sum(u,2));
         % update membership (phase 2)
         temp = u;
         for it_c = 1 : clusterNum
-            temp(:,it_c) = 
+            temp(:,it_c) = sum(weight.* ...
+                reshape(u(row(:),it_c), window_size^2, []).',2);
         end
         u = temp;
         u = bsxfun(@rdivide, u, sum(u,2));
         % update submembership (phase 1)
-
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                v(:,it_cc,it_c) = (u(:,it_c).^drg_m.* ...
+                    sum(reshape(dist(row(:),it_c,it_cc), window_size^2, []).'.* ...
+                    weight, 2)).^drg_n;
+            end
+        end
+        v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
         % update submembership (phase 2)
-
+        temp = v;
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                temp(:, it_cc, it_c) = sum(weight.* ...
+                    reshape(v(row(:),it_cc, it_c), window_size^2, []).',2);
+            end
+        end
+        v = temp;
+        v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
+        % objective function 
+        obj = 0;
+        for it_c = 1 : clusterNum
+            for it_cc = 1 : subClusterNum
+                obj = obj + sum(u(:,it_c).^drg_m.*squeeze( ...
+                    sum(v(:,it_cc,it_c).^drg_n.*sum(weight.* ... 
+                    reshape(dist(row(:),it_cc,it_c), window_size^2, []).',2),2)));
+            end
+        end
+        %fprintf('GHFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
+        if abs(obf-obf_prev) < epsilon
+            halt = halt+1;
+            if halt> 3
+                break;
+            end
+        end
+        obf_prev = obf;
     end
 end
 
