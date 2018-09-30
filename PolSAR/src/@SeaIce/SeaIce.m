@@ -53,8 +53,8 @@ classdef SeaIce < PolSAR_AnalyzeTool
         end
 
         function imageKCluster(obj, nColors)
-            creatLogCumulantRGB(obj);
             temp = imageKCluster@PolSAR_AnalyzeTool(obj, obj.im, nColors);
+            creatLogCumulantRGB(obj);
             %obj.y_hat = padarray(temp, [1,1], -1,'both');
             obj.y_hat = temp;
         end

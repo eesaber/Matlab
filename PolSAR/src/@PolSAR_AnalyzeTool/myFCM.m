@@ -64,15 +64,17 @@ function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
             [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
         case 'GHFCM'
             [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
-        otherwise
+        case 'CFCM'
             [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
+        otherwise
+            error('Incorrect algorithm name.')
     end
 
     % Output results
     [~, label] = max(u,[],2);
-    if k>=1, varargout{1} = label;
-        if k>=2, varargout{2} = c;
-            if k>=3, varargout{3} = u;
+    if nargout>=1, varargout{1} = label;
+        if nargout>=2, varargout{2} = c;
+            if nargout>=3, varargout{3} = u;
             end
         end
     end
@@ -226,37 +228,35 @@ end
 function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
     N_DATA = size(x,1);
     DIM = size(x,2);
-	window_size = 5;
+	window_size = 3;
     obf_prev = 0;
     halt = 3;
     v = rand(N_DATA, subClusterNum, clusterNum);
     v = v./repmat(sum(v,2),[1,subClusterNum,1]); % submembership 
     c = zeros(clusterNum,DIM,subClusterNum); % cluster centroid
-    weight = zeros(N_DATA+1,window_size^2);
-    row = uint32(zeros(N_DATA+1,window_size^2));
+    weight = zeros(window_size^2,N_DATA);
+    row = uint32(zeros(window_size^2,N_DATA));
     x = [x; zeros(1, DIM)];
 
     parfor it_n = 1 : N_DATA
         [w, r] = spatialDist(obj, it_n, window_size);
-        weight(it_n,:) = w;
-        row(it_n,:) = r;
-    end    
-    weight = weight(1:end-1,:).';
-    row = row(1:end-1,:).';
+        weight(:,it_n) = w;
+        row(:,it_n) = r;
+    end
     
     % Iteration 
     for it = 1 : max_iter
         % update centroid
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                c(it_c,:,it_cc) = reshape(sum(reshape(x(row(:),:), ... 
-                        window_size^2,[])), [], DIM);
-                c(it_c,:,it_cc) = c(it_c,:,it_cc).*sum(u(:,it_c).^drg_m ...
-                        .*v(:,it_cc,it_c).^drg_n);
+                temp = squeeze(sum(reshape(x(row(:),:),window_size^2,[],DIM),1));
+                c(it_c,:,it_cc) = sum(u(:,it_c).^drg_m ...
+                        .*v(:,it_cc,it_c).^drg_n.*temp);
                 c(it_c,:,it_cc) = c(it_c,:,it_cc)/...
                     sum(u(:,it_c).^drg_m.*v(:,it_cc, it_c).^drg_n);
             end
         end
+        clear temp
         % calculate distance 
         dist = zeros(N_DATA+1, subClusterNum, clusterNum);
         for it_c = 1 : clusterNum
@@ -267,45 +267,46 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         end
         % update membership (phase 1)
         for it_c = 1 : clusterNum
-            u(:,it_c) = (v(:,:,it_c).^n.*sum(weight.* ...
-                reshape(dist(row(:),:,it_c), window_size^2,[]).',2)).^(1/(1-drg_m));
+            u(:,it_c) = sum((v(:,:,it_c).^drg_n.* ...
+                reshape(sum(repmat(weight,[1,subClusterNum]).* ...
+                    reshape(dist(row(:),:,it_c), window_size^2,[]),1),...
+                    [],subClusterNum)),2).^(1/(1-drg_m));
         end
         u = bsxfun(@rdivide, u, sum(u,2));
         % update membership (phase 2)
-        temp = u;
+        temp = [u; zeros(1,clusterNum)];
         for it_c = 1 : clusterNum
-            temp(:,it_c) = sum(weight.* ...
-                reshape(u(row(:),it_c), window_size^2, []).',2);
+            u(:,it_c) = sum(weight.* ...
+                reshape(temp(row(:),it_c), window_size^2, []),1);
         end
-        u = temp;
         u = bsxfun(@rdivide, u, sum(u,2));
+        clear temp
         % update submembership (phase 1)
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
                 v(:,it_cc,it_c) = (u(:,it_c).^drg_m.* ...
-                    sum(reshape(dist(row(:),it_c,it_cc), window_size^2, []).'.* ...
-                    weight, 2)).^drg_n;
+                    sum(reshape(dist(row(:),it_cc,it_c),window_size^2,[]).* ...
+                    weight, 1).').^(1/(1-drg_n));
             end
         end
         v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
         % update submembership (phase 2)
-        temp = v;
+        temp = cat(1,v,zeros(1,subClusterNum,clusterNum));
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                temp(:, it_cc, it_c) = sum(weight.* ...
-                    reshape(v(row(:),it_cc, it_c), window_size^2, []).',2);
+                v(:, it_cc, it_c) = sum(weight.* ...
+                    reshape(temp(row(:),it_cc, it_c), window_size^2, []),1);
             end
         end
-        v = temp;
+        clear temp
         v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
         % objective function 
-        obj = 0;
-        for it_c = 1 : clusterNum
-            for it_cc = 1 : subClusterNum
-                obj = obj + sum(u(:,it_c).^drg_m.*squeeze( ...
-                    sum(v(:,it_cc,it_c).^drg_n.*sum(weight.* ... 
-                    reshape(dist(row(:),it_cc,it_c), window_size^2, []).',2),2)));
-            end
+        obf = 0;
+        for it_c = 1 : clusterNum            
+            obf = obf + sum(u(:,it_c).^drg_m.*sum(v(:,:,it_c).^drg_n.* ...
+                reshape(sum(repmat(weight,[1,subClusterNum]).* ... 
+                reshape(dist(row(:),:,it_c), window_size^2, []),1), ...
+                [], subClusterNum),2));
         end
         %fprintf('GHFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
         if abs(obf-obf_prev) < epsilon
@@ -331,11 +332,10 @@ function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
 				./sum(u(:,it_c).^drg_m);
 		end
         dist = pdist2(x,c,'squaredeuclidean');
-        temp = dist.^(1/(1-drg_m));
-        u = temp ./ repmat(sum(temp,2), [1, size(x, 2)]);
-        u = u./sum(u,2);
+        u = dist.^(1/(1-drg_m));
+        u = u./repmat(sum(u,2),[1, clusterNum]);
         obf = sum(sum((u.^drg_m).*dist));
-		fprintf('CFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
+		%fprintf('CFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
         if abs(obf-obf_prev) < epsilon
             halt = halt+1;
             if halt> 3
@@ -360,9 +360,9 @@ function [weight, row_n] = spatialDist(obj, n_1, window_size)
 	box = -(window_size-1)/2:1:(window_size-1)/2;
 	[X,Y] = meshgrid(box,box);
 	% obtain the index of the center of the windows.
-	[row_, col_]= idx2nm(obj, n_1); % idx = (row, col)
+	[row_, col_]= idx2nm(obj, n_1); 
 	% obtain the index inside windows
-	idx = [col_+X(:), row_+Y(:)]; 
+	idx = [row_+Y(:), col_+X(:)]; % idx = (row, col)
     
 	% exclude the elements which is not in the matrix
 	idx = idx(( (idx(:,1)<=0)+(idx(:,1)>obj.IMAGE_SIZE(1))+...
