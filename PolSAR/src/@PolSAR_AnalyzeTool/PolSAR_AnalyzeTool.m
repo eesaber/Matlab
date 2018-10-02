@@ -74,12 +74,13 @@ classdef PolSAR_AnalyzeTool < handle
         % class function declearation
         readPolsarData(obj);
         %
-        [kai_1, kai_2, kai_3, kai_4] = logCumulant(obj)
+        varargout = logCumulant(obj)
         logCumulantDiagram(obj, kai_2, kai_3)
         [X] = HMRF(obj, im, labels, nColors)
         [labels] = imageKCluster(obj, im, nColors)
         showLabels(obj, labels, nColors)
         varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo);
+        varargout = mySVM(obj, x);
         %
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         pauliDecomposition(obj, varargin)
