@@ -58,12 +58,12 @@ x_c.logCumulant();
 %x_480.logCumulantDiagram(kai_2, kai_3)
 %% K-means Classfication
 nColors = 3;
-if 1
+if 0
     disp('Appling k-means clustering to x_a')
     x_a.imageKCluster(nColors)
-    x_b.showLabels(x_b.y_hat, nColors)
+    x_a.showLabels(x_a.y_hat, nColors)
 end
-if 1
+if 0
     disp('Appling k-means clustering to x_b')
     x_b.imageKCluster(nColors)
     x_b.showLabels(x_b.y_hat, nColors)
@@ -75,15 +75,79 @@ if 1
 end
 
 %% Make old ice to 3 and new ice to 1
-%{
-label = x_c.y_hat;
+
 temp = x_c.y_hat;
-labels(temp == 1) = 3;
-labels(temp == 2) = 1;
-labels(temp == 3) = 2;
+x_c.y_hat(temp == 1) = 2;
+x_c.y_hat(temp == 2) = 1;
+
 clear temp
-showLabels(x, labels, nColors-1)
-%}
+x_c.showLabels(x_c.y_hat, nColors)
+
 %% Hidden Markove random fields 
-x_c.HMRF(nColors);
-x_c.showLabels(x_c.y_hat_MRF, nColors)
+if 0
+    disp('Appling HMRF to x_a')
+    x_a.HMRF(nColors);
+    x_a.showLabels(x_a.y_hat_MRF, nColors)
+end
+if 1
+    disp('Appling HMRF to x_b')
+    x_b.HMRF(nColors);
+    x_b.showLabels(x_b.y_hat_MRF, nColors-1)
+end
+if 1
+    disp('Appling HMRF to x_c')
+    x_c.HMRF(nColors);
+    x_c.showLabels(x_c.y_hat_MRF, nColors-1)
+end
+%% Image B
+
+old = 10*log10(y_b.vv_vv)>-12;
+mask = zeros(size(y_b.vv_vv));
+mask(2:end-1,2:end-1) = 1;
+mask = mask.*(~isinf(10*log10(y_b.vv_vv)));
+nPixel = sum(sum(mask));
+% Without HMRF
+Tt = sum(sum( ((x_b.y_hat==3) + (x_b.y_hat==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (x_b.y_hat==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((x_b.y_hat==3) + (x_b.y_hat==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (x_b.y_hat==1).*(old).*mask))/nPixel;
+fprintf('Before MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+% With HMRF
+Tt = sum(sum( ((x_b.y_hat_MRF==3) + (x_b.y_hat_MRF==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (x_b.y_hat_MRF==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((x_b.y_hat_MRF==3) + (x_b.y_hat_MRF==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (x_b.y_hat_MRF==1).*(old).*mask))/nPixel;
+fprintf('After MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+
+%% Image C
+% Possible frost flower
+c = [3613,4376,4492,4573,4608,4608,4527,4117];
+r = [1,95,131,124,133,96,66,1];
+ROI_frost = ~roipoly(ones(x_c.IMAGE_SIZE),c,r);
+
+old = 10*log10(y_c.vv_vv)>-12;
+mask = zeros(size(y_c.vv_vv));
+mask(2:end-1,2:end-1) = 1;
+mask = mask.*(~isinf(10*log10(y_c.vv_vv)));
+nPixel = sum(sum(mask));
+% Without HMRF
+Tt = sum(sum( ((x_c.y_hat==3) + (x_c.y_hat==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (x_c.y_hat==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((x_c.y_hat==3) + (x_c.y_hat==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (x_c.y_hat==1).*(old).*mask))/nPixel;
+fprintf('Before MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+% Without HMRF mask forst flower
+mask = ROI_frost.*mask;
+nPixel = sum(sum(mask));
+Tt = sum(sum( ((x_c.y_hat==3) + (x_c.y_hat==2)).*(old).*mask))/nPixel;
+Ff = sum(sum( (x_c.y_hat==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((x_c.y_hat==3) + (x_c.y_hat==2)).*(~old).*mask))/nPixel;
+tF = sum(sum( (x_c.y_hat==1).*(old).*mask))/nPixel;
+fprintf('Before MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+
+% With HMRF
+Tt = sum(sum( ((x_c.y_hat_MRF==3) ).*(old).*mask))/nPixel;
+Ff = sum(sum( (x_c.y_hat_MRF==1).*(~old).*mask))/nPixel;
+Tf = sum(sum( ((x_c.y_hat_MRF==3) ).*(~old).*mask))/nPixel;
+tF = sum(sum( (x_c.y_hat_MRF==1).*(old).*mask))/nPixel;
+fprintf('After MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
