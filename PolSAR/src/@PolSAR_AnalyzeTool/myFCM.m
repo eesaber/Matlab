@@ -1,4 +1,4 @@
-function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
+function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo, drg_n, drg_m)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
@@ -45,15 +45,17 @@ function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo)
 
     % Algorithm parameters
 	N = size(x,1);
-    rng(1)
+    rng(3)
 	u = rand(N, clusterNum); % membership matrix
     u = u./sum(u,2);
-    drg_m = 2; % drg_m is fuzzy partition matrix exponent for controlling
+    if nargin < 6
+    drg_m = 1.5; % drg_m is fuzzy partition matrix exponent for controlling
                % the degree of fuzzy overlap, with m > 1. Fuzzy overlap
 	           % refers to how fuzzy the boundaries between clusters 
 	           % are, that is the number of data points that have 
 	           % significant membership in more than one cluster.
-    drg_n = 2; 
+    drg_n = 5; 
+    end
     epsilon = 1e-5;
 
     % Execute fuzzy c-means clustering
@@ -181,9 +183,7 @@ function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_i
         %fprintf('HFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
         if (obf-obf_prev)<epsilon
             halt = halt+1;
-            if halt> 100
-                break;
-            end
+            if halt> 3, break; end
         end
         obf_prev = obf;
     end
@@ -214,12 +214,11 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         % update centroid
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                % original 
-                
-                temp = squeeze(sum(reshape(x(row(:),:),window_size^2,[],DIM),1));
-                temp = temp./repmat(sum(weight~=0,1).',[1,DIM]);
+                % original                 
                 c(it_cc,:,it_c) = sum(repmat(u(:,it_c).^drg_m.* ...
-                        v(:,it_cc,it_c).^drg_n, [1, DIM]).*temp,1);
+                    v(:,it_cc,it_c).^drg_n, [1, DIM]).*...
+                    squeeze(sum(reshape(x(row(:),:),window_size^2,[],DIM),1))...
+                    ./repmat(sum(weight~=0,1).',[1,DIM]),1);
                 c(it_cc,:,it_c) = c(it_cc,:,it_c)/...
                     sum(u(:,it_c).^drg_m.*v(:,it_cc, it_c).^drg_n);
                 %{
@@ -240,7 +239,7 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
                 dis(1:end-1,it_cc,it_c) = pdist2(x(1:end-1,:), ...
-                    c(it_cc,:,it_c),'squaredeuclidean');
+                    c(it_cc,:,it_c),'chebychev');
             end
         end
 
@@ -320,7 +319,7 @@ function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
 			c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
 				./sum(u(:,it_c).^drg_m);
 		end
-        dist = pdist2(x,c,'squaredeuclidean');
+        dist = pdist2(x,c,'chebychev');
         u = dist.^(1/(1-drg_m));
         u = u./repmat(sum(u,2),[1, clusterNum]);
         obf = sum(sum((u.^drg_m).*dist));

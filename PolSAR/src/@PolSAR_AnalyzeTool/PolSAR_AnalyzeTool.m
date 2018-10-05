@@ -79,8 +79,9 @@ classdef PolSAR_AnalyzeTool < handle
         [X] = HMRF(obj, im, labels, nColors)
         [labels] = imageKCluster(obj, im, nColors)
         showLabels(obj, labels, nColors)
-        varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo);
+        varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_n, drg_m);
         varargout = mySVM(obj, x);
+        y = myMaxPooling(obj, x, r_size, c_size);
         %
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         pauliDecomposition(obj, varargin)
