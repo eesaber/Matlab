@@ -79,7 +79,7 @@ classdef PolSAR_AnalyzeTool < handle
         [X] = HMRF(obj, im, labels, nColors)
         [labels] = imageKCluster(obj, im, nColors)
         showLabels(obj, labels, nColors)
-        varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_n, drg_m);
+        varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_m, drg_n);
         varargout = mySVM(obj, x);
         y = myMaxPooling(obj, x, r_size, c_size);
         %

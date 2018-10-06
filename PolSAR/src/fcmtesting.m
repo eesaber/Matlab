@@ -14,8 +14,8 @@ pol_ang = x_c.getPolAngle([-30 30]);
 
 %% input image tuning
 %2D Maxpooling
-poolang = my_maxpool(abs(pol_ang),9,15);
-poolang = imgaussfilt(imresize(poolang,obj.IMAGE_SIZE,'nearest'),3);
+poolang = x_c.myMaxPooling(abs(pol_ang),9,15);
+poolang = imgaussfilt(imresize(poolang,x_c.IMAGE_SIZE,'nearest'),3);
 input_opt = 2;
 switch input_opt
     case 1
@@ -33,7 +33,7 @@ end
 %% Test sigle algorithm
 algo = 'GHFCM';
 tic 
-[labels, c, u] = x_c.myFCM(double(im),4,20,10,algo,2,2);
+[labels, c, u] = x_c.myFCM(double(im),4,600,2,algo,1.5,2);
 toc
 
 figure('name','c=4,subc=10,m=1.5,n=5')
@@ -41,9 +41,10 @@ imagesc(reshape(labels,x_c.IMAGE_SIZE))
 set(gca,'Ydir','normal')
 
 %% Grid searching fuzzy parameters
+algo = 'GHFCM';
 for drg_m = [1.5, 3, 4]
     for drg_n = [1.5, 3, 4]
-        [labels, c, u] = x_c.myFCM(double(im),5,50,10,algo,drg_n,drg_m);
+        [labels, c, u] = x_c.myFCM(double(im),5,50,10,algo,drg_m,drg_n);
         figure
         imagesc(reshape(labels,x_c.IMAGE_SIZE))
         set(gca,'Ydir','normal')
@@ -52,28 +53,13 @@ for drg_m = [1.5, 3, 4]
 end
 
 %% Grid searching number of cluster center 
-max_iter = 1;
+max_iter = 1000;
 im_size = x_c.IMAGE_SIZE;
-for num_c = 3 : 5
-    for num_subc = 2 : 3
-        g_name = ['(',num2str(num_c),')'];
-        tic
-            labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'CFCM',2,2);
-            figure('name',['fcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['fcm_',g_name],'-djpeg','-noui','-r300')
-        toc
+parfor num_c = 3 : 6
 
-        labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'GFCM',2,2);
-        tic 
-            figure('name',['gfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['gfcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-        %
-        g_name = ['(',num2str(num_c),',3)'];
+    for num_subc = 2 : 2
+        g_name = ['(',num2str(num_c),',',num2str(num_subc),')'];
+    %{
         tic 
             labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'HFCM',2,2);
             figure('name',['hfcm', g_name])
@@ -81,6 +67,7 @@ for num_c = 3 : 5
             set(gca,'Ydir','normal')
             print(['hfcm_',g_name],'-djpeg','-noui','-r300')
         toc
+    %} 
         tic
             labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'GHFCM',2,2);
             figure('name',['ghfcm', g_name])
@@ -89,6 +76,24 @@ for num_c = 3 : 5
             print(['ghfcm_',g_name],'-djpeg','-noui','-r300')
         toc
     end
+        g_name = ['(',num2str(num_c),')'];
+    %{
+        tic
+            labels = x_c.myFCM(double(im),num_c,max_iter,0,'CFCM',2,2);
+            figure('name',['fcm', g_name])
+            imagesc(reshape(labels,im_size))
+            set(gca,'Ydir','normal')
+            print(['fcm_',g_name],'-djpeg','-noui','-r300')
+        toc
+    %}
+        labels = x_c.myFCM(double(im),num_c,max_iter,0,'GFCM',2,2);
+        tic 
+            figure('name',['gfcm', g_name])
+            imagesc(reshape(labels,im_size))
+            set(gca,'Ydir','normal')
+            print(['gfcm_',g_name],'-djpeg','-noui','-r300')
+        toc    
+    
 end
 %% History 
 %{

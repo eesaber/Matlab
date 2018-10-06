@@ -1,4 +1,4 @@
-function varargout = myFCM (obj, x, clusterNum, max_iter, subClusterNum, algo, drg_n, drg_m)
+function varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_m, drg_n)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
