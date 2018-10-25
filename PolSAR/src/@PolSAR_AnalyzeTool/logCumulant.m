@@ -17,6 +17,11 @@ function varargout = logCumulant(obj)
     %    mu_1  - First order log-cumulants.
     %    kai_2 - Second order log-cumulants.
     %    kai_3 - Third order log-cumulants.
+    % 
+    % Reference:
+    %    [1] A mixture model for multilook polarimetic SAR data
+    %    [2] Introduction to second kind statistics: Application of log-moments and 
+    %        log-cumulants to the analysis of radar image distribution
     %
     % Other m-files required: none
     % Subfunctions: none
@@ -79,11 +84,7 @@ function varargout = logCumulant(obj)
         - 10*mu_3.^2 + 120*mu_1.*mu_2.*mu_3 - 120*mu_1.^3.*mu_3 ...
         + 30*mu_2.^3 - 270*mu_1.^2.*mu_2.^2 + 360*mu_1.^4.*mu_2 - 120*mu_1.^6;
     showIm(obj, mu_1, kai_2, kai_3) % Display RGB image
-    % showIm(obj, mu_1, kai_2, kai_4) % Display RGB image
-    % showIm(obj, mu_1, kai_3, kai_4) % Display RGB image
-    % showIm(obj, kai_2, kai_3, kai_4) % Display RGB image
-    
-    % showIm(obj, mu_1, kai_2, kai_3) % Display RGB image
+   
     if nargout>=1, varargout{1} = mu_1;
         if nargout>=2, varargout{2} = kai_2;
             if nargout>=3, varargout{3} = kai_3;

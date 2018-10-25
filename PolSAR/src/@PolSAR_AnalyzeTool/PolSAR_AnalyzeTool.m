@@ -80,7 +80,7 @@ classdef PolSAR_AnalyzeTool < handle
         [labels] = imageKCluster(obj, im, nColors)
         showLabels(obj, labels, nColors)
         varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_m, drg_n);
-        varargout = mySVM(obj, x);
+        varargout = mySVM(obj, x, y);
         y = myMaxPooling(obj, x, r_size, c_size);
         %
         [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
@@ -100,7 +100,7 @@ classdef PolSAR_AnalyzeTool < handle
         paraRatioVVHH(obj, x, y)
         paraRoughness1(obj, x, y)
         paraRoughness2(obj, x, y)
-        paraCoPolCorrelation(obj, x, y)
+        co_pol = paraCoPolCorrelation(obj, x, y)
         %
         geocode(obj)
     end

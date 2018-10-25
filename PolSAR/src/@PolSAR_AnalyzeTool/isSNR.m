@@ -41,7 +41,9 @@ function isSNR(obj, NESZ, varargin)
         figure
         imagesc(10*log10(obj.vv_vv)-NESZ>6)
         %title('\sigma_{vv}')
+        obj.plotSetting([0,1])
         colormap gray
+        colorbar off
         plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/SNR_sigma_vv'])
     end
     if parse_.Results.hh
