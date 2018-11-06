@@ -1,4 +1,4 @@
-function varargout = mySVM(obj, x)
+function varargout = mySVM(obj, x, y)
     % MYSVM use LIBSVM [1] to do the PolSAR classification
     %
     % Syntax:
@@ -17,23 +17,31 @@ function varargout = mySVM(obj, x)
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
-    [heart_scale_label, heart_scale_inst] = libsvmread('../heart_scale');
-
+    
+    dim = size(x,3);
     % Split Data
-    train_data = heart_scale_inst(1:150,:);
-    train_label = heart_scale_label(1:150,:);
-    test_data = heart_scale_inst(151:270,:);
-    test_label = heart_scale_label(151:270,:);
-
-    % Linear Kernel
-    model_linear = svmtrain(train_label, train_data, '-t 0');
-    [predict_label_L, accuracy_L, dec_values_L] = svmpredict(test_label, test_data, model_linear);
-
-    % Precomputed Kernel
-    model_precomputed = svmtrain(train_label, [(1:150)', train_data*train_data'], '-t 4');
-    [predict_label_P, accuracy_P, dec_values_P] = svmpredict(test_label, [(1:120)', test_data*train_data'], model_precomputed);
-
-    accuracy_L % Display the accuracy using linear kernel
-    accuracy_P % Display the accuracy using precomputed kernel
+    train_data = reshape(x(:,1501:end,:),[],dim);
+    train_label = reshape(y(:,1501:end),[],1);
+    test_data = reshape(x(:,1:1500,:),[],dim);
+    test_label =  reshape(y(:,1:1500),[],1);
+    % sampling
+    rng(1)
+    p = randperm(size(train_data,1),80000);
+    
+    % Radial Kernel
+    disp('SVM training...')
+    tic
+    model_linear = svmtrain(train_label(p), train_data(p,:), '-s 0 -t 2 -g 10 -c 100 -e 0.1');
+    [predict_label_L, accuracy_L, dec_values_L] = ...
+    svmpredict(test_label, test_data, model_linear);
+    toc
+    fprintf('Test case accuracy: %f \n', accuracy_L) % Display the accuracy using linear kernel
+    % Output results
+    disp('SVM predicting...')
+    label = svmpredict([test_label; train_label], [test_data; train_data], model_linear);
+    disp('Session over..')
+    if nargout>=1
+        varargout{1} = label;
+    end
 
 end

@@ -1,7 +1,6 @@
-clc; clear;
-
+clear; clc
 %% Data 
-plotSetting = @ Plotsetting_dummy;
+plotSetting = @ Plotsetting_seaice;
 fin = [repmat('/media/akb/2026EF9426EF696C/raw_data/20070426/',3,1) ...
          ['ALPSRP066691430-L1.1/T3';...
           'ALPSRP066691460-L1.1/T3';...
@@ -56,6 +55,9 @@ x_c.logCumulant();
 %x_430.logCumulantDiagram(kai_2, kai_3)
 %x_460.logCumulantDiagram(kai_2, kai_3)
 %x_480.logCumulantDiagram(kai_2, kai_3)
+%%
+x_b.cov2coh();
+pol_ang = x_b.getPolAngle([-30 30]);
 %% K-means Classfication
 nColors = 3;
 if 0
@@ -151,3 +153,6 @@ Ff = sum(sum( (x_c.y_hat_MRF==1).*(~old).*mask))/nPixel;
 Tf = sum(sum( ((x_c.y_hat_MRF==3) ).*(~old).*mask))/nPixel;
 tF = sum(sum( (x_c.y_hat_MRF==1).*(old).*mask))/nPixel;
 fprintf('After MRF:\n%f, %f\n%f ,%f \n', Tt, Tf, tF, Ff);
+%%
+image = cat(3,x_c.hh_hh, x_c.hv_hv, x_c.vv_vv, real(x_c.hh_hv),imag(x_c.hh_hv),...
+    real(x_c.hh_vv), imag(x_c.hh_vv), real(x_c.hv_vv), imag(x_c.hv_vv));

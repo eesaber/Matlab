@@ -1,11 +1,11 @@
 
 clc; clear;
-plotSetting = @ Plotsetting_dummy;
+plotSetting = @ Plotsetting_seaice;
 %%
 winter = '/media/akb/2026EF9426EF696C/raw_data/20070426/ALPSRP066691460-L1.1/T3'; % 420~540
-advance_melt = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921500-L1.1/T3'; % 500~520
+advance_melt = '/media/akb/2026EF9426EF696C/raw_data/20090811/ALPSRP188921510-L1.1/T3'; % 500~520
 fin = advance_melt ;
-fout = '/home/akb/Code/Matlab/PolSAR/output/20090811/500';
+fout = '/home/akb/Code/Matlab/PolSAR/output/20090811/510';
 x = PolSAR_AnalyzeTool([624 4608],'ALOS PALSAR', plotSetting,...
     'inputDataDir', fin,  'outputDataDir', fout); % [#col, #row]
 
@@ -35,11 +35,11 @@ if 1
     im = cat(3, reshape(intensityMapping(kai_1,'Bit','uint16'), size(kai_1)),...
         reshape(intensityMapping(kai_2,'Bit','uint16'), size(kai_2)), ...
         reshape(intensityMapping(kai_3,'Bit','uint16'), size(kai_3)));
-    im = im(2:end-1,3:end-2,:);
+    im = im(2:end-1, 2:end-1);
 else
-    R = kai_1(2:end-1,3:end-2);
-    G = kai_2(2:end-1,3:end-2);
-    B = kai_3(2:end-1,3:end-2);
+    R = kai_1(2:end-1, 2:end-1);
+    G = kai_2(2:end-1, 2:end-1);
+    B = kai_3(2:end-1, 2:end-1);
     im = cat(3, reshape(intensityMapping(R,'Bit','uint16'), size(R)),...
         reshape(intensityMapping(G,'Bit','uint16'), size(G)), ...
         reshape(intensityMapping(B,'Bit','uint16'), size(B)));
@@ -48,7 +48,7 @@ end
 
 y_hat = imageKCLuster(x, im, nColors);
 %%
-labels = padarray(y_hat, [1,2], -1,'both');
+labels = padarray(y_hat, [1,1], -1,'both');
 showLabels(x, labels, nColors)
 
 %% Make old ice to 3 and new ice to 1
@@ -62,11 +62,11 @@ clear temp
 showLabels(x, labels, nColors-1)
 
 %% Hidden Markove random fields 
-temp = labels(2:end-1,3:end-2);
+temp = labels(2:end-1, 2:end-1);
 y_hatMRF = uint8(HMRF(x, im, temp , nColors-1));
 clear temp;
 %%
-labels_MRF = padarray(y_hatMRF, [1,2], -1,'both');
+labels_MRF = padarray(y_hatMRF, [1,1], -1,'both');
 showLabels(x, labels_MRF, nColors)
 %%
 temp = labels_MRF;

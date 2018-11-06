@@ -40,7 +40,7 @@ function texture = myGLCM(im, f_row, f_col)
     end
 
     %% Pad the boarder as 
-    f = @(x) padarray(x,floor(FILTER_SIZE/2),'replicate','both');
+    f = @(x) padarray(x,ceil(FILTER_SIZE/2),'replicate','both');
     texture = f(texture_meanfirst);
     %%
     prop = {'Contrast','Correlation','Energy','Homogeneity'};

@@ -44,6 +44,7 @@ function isSNR(obj, NESZ, varargin)
         obj.plotSetting([0,1])
         colormap gray
         colorbar off
+        set(gca,'Visible','on')
         plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/SNR_sigma_vv'])
     end
     if parse_.Results.hh

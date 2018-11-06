@@ -1,4 +1,4 @@
-function varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, drg_m, drg_n)
+function varargout = myFCM(obj, x, varargin)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
@@ -31,43 +31,49 @@ function varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, dr
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
     
-    % input arugument
-    switch nargin
-        case 4
-            subClusterNum  = 1;
-            algo = 'CFCM';
-        case 5
-            algo = 'CFCM';
-    end
-    minArgs=1;  
+    %% Parse input/output arguments
+    % parse input arguments
+    p_ = inputParser;
+    validationFcn_1_ = @(x) validateattributes(x,{'int32'},{'scalar'});
+    validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{'scalar'});
+    validationFcn_3_ = @(x) validateattributes(x,{'char'},{'nonempty'});
+    validationFcn_4_ = @(x) validateattributes(x,{'char','function_handle'},{'nonempty'});
+    addParameter(p_,'clusterNum', 4,validationFcn_1_);
+    addParameter(p_,'subClusterNum', 0,validationFcn_1_);
+    addParameter(p_,'max_iter', 100,validationFcn_1_);
+    addParameter(p_,'drg_m', 2,validationFcn_2_);
+    addParameter(p_,'drg_n', 2,validationFcn_2_);
+    addParameter(p_,'algo', 'CFCM',validationFcn_3_);
+    addParameter(p_,'distance', 'squaredeuclidean',validationFcn_4_);
+    parse(p_,varargin{:})
+    p_ = p_.Results;
+    % parse output arguments
+    minArgs=1;
     maxArgs=3;
     nargoutchk(minArgs,maxArgs)
 
-    % Algorithm parameters
+    %% Algorithm parameters
+    % drg_m is fuzzy partition matrix exponent for controlling
+    % the degree of fuzzy overlap, with m > 1. Fuzzy overlap
+    % refers to how fuzzy the boundaries between clusters 
+    % are, that is the number of data points that have 
+    % significant membership in more than one cluster.
 	N = size(x,1);
     rng(3)
-	u = rand(N, clusterNum); % membership matrix
+	u = rand(N, p_.clusterNum); % membership matrix
     u = u./sum(u,2);
-    if nargin < 6
-    drg_m = 1.5; % drg_m is fuzzy partition matrix exponent for controlling
-               % the degree of fuzzy overlap, with m > 1. Fuzzy overlap
-	           % refers to how fuzzy the boundaries between clusters 
-	           % are, that is the number of data points that have 
-	           % significant membership in more than one cluster.
-    drg_n = 5; 
-    end
-    epsilon = 1e-5;
+    epsilon = 1e-10;
 
-    % Execute fuzzy c-means clustering
-    switch algo
+    %% Execute fuzzy c-means clustering
+    switch p_.algo
         case 'GFCM'
-            [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
+            [u, c] = GFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance);
         case 'HFCM'
-            [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
+            [u, c] = HFCM(obj, x, u, p_.drg_m, p_.drg_n, p_.clusterNum, p_.subClusterNum, p_.max_iter, epsilon, p_.distance);
         case 'GHFCM'
-            [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon);
+            [u, c] = GHFCM(obj, x, u, p_.drg_m, p_.drg_n, p_.clusterNum, p_.subClusterNum, p_.max_iter, epsilon, p_.distance);
         case 'CFCM'
-            [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon);
+            [u, c] = CFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance);
         otherwise
             error('Incorrect algorithm name.')
     end
@@ -83,7 +89,7 @@ function varargout = myFCM(obj, x, clusterNum, max_iter, subClusterNum, algo, dr
 end
 
 %% Generalized FCM
-function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
+function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric)
     N_DATA = size(x,1);
     DIM = size(x,2);
 	window_size = 3;
@@ -92,6 +98,8 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
     weight = zeros(window_size^2,N_DATA);
     row = uint32(zeros(window_size^2,N_DATA));
     x = [x; zeros(1, DIM)];
+    dist_function = @wishart;
+
 
     parfor it_n = 1 : N_DATA
         [w, r] = spatialDist(obj, it_n, window_size);
@@ -108,7 +116,7 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
 			c(it_c,:) = temp./sum(u(:,it_c).^drg_m.* ...
                 sum(weight,1).',1);
         end
-        dist = [pdist2(x,c,'squaredeuclidean'); zeros(1,clusterNum)];
+        dist = [pdist2(x,c, distance_metric); zeros(1,clusterNum)];
         % dist(i,j) is the distance between observation i in X 
         % and observation j in Y.
         % update membership (phase 1)
@@ -141,7 +149,7 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
 end
 
 %% Hierarchical FCM
-function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
+function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon, distance_metric)
     DIM = size(x,2);
     N_DATA = size(x,1);
     v = rand(N_DATA, subClusterNum, clusterNum); % v_{i,k,j}
@@ -162,7 +170,7 @@ function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_i
         dist = zeros(N_DATA, subClusterNum, clusterNum);
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
-                dist(:,it_cc,it_c) = pdist2(x,c(it_cc,:,it_c),'squaredeuclidean');
+                dist(:,it_cc,it_c) = pdist2(x,c(it_cc,:,it_c), distance_metric);
             end
         end
         % update membership
@@ -191,7 +199,7 @@ function [u, c] = HFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_i
 end
 
 %% Generalized Hierarchical FCM
-function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon)
+function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon, distance_metric)
     N_DATA = size(x,1);
     DIM = size(x,2);
 	window_size = 3;
@@ -208,7 +216,10 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         weight(:,it_n) = w;
         row(:,it_n) = r;
     end
-
+    figure
+    h = animatedline;
+    xlabel('iter time')
+    ylabel('objective function')
     % Iteration 
     for it = 1 : max_iter
         % update centroid
@@ -239,10 +250,10 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
         for it_c = 1 : clusterNum
             for it_cc = 1 : subClusterNum
                 dis(1:end-1,it_cc,it_c) = pdist2(x(1:end-1,:), ...
-                    c(it_cc,:,it_c),'chebychev');
+                    c(it_cc,:,it_c), distance_metric);
             end
         end
-
+        
         % update membership (phase 1)
         for it_c = 1 : clusterNum
             %{
@@ -287,6 +298,7 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
                     reshape(temp(row(:),it_cc, it_c), window_size^2, []),1);
             end
         end
+        
         clear temp
         v = v./repmat(sum(v,2),[1, subClusterNum, 1]);
         % objective function 
@@ -297,18 +309,20 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
                 reshape(dis(row(:),:,it_c), window_size^2, []),1), ...
                 [], subClusterNum),2));
         end
-        
+        addpoints(h,it,obf);
+        drawnow
         if abs(obf-obf_prev) < epsilon
             halt = halt+1;
             if halt> 3, break; end
         end
         obf_prev = obf;
+        if mod(it,100) == 0, disp(it); end
     end
     fprintf('GHFCM@Iteration count = %i, objective function = %f \n', it, obf);
 end
 
 %% Conventional FCM
-function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
+function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric)
     obf = 0; obf_prev = 0;
     halt = 0;
     DIM = size(x,2);
@@ -319,7 +333,7 @@ function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon)
 			c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
 				./sum(u(:,it_c).^drg_m);
 		end
-        dist = pdist2(x,c,'chebychev');
+        dist = pdist2(x,c, distance_metric);
         u = dist.^(1/(1-drg_m));
         u = u./repmat(sum(u,2),[1, clusterNum]);
         obf = sum(sum((u.^drg_m).*dist));
@@ -349,7 +363,7 @@ function [weight, row_n] = spatialDist(obj, n_1, window_size)
     %              the row number of the pixel in the window.
     %------------- <<<<< >>>>>--------------
 	
-	sigma = (window_size-1)/4; % Spatial relation
+	sigma = (window_size-1)/2; % Spatial relation
 	box = -(window_size-1)/2:1:(window_size-1)/2;
 	[X,Y] = meshgrid(box,box);
 	% obtain the index of the center of the windows.
@@ -368,4 +382,37 @@ function [weight, row_n] = spatialDist(obj, n_1, window_size)
 	% obtain the row number of each elements
     row_n = uint32([sub2ind(obj.IMAGE_SIZE, idx(:,1), idx(:,2)).' ...
          obj.IMAGE_SIZE(1)*obj.IMAGE_SIZE(2)+1+padding]);
+end
+function D2 = wishart(data, center)
+    % WISHART implement Wishart distance for custom distance function in pdist2
+    %
+    % Inputs:
+    %	* data is a 1-by-n matrix containing a single observation
+    %	* center is a m2-by-n matrix containing multiple observations 
+    %	* D2 is an m2-by-1 vector of distance and D2(k) is the distance bewteen 
+    %     observations ZI and ZJ(k,:)
+    % 
+    % Reference
+    % [1] Unsupervised classification using polarimetric decomposition
+    %     and the complex Wishart classifier.
+    %
+    %------------- <<<<< >>>>>--------------
+    
+    rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
+        sqrt(2)*(x(3)-1j*x(4)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
+        x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
+    %
+    det_3 = @(x) x(1,1,:).*x(2,2,:).*x(3,3,:)+x(1,2,:).*x(2,3,:).*x(3,1,:)...
+        +x(1,3,:).*x(2,1,:).*x(3,2,:)-(x(1,3,:).*x(2,2,:).*x(3,1,:)...
+        +x(1,1,:).*x(2,3,:).*x(3,2,:)+x(1,2,:).*x(2,1,:).*x(3,3,:));
+    %
+    inv_3 = @(x) 1/det_3(x)*(x*x-sum(diag(x))*x+(sum(diag(x))^2-sum(diag(x*x)))*eye(3)/2);
+    %
+    D2 = zeros(size(center,1),1);
+    pixel = rebuildCov(data);
+    % Wishart distance: d(X,Y) = ln(det(Y))+Tr(Y^{-1}*X)
+    for it = 1 : size(D2,1)
+        D2(it) = real(log(det_3(rebuildCov(center(it,:))))+...
+            sum(diag(inv_3(rebuildCov(center(it,:)))*pixel)));
+    end
 end

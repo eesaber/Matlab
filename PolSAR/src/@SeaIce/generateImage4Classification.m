@@ -1,4 +1,4 @@
-function im = generateImage4Classification(obj, texture)
+function [im,texture] = generateImage4Classification(obj, texture)
 
     switch nargin
         case 1

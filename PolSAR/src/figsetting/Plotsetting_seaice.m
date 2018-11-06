@@ -7,7 +7,9 @@ function Plotsetting_seaice(Clim, varargin)
     parse(parse_,varargin{:})    
     set(gca,'Ydir','normal','Clim',Clim)
     set(gca,'YTickLabel',[],'XTickLabel',[])
+    set(gca,'Visible','off')
     colormap jet;
+    colorbar
     if ~strcmp(parse_.Results.Colorbar_unit, '')
         title(colorbar,parse_.Results.Colorbar_unit,'Position', [40 -70])
     end

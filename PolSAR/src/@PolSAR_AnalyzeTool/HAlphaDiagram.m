@@ -31,9 +31,11 @@ function HAlphaDiagram(obj, H, alpha_bar, varargin)
 	
 	figure
 		histogram2(H(:), alpha_bar(:),'DisplayStyle','tile',...
-			'YBinLimits',[0 90],'XBinLimits',[0 1],'NumBins',[450 1350]);
-		colormap jet 
-		set(gca,'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
+			'YBinLimits',[0 90],'XBinLimits',[0 1],'NumBins',[450 1350],...
+			'Normalization','pdf');
+		colormap jet
+		c = colorbar;
+		set(gca,'clim',[0,0.4],'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
     hold on
     n = 100;
 	x = linspace(0,1,n);
@@ -65,6 +67,6 @@ function HAlphaDiagram(obj, H, alpha_bar, varargin)
 	set(gca,'Color', 0.8*ones(3,1));
     xlabel('$H$','Interpreter', 'latex')
 	ylabel('$\langle \alpha \rangle$ (deg)','Interpreter', 'latex')
-    plot_para('Maximize',true,'Ratio', [4 3 1],'Filename',[obj.OUTPUT_PATH, '/H_alpha'])
+    plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH, '/H_alpha'])
     
 end

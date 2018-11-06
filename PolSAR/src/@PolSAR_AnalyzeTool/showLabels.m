@@ -16,7 +16,7 @@ function showLabels(obj, labels, nColors)
         set(L,{'color'},mat2cell(cmap, ones(1,nColors),3)); % set the colors according to cmap
         legend(num2str((1:nColors)'),'Location','bestoutside')
         plot_para('Maximize',true,'Ratio',[4 3 1],'Filename',[obj.OUTPUT_PATH '/label'])
-    
+    %{
     %% Histogram of sigma_vv
     % bin_limit = [0, 0.1];
     bin_limit = [0, 0.1];
@@ -35,4 +35,5 @@ function showLabels(obj, labels, nColors)
         xlabel('$\sigma_{vv}$', 'interpreter', 'latex')
         ylabel('Pr$(x = \sigma_{vv})$', 'interpreter', 'latex')
         plot_para('Maximize',true,'Ratio',[4 3 1], 'FileName',[obj.OUTPUT_PATH '/histo_vv'])
+    %}
 end

@@ -67,7 +67,7 @@ classdef SeaIce < PolSAR_AnalyzeTool
         
         %%
         creatLogCumulantRGB(obj);
-        im = generateImage4Classification(obj, texture);
+        [im,texture] = generateImage4Classification(obj, texture);
     end
 end
 %{
