@@ -2,8 +2,8 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     % EIGENDECOMPOSITION implement eigen-decomposition.
     %
     % Syntax:
-	%	[H,alpha_bar] = EIGENDECOMPOSITION(Calculate, Filename)
-	%
+    %	[H,alpha_bar] = EIGENDECOMPOSITION(Calculate, Filename)
+    %
     % Description:
     %   EIGENDECOMPOSITION(Calculate, Filename)
     %	* If Calculate is 1, the entropy data will be computed and saved
@@ -39,17 +39,17 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     num= obj.IMAGE_SIZE(1)*obj.IMAGE_SIZE(2);
     
     if Calculate
-		T = cat(1,cat(2, reshape(obj.T_11,[1,1,num]), reshape(obj.T_12,[1,1,num]), reshape(obj.T_13,[1,1,num])), ...
+        T = cat(1,cat(2, reshape(obj.T_11,[1,1,num]), reshape(obj.T_12,[1,1,num]), reshape(obj.T_13,[1,1,num])), ...
              cat(2,reshape(conj(obj.T_12),[1,1,num]), reshape(obj.T_22,[1,1,num]), reshape(obj.T_23,[1,1,num])),....
              cat(2,reshape(conj(obj.T_13),[1,1,num]), reshape(conj(obj.T_23),[1,1,num]), reshape(obj.T_33,[1,1,num])));
-		if obj.IS_BIGFILE
-			setCov2Zero(obj)
+        if obj.IS_BIGFILE
+            setCov2Zero(obj)
             setCoh2Zero(obj)
-		end
+        end
         H = zeros(1, num); A_1 = zeros(1, num); A_2 = zeros(1, num); 
-		lambda = zeros(3,num); alpha_bar = zeros(1, num);
+        lambda = zeros(3,num); alpha_bar = zeros(1, num);
         seg = [1, num/4, num/2, 3*num/4, num];
-		disp('Calculating....')
+        disp('Calculating....')
         for b = 1 : 4
             parfor r = ceil(seg(b)) : floor(seg(b+1))
                 if sum(sum(T(:,:,r)== zeros(3,3))) == 9
@@ -65,13 +65,13 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
                 alpha_bar(r) = sum(P'.*acosd(abs(U(1,:))));
             end
         end
-		H = single(real(reshape(H, obj.IMAGE_SIZE)));
-		A_1 = single(reshape(A_1, obj.IMAGE_SIZE));
-		A_2 = single(reshape(A_2, obj.IMAGE_SIZE));
-		alpha_bar = single(reshape(alpha_bar, obj.IMAGE_SIZE));
+        H = single(real(reshape(H, obj.IMAGE_SIZE)));
+        A_1 = single(reshape(A_1, obj.IMAGE_SIZE));
+        A_2 = single(reshape(A_2, obj.IMAGE_SIZE));
+        alpha_bar = single(reshape(alpha_bar, obj.IMAGE_SIZE));
         lambda = single(reshape(lambda.', [obj.IMAGE_SIZE 3]));
         if parse_.Results.SaveResults
-		    disp('Saving results....')
+            disp('Saving results....')
             save([obj.INPUT_PATH Filename '.mat'],'-v7.3', 'H', 'A_1', 'A_2', 'lambda','alpha_bar');
         end
     else 
@@ -97,8 +97,8 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
         imagesc(A_2)
         obj.plotSetting([0.6 1])
         plot_para('Maximize',true,'Filename',[obj.OUTPUT_PATH '/Anisotropy2'])
-	if obj.IS_BIGFILE
-		clear A_1 A_2 lambda
-		obj.readPolsarData();
-	end
+    if obj.IS_BIGFILE
+        clear A_1 A_2 lambda
+        obj.readPolsarData();
+    end
 end

@@ -68,7 +68,7 @@ function varargout = myFCM(obj, x, varargin)
     rng(2)
     u = rand(N, p_.clusterNum); % membership matrix
     u = u./sum(u,2);
-    epsilon = 1e-10;
+    epsilon = 1e-5;
 
     %% Execute fuzzy c-means clustering
     switch p_.algo

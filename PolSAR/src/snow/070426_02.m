@@ -23,8 +23,6 @@ gt = int8(bw);
 save('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_2', 'gt', 'bw_testing')
 %% load groundtruth 
 load('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_2')
-
-
 %% Data IO
 plotSetting = @ Plotsetting_dummy;
 fin = [repmat('/media/akb/2026EF9426EF696C/raw_data/20070426/',3,1) ...
@@ -35,12 +33,10 @@ fout = [repmat('/home/akb/Code/Matlab/PolSAR/output/20070426/',3,1) ...
         ['430'; '460';'480']];
 x_b = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
         'inputDataDir', fin(2,:),  'outputDataDir', fout(2,:));
-x_b.logCumulant();
-x_b.cov2coh()
-[H, alpha] = x_b.eigenDecomposition(1,'eigen_9x9avg','SaveResults', false); % Eigen-decomposition
 %% Generate data
-input_vector = 2;
-[im, texture] = x_b.generateImage4Classification(input_vector,'texture',texture);
+input_vector = 3;
+%[im, ~] = x_b.generateImage4Classification(input_vector,'texture',texture);
+[im, texture] = x_b.generateImage4Classification(input_vector);
 if 0
     bai = 100;
     pixel_cov = bai*permute( ...
@@ -53,7 +49,7 @@ if 0
     3,3,[]), ...
     [2, 1, 3]);
 end
-%save(['/home/akb/Code/PolSAR_ML/data/image_070426_2_('+ num2str(input_vector)+').mat'],'im')
+save(['/home/akb/Code/PolSAR_ML/data/image_070426_2_(', num2str(input_vector),').mat'],'im')
 
 
 %% FCM
@@ -75,15 +71,14 @@ tic
                             'drg_m', drg_m, ...
                             'drg_n', drg_n, ...
                             'algo', algo, ...
-                            'distance', distance_metric, ...
-                            'covariance', pixel_cov);
+                            'distance', distance_metric);
+                            %'covariance', pixel_cov);
 toc
 %%
 x_b.showLabels(reshape(label_fcm,x_b.IMAGE_SIZE), num_c)
-title(sprintf('(squaredeuclidean) algorithm: %s, (I,J,m,n) = (%i,%i,%i,%i)', algo, num_c, num_subc, drg_m, drg_n))
-%title([algo,' $(I,J,m,n) = ($', num2str(num_c),',',num2str(num_subc),',',...
-%    num2str(drg_m),',',num2str(drg_n),')'],'Interpreter', 'latex')
-set(gca,'Ydir','normal','Visible','off')
+z = sprintf('%s %s, $(I,J,m,n)$ = (%i,%i,%i,%i)', algo, distance_metric, num_c, num_subc, drg_m, drg_n);
+title(z,'Interpreter', 'latex')
+%set(gca,'Ydir','normal','Visible','off')
 %%
 figure
 scatter3(c(:,1),c(:,2),c(:,3), 32, linspecer(num_c,'qualitative'),'LineWidth',3)
@@ -101,11 +96,11 @@ load('/home/akb/Code/Matlab/PolSAR/output/20070426/480/model_svm_(4)')
 label_svm = svmpredict(zeros(numel(gt),1), double(im), model_svm);
 
 %%
-k_cluster = 4;
+k_cluster = 3;
 [label_kmeans, ~] = kmeans(im, k_cluster,'distance','sqeuclidean', ...
                                           'Replicates',3,'MaxIter',150,...
                                           'Options',statset('Display','final'));
-%%
+
 x_b.showLabels(reshape(label_kmeans,x_b.IMAGE_SIZE), k_cluster)
 title(sprintf('k-means cluster number: %i',k_cluster))
 set(gca,'Visible','off')
@@ -115,8 +110,8 @@ label_fcm(temp==1) = 4;
 label_fcm(temp==4) = 1;
 clear temp
 %%
-y_hat = reshape(label_nn, x_b.IMAGE_SIZE);
-%y_hat = y_hat > 2;
+y_hat = reshape(label_fcm, x_b.IMAGE_SIZE);
+y_hat = (y_hat ~= 4);
 
 figure
 imagesc(y_hat)
@@ -124,7 +119,7 @@ set(gca,'Ydir','normal','Visible','off')
 colormap(gca, [0,120,0;180,100,50]/255)
 %plot_para('Filename',[x_b.OUTPUT_PATH, '/label_070426_2_svm'],'Maximize',true)
 %%
-disp('--------------nn-------------')
+disp('--------------fcm-------------')
 fprintf('Acc: %f\n', sum(sum(y_hat == bw))/sum(sum(bw>=0)))
 % Uppercase: predict, lowercase: actual
 Mm = sum(sum((y_hat==1).*(bw==1)))/sum(sum(bw>=0));
@@ -132,3 +127,4 @@ Mf = sum(sum((y_hat==1).*(bw==0)))/sum(sum(bw>=0));
 Fm = sum(sum((y_hat==0).*(bw==1)))/sum(sum(bw>=0));
 Ff = sum(sum((y_hat==0).*(bw==0)))/sum(sum(bw>=0));
 fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);
+

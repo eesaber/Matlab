@@ -27,7 +27,7 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
     parse(p_,varargin{:})
     p_ = p_.Results;
     
-    if isempty(p_.texture) && (input_vector==1 || intput_vector==2)
+    if isempty(p_.texture) && (input_vector==1 || input_vector==2)
         temp = 10*log10(obj.vv_vv);
         temp(10*log10(obj.vv_vv)<-25) = -25;
         temp(10*log10(obj.vv_vv)>-5) = -5;

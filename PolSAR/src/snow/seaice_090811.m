@@ -39,7 +39,6 @@ x_b = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
     'inputDataDir', fin(2,:),  'outputDataDir', fout(2,:));
 x_c = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
     'inputDataDir', fin(3,:),  'outputDataDir', fout(3,:));
-%%
 x_b.vv_vv = [x_b.vv_vv, x_c.vv_vv(:,678:end)];
 x_b.hh_hh = [x_b.hh_hh, x_c.hh_hh(:,678:end)];
 x_b.hv_hv = [x_b.hv_hv, x_c.hv_hv(:,678:end)];
@@ -48,29 +47,28 @@ x_b.hh_hv = [x_b.hh_hv, x_c.hh_hv(:,678:end)];
 x_b.hv_vv = [x_b.hv_vv, x_c.hv_vv(:,678:end)];
 x_b.IMAGE_SIZE = size(x_b.vv_vv);
 clear x_c
-
 %% Generate data
 input_vector = 2;
-[im, texture] = x_c.generateImage4Classification(input_vector,'texture',texture);
+[im, texture] = x_b.generateImage4Classification(input_vector,'texture',texture);
 if 0
     bai = 100;
     pixel_cov = bai*permute( ...
     reshape( ...
     reshape( ...
-    cat(3, x_c.hh_hh, sqrt(2)*x_c.hh_hv, x_c.hh_vv, ...
-    sqrt(2)*conj(x_c.hh_hv), 2*x_c.hv_hv, sqrt(2)*x_c.hv_vv, ...
-    conj(x_c.hh_vv), sqrt(2)*conj(x_c.hv_vv), x_c.vv_vv), ...
+    cat(3, x_b.hh_hh, sqrt(2)*x_b.hh_hv, x_b.hh_vv, ...
+    sqrt(2)*conj(x_b.hh_hv), 2*x_b.hv_hv, sqrt(2)*x_b.hv_vv, ...
+    conj(x_b.hh_vv), sqrt(2)*conj(x_b.hv_vv), x_b.vv_vv), ...
     [], 9).', ...
     3,3,[]), ...
     [2, 1, 3]);
 end
 %save(['/home/akb/Code/PolSAR_ML/data/image_090811_('+ num2str(input_vector)+').mat'],'im')
 %% Test sigle algorithm
-algo = 'CFCM';
-num_c = 4;
+algo = 'GFCM';
+num_c = 5;
 num_subc = 2;
-%distance_metric = 'squaredeuclidean';
-distance_metric = 'wishart';
+distance_metric = 'squaredeuclidean';
+%distance_metric = 'wishart';
 drg_m = 2;
 drg_n = 2;
 tic 
@@ -96,11 +94,11 @@ set(gca,'Ydir','normal','yticklabels',[],'xticklabels',[])
 %%
 label_svm = x_b.mySVM(double(reshape(im, [x_b.IMAGE_SIZE, size(im,2)])), double(bw));
 %%
-k_cluster = 4;
+k_cluster = 5;
 [label_kmeans, ~] = kmeans(im, k_cluster,'distance','sqeuclidean', ...
                                           'Replicates',3,'MaxIter',150,...
                                           'Options',statset('Display','final'));
-
+%%
 x_b.showLabels(reshape(label_kmeans,x_b.IMAGE_SIZE), k_cluster)
 title(sprintf('k-means cluster number: %i',k_cluster))
 set(gca,'yticklabels',[],'xticklabels',[])
@@ -109,15 +107,15 @@ load('/home/akb/Code/PolSAR_ML/data/output/y_hat_090811.mat')
 label_nn = y_hat;
 clear y_hat
 %%
-y_hat = reshape(label_svm, x_b.IMAGE_SIZE);
-%y_hat = y_hat == 4;
+y_hat = reshape(label_fcm, x_b.IMAGE_SIZE);
+y_hat = y_hat == 2;
 figure
 imagesc(y_hat)
 set(gca,'Ydir','normal','Visible','off')
 colormap(gca, [0,120,0; 255,255,0]/255)
 plot_para('Filename',[x_b.OUTPUT_PATH '/label_090811_svm'],'Maximize',true)
 %%
-disp('--------------svm-------------')
+disp('--------------fcm-------------')
 fprintf('Acc: %f\n', sum(sum(y_hat == bw))/numel(bw))
 % Uppercase: predict, lowercase: actual
 Mm = sum(sum((y_hat==1).*(bw==1)))/numel(bw);

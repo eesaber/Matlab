@@ -23,7 +23,7 @@ function readPolsarData(obj)
     end
 end
 function palsar(obj)
-	%% Check the image size is correct
+    %% Check the image size is correct
     type([obj.INPUT_PATH '/config.txt'])
     %% Read ALOS PALSAR data.
     % 1/2 |S_{hh} + S_{vv}|^2
@@ -50,8 +50,8 @@ function palsar(obj)
     obj.T_23 = (single(fread(fid, obj.IMAGE_SIZE,'real*4')));
     fid = fopen([obj.INPUT_PATH '/' 'T23_imag.bin'],'r','ieee-le'); 
     obj.T_23 = obj.T_23 + 1j*(single(fread(fid, obj.IMAGE_SIZE,'real*4')));
-	
-	%% Convert coherency matrix to covariance matrix
+    
+    %% Convert coherency matrix to covariance matrix
     obj.coh2cov()
 end
 function ers2(obj)

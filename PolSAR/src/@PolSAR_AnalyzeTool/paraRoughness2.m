@@ -7,8 +7,8 @@ function paraRoughness2(obj, x, y)
     % Syntax: PARAROUGHNESS2(x,y)
     %
     % Inputs:
-	%    x  - row number of boxcar filter with default value 3.
-	%    y  - column number of boxcar filter with default value 3.
+    %    x  - row number of boxcar filter with default value 3.
+    %    y  - column number of boxcar filter with default value 3.
     %
     % Other m-files required: plot_para
     % Subfunctions: none

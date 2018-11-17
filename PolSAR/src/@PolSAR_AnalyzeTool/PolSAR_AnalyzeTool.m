@@ -3,8 +3,8 @@ classdef PolSAR_AnalyzeTool < handle
     % analysis method.
     %
     % Syntax:
-	%	* obj = PolSAR_AnalyzeTool(image_size, carrier, plotSetting, varargin)
-	%
+    %	* obj = PolSAR_AnalyzeTool(image_size, carrier, plotSetting, varargin)
+    %
     % Inputs:
     %	* image_size  : A 2x1 array which specify the dimension of image.
     %	* carrier     : A char array which specify the platform name, including 

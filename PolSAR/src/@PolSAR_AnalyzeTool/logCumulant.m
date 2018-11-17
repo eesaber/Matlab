@@ -3,8 +3,8 @@ function varargout = logCumulant(obj)
     % cumulant of a 2x2 matrix.
     %
     % Syntax:
-	%	[mu_1, kai_2, kai_3] = LOGCUMULANT()
-	%
+    %	[mu_1, kai_2, kai_3] = LOGCUMULANT()
+    %
     % Description:
     %   LOGCUMULANT()
     %   * Because S_hv is very noisy (below SNR), the 2x2 covariance 

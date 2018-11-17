@@ -18,8 +18,9 @@ fout = [repmat('/home/akb/Code/Matlab/PolSAR/output/20070426/',3,1) ...
 x_c = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
         'inputDataDir', fin(3,:),  'outputDataDir', fout(3,:));
 %% Generate data
-input_vector = 2;
-[im, texture] = x_c.generateImage4Classification(input_vector,'texture',texture);
+input_vector = 3;
+%[im, ~] = x_c.generateImage4Classification(input_vector,'texture',texture);
+[im, texture] = x_c.generateImage4Classification(input_vector);
 if 0
     bai = 100;
     pixel_cov = bai*permute( ...
@@ -32,18 +33,25 @@ if 0
     3,3,[]), ...
     [2, 1, 3]);
 end
-%save(['/home/akb/Code/PolSAR_ML/data/image_070426_3_('+ num2str(input_vector)+').mat'],'im')
+save(['/home/akb/Code/PolSAR_ML/data/image_070426_3_(', num2str(input_vector),').mat'],'im')
 
 %%
+qq = imresize(reshape(im,624,4608,[]), [496, 496], 'method','nearest');
+save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(5).mat','qq')
+qq = cat(3,qq, zeros(496,496));
+
 figure
-image(imresize(reshape(im,624,4608,3), [96, 496], 'method','nearest'))
+image(qq)
 set(gca,'Ydir','normal')
-map = imresize(reshape(im,624,4608,3), [96, 496], 'method','nearest');
-save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(5).mat','map')
+
 %%
-save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(3).mat','im')
+gt = imresize(bw, [496, 496], 'method','nearest');
+figure
+image(gt)
+set(gca,'Ydir','normal')
+
 %%
-gt = bw(:);
+gt = gt(:);
 save('/home/akb/Code/PolSAR_ML/data/mask_070426_3_(2).mat', 'gt')
 %% FCM
 algo = 'GFCM';
@@ -76,7 +84,7 @@ set(gca,'Ydir','normal','yticklabels',[],'xticklabels',[])
 %% SVM
 [label_svm, model_svm] = x_c.mySVM(double(reshape(im, [x_c.IMAGE_SIZE, size(im,2)])), double(bw));
 %%
-save([x_c.OUTPUT_PATH, '/model_svm_(4)'], 'model_svm')
+save([x_c.OUTPUT_PATH, '/model_svm_(' num2str(input_vector) ')'], 'model_svm')
 %% k-means
 k_cluster = 4;
 [label_kmeans, ~] = kmeans(im, k_cluster,...
@@ -127,3 +135,13 @@ Mf = sum(sum((y_hat==1).*(bw==0)))/numel(bw);
 Fm = sum(sum((y_hat==0).*(bw==1)))/numel(bw);
 Ff = sum(sum((y_hat==0).*(bw==0)))/numel(bw);
 fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);
+
+%% Data augmentation
+x_c.myDataAugmentation(im, bw,...
+    'data_size', 1000, ...
+    'shear_range', 0.1, ...
+    'rotation_range', 45, ...
+    'zoom_range', 0.3, ...
+    'horizontal_flip', true, ...
+    'vertical_flip', true, ...
+    'filename', '070428_3');

@@ -2,8 +2,8 @@ function pauliDecomposition(obj, varargin)
     % PAULIDECOMPOSITION implement Pauli-decomposition.
     %
     % Syntax:
-	%	PAULIDECOMPOSITION(Name, Value)
-	%
+    %	PAULIDECOMPOSITION(Name, Value)
+    %
     % Description:
     %   PAULIDECOMPOSITION(Name, Value)
     %	* Specify the filename and image scaleing by name-value pair.
@@ -27,11 +27,11 @@ function pauliDecomposition(obj, varargin)
 
     if numel(obj.T_11) == 0
         B = (obj.hh_hh + obj.vv_vv + obj.hh_vv + conj(obj.hh_vv))/2;
-	    R = (obj.hh_hh + obj.vv_vv - obj.hh_vv - conj(obj.hh_vv))/2;
+        R = (obj.hh_hh + obj.vv_vv - obj.hh_vv - conj(obj.hh_vv))/2;
         G = 2*obj.hv_hv;
     else
         B = obj.T_11;
-	    R = obj.T_22;
+        R = obj.T_22;
         G = obj.T_33;
     end
 
