@@ -31,11 +31,13 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
     addParameter(parse_, 'SaveResults', 0, validationFcn_1_);
-    
     parse(parse_,varargin{:})
-
+    
+    if isempty(obj.T_11)
+        obj.cov2coh(); 
+    end
     num= obj.IMAGE_SIZE(1)*obj.IMAGE_SIZE(2);
-
+    
     if Calculate
 		T = cat(1,cat(2, reshape(obj.T_11,[1,1,num]), reshape(obj.T_12,[1,1,num]), reshape(obj.T_13,[1,1,num])), ...
              cat(2,reshape(conj(obj.T_12),[1,1,num]), reshape(obj.T_22,[1,1,num]), reshape(obj.T_23,[1,1,num])),....

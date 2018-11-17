@@ -1,12 +1,30 @@
 %% Ground truth data
-load('/media/akb/2026EF9426EF696C/raw_data/20070426/MYI_mask.mat')
-bw = bw_1 + bw_2 + bw_3 + bw_4 + bw_5 + bw_6 + bw_7 + bw_8;
-clear bw_1  bw_2 bw_3 bw_4 bw_5 bw_6 bw_7 bw_8 bwf_1
-bw = logical(bw);
+img4roi = 10*log10(x_b.vv_vv);
+img4roi(img4roi>-5) = -5;
+img4roi(img4roi<-25) = -25;
+img4roi = rescale(img4roi);
+%bw_testing = logical(zeros([x_b.IMAGE_SIZE, 10]));
+%%
+
+figure
+[bw_testing(:,:,4), ver_x, ver_y] = roipoly(flipud(img4roi));
+%%
+bw = zeros(x_b.IMAGE_SIZE);
+for it = 1 : 3, bw = bw+bw_testing(:,:,it); end
+bw = bw.*bw_testing(:,:,10) - (~bw_testing(:,:,10));
+bw = flipud(bw);
 figure
 imagesc(bw)
-set(gca,'Ydir','normal')
-colormap gray
+set(gca,'Ydir','normal','Visible','off')
+colormap(gca, [0,0,0;0,120,0;180,100,50]/255)
+%plot_para('Filename',[x_b.OUTPUT_PATH, '/label_070426_2'],'Maximize',true)
+%%
+gt = int8(bw);
+save('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_2', 'gt', 'bw_testing')
+%% load groundtruth 
+load('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_2')
+
+
 %% Data IO
 plotSetting = @ Plotsetting_dummy;
 fin = [repmat('/media/akb/2026EF9426EF696C/raw_data/20070426/',3,1) ...
@@ -17,107 +35,100 @@ fout = [repmat('/home/akb/Code/Matlab/PolSAR/output/20070426/',3,1) ...
         ['430'; '460';'480']];
 x_b = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
         'inputDataDir', fin(2,:),  'outputDataDir', fout(2,:));
-
+x_b.logCumulant();
+x_b.cov2coh()
+[H, alpha] = x_b.eigenDecomposition(1,'eigen_9x9avg','SaveResults', false); % Eigen-decomposition
 %% Generate data
-%im = x_b.generateImage4Classification(texture);
-[im, texture] = x_b.generateImage4Classification();
+input_vector = 2;
+[im, texture] = x_b.generateImage4Classification(input_vector,'texture',texture);
+if 0
+    bai = 100;
+    pixel_cov = bai*permute( ...
+    reshape( ...
+    reshape( ...
+    cat(3, x_b.hh_hh, sqrt(2)*x_b.hh_hv, x_b.hh_vv, ...
+    sqrt(2)*conj(x_b.hh_hv), 2*x_b.hv_hv, sqrt(2)*x_b.hv_vv, ...
+    conj(x_b.hh_vv), sqrt(2)*conj(x_b.hv_vv), x_b.vv_vv), ...
+    [], 9).', ...
+    3,3,[]), ...
+    [2, 1, 3]);
+end
+%save(['/home/akb/Code/PolSAR_ML/data/image_070426_2_('+ num2str(input_vector)+').mat'],'im')
 
-%% Test sigle algorithm
+
+%% FCM
 algo = 'GFCM';
-num_c = 4;
+distance_metric = 'squaredeuclidean'; 
+%{
+wishart
+squaredeuclidean
+%}
+num_c = 5;
 num_subc = 2;
 drg_m = 2;
 drg_n = 2;
 tic 
-[label_fcm, c, u] = x_b.myFCM(double(im),num_c,75,num_subc,algo,drg_m,drg_n);
+[label_fcm, c, u] = x_b.myFCM(double(im),...
+                            'clusterNum', int32(num_c), ...
+                            'subClusterNum', int32(num_subc), ...
+                            'max_iter', int32(75), ...
+                            'drg_m', drg_m, ...
+                            'drg_n', drg_n, ...
+                            'algo', algo, ...
+                            'distance', distance_metric, ...
+                            'covariance', pixel_cov);
 toc
-
+%%
 x_b.showLabels(reshape(label_fcm,x_b.IMAGE_SIZE), num_c)
 title(sprintf('(squaredeuclidean) algorithm: %s, (I,J,m,n) = (%i,%i,%i,%i)', algo, num_c, num_subc, drg_m, drg_n))
 %title([algo,' $(I,J,m,n) = ($', num2str(num_c),',',num2str(num_subc),',',...
 %    num2str(drg_m),',',num2str(drg_n),')'],'Interpreter', 'latex')
-set(gca,'Ydir','normal','yticklabels',[],'xticklabels',[])
-
-%% Grid searching fuzzy parameters
-algo = 'GHFCM';
-for drg_m = [1.5, 3, 4]
-    for drg_n = [1.5, 3, 4]
-        [labels, c, u] = x_b.myFCM(double(im),5,50,10,algo,drg_m,drg_n);
-        figure
-        imagesc(reshape(labels,x_b.IMAGE_SIZE))
-        set(gca,'Ydir','normal')
-        print([num2str(drg_m), num2str(drg_n)],'-djpeg','-r300','-noui')
-    end
-end
-
-%% Grid searching number of cluster center 
-max_iter = 1000;
-im_size = x_b.IMAGE_SIZE;
-parfor num_c = 3 : 6
-
-    for num_subc = 2 : 2
-        g_name = ['(',num2str(num_c),',',num2str(num_subc),')'];
-    %{
-        tic 
-            labels = x_b.myFCM(double(im),num_c,max_iter,num_subc,'HFCM',2,2);
-            figure('name',['hfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['hfcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    %} 
-        tic
-            labels = x_b.myFCM(double(im),num_c,max_iter,num_subc,'GHFCM',2,2);
-            figure('name',['ghfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['ghfcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    end
-        g_name = ['(',num2str(num_c),')'];
-    %{
-        tic
-            labels = x_b.myFCM(double(im),num_c,max_iter,0,'CFCM',2,2);
-            figure('name',['fcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['fcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    %}
-        labels = x_b.myFCM(double(im),num_c,max_iter,0,'GFCM',2,2);
-        tic 
-            figure('name',['gfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['gfcm_',g_name],'-djpeg','-noui','-r300')
-        toc    
-    
-end
+set(gca,'Ydir','normal','Visible','off')
 %%
-label_svm = x_b.mySVM(double(reshape(im, [x_b.IMAGE_SIZE, 3])), double(bw));
+figure
+scatter3(c(:,1),c(:,2),c(:,3), 32, linspecer(num_c,'qualitative'),'LineWidth',3)
+set(gca,'Xlim',[0,1],'Ylim',[0,1],'Zlim',[0,1])
+xlabel('$\tilde \kappa_1$','Interpreter','latex')
+ylabel('$\tilde \kappa_2$','Interpreter','latex')
+zlabel('$\tilde f_2$','Interpreter','latex')
+%% NN
+load('/home/akb/Code/PolSAR_ML/output/y_hat_070426_2.mat')
+label_nn = y_test_hat;
+clear y_hat_test_hat
+%% SVM
+load('/home/akb/Code/Matlab/PolSAR/output/20070426/480/model_svm_(4)')
+%label_svm = x_b.mySVM(double(reshape(im, [x_b.IMAGE_SIZE, 3])), double(bw));
+label_svm = svmpredict(zeros(numel(gt),1), double(im), model_svm);
+
 %%
-k_cluster = 10;
+k_cluster = 4;
 [label_kmeans, ~] = kmeans(im, k_cluster,'distance','sqeuclidean', ...
                                           'Replicates',3,'MaxIter',150,...
                                           'Options',statset('Display','final'));
-                                      
+%%
 x_b.showLabels(reshape(label_kmeans,x_b.IMAGE_SIZE), k_cluster)
 title(sprintf('k-means cluster number: %i',k_cluster))
-set(gca,'yticklabels',[],'xticklabels',[])
+set(gca,'Visible','off')
 %%
-y_hat = reshape(label_fcm, x_b.IMAGE_SIZE);
-y_hat = y_hat < 3;
+temp = label_fcm;
+label_fcm(temp==1) = 4;
+label_fcm(temp==4) = 1;
+clear temp
+%%
+y_hat = reshape(label_nn, x_b.IMAGE_SIZE);
+%y_hat = y_hat > 2;
+
 figure
 imagesc(y_hat)
-set(gca,'Ydir','normal','yticklabels',[],'xticklabels',[])
+set(gca,'Ydir','normal','Visible','off')
 colormap(gca, [0,120,0;180,100,50]/255)
-plot_para('Filename','label_070428_3_fcm.jpg','Maximize',true)
+%plot_para('Filename',[x_b.OUTPUT_PATH, '/label_070426_2_svm'],'Maximize',true)
 %%
-disp('--------------???-------------')
-fprintf('Acc: %f\n', sum(sum(y_hat == bw))/numel(bw))
+disp('--------------nn-------------')
+fprintf('Acc: %f\n', sum(sum(y_hat == bw))/sum(sum(bw>=0)))
 % Uppercase: predict, lowercase: actual
-Mm = sum(sum((y_hat==1).*(bw==1)))/numel(bw);
-Mf = sum(sum((y_hat==1).*(bw==0)))/numel(bw);
-Fm = sum(sum((y_hat==0).*(bw==1)))/numel(bw);
-Ff = sum(sum((y_hat==0).*(bw==0)))/numel(bw);
+Mm = sum(sum((y_hat==1).*(bw==1)))/sum(sum(bw>=0));
+Mf = sum(sum((y_hat==1).*(bw==0)))/sum(sum(bw>=0));
+Fm = sum(sum((y_hat==0).*(bw==1)))/sum(sum(bw>=0));
+Ff = sum(sum((y_hat==0).*(bw==0)))/sum(sum(bw>=0));
 fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);

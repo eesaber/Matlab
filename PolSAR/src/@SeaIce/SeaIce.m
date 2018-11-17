@@ -27,7 +27,7 @@ classdef SeaIce < PolSAR_AnalyzeTool
     %------------- <<<<< >>>>>--------------
     
     properties
-        H;
+        H, alpha_bar;
         kai_1; kai_2; kai_3; kai_4;% log-cumulant;
         im; % log-cumulant plot
         y_hat; y_hat_MRF;
@@ -52,6 +52,13 @@ classdef SeaIce < PolSAR_AnalyzeTool
                         logCumulant@PolSAR_AnalyzeTool(obj);
         end
 
+        function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+            [obj.H, obj.alpha_bar] = eigenDecomposition@PolSAR_AnalyzeTool(obj,...
+                Calculate, Filename, varargin{:});
+            H = obj.H;
+            alpha_bar = obj.alpha_bar;
+        end
+            
         function imageKCluster(obj, nColors)
             temp = imageKCluster@PolSAR_AnalyzeTool(obj, obj.im, nColors);
             creatLogCumulantRGB(obj);
@@ -67,7 +74,7 @@ classdef SeaIce < PolSAR_AnalyzeTool
         
         %%
         creatLogCumulantRGB(obj);
-        [im,texture] = generateImage4Classification(obj, texture);
+        [im,texture] = generateImage4Classification(obj, input_vector, varargin)
     end
 end
 %{

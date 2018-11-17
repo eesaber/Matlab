@@ -2,10 +2,10 @@ function varargout = myFCM(obj, x, varargin)
     % MYFCM implement the fuzzy c-means clustering
     %
     % Syntax:
-	%  * [label] = MYFCM(x, clusterNum, max_iter)
-	%  * [label,c] = MYFCM(x, clusterNum, max_iter)
-	%  * [label,c,u] = MYFCM(x, clusterNum, max_iter)
-	%
+    %  * [label] = MYFCM(x, clusterNum, max_iter)
+    %  * [label,c] = MYFCM(x, clusterNum, max_iter)
+    %  * [label,c,u] = MYFCM(x, clusterNum, max_iter)
+    %
     % Inputs:
     %  * x           : Data, specified as a numeric matrix. The rows of x 
     %                  correspond to observations, and the columns correspond
@@ -38,6 +38,7 @@ function varargout = myFCM(obj, x, varargin)
     validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{'scalar'});
     validationFcn_3_ = @(x) validateattributes(x,{'char'},{'nonempty'});
     validationFcn_4_ = @(x) validateattributes(x,{'char','function_handle'},{'nonempty'});
+    validationFcn_5_ = @(x) validateattributes(x,{'numeric'},{});
     addParameter(p_,'clusterNum', 4,validationFcn_1_);
     addParameter(p_,'subClusterNum', 0,validationFcn_1_);
     addParameter(p_,'max_iter', 100,validationFcn_1_);
@@ -45,35 +46,40 @@ function varargout = myFCM(obj, x, varargin)
     addParameter(p_,'drg_n', 2,validationFcn_2_);
     addParameter(p_,'algo', 'CFCM',validationFcn_3_);
     addParameter(p_,'distance', 'squaredeuclidean',validationFcn_4_);
+    addParameter(p_,'covariance_matirx', [],validationFcn_5_);
     parse(p_,varargin{:})
     p_ = p_.Results;
+    if strcmp(p_.distance, 'wishart')
+        p_.distance = @wishart;
+    end
     % parse output arguments
     minArgs=1;
     maxArgs=3;
     nargoutchk(minArgs,maxArgs)
-
+    
     %% Algorithm parameters
     % drg_m is fuzzy partition matrix exponent for controlling
     % the degree of fuzzy overlap, with m > 1. Fuzzy overlap
     % refers to how fuzzy the boundaries between clusters 
     % are, that is the number of data points that have 
     % significant membership in more than one cluster.
-	N = size(x,1);
-    rng(3)
-	u = rand(N, p_.clusterNum); % membership matrix
+    N = size(x,1);
+    %rng(3)
+    rng(2)
+    u = rand(N, p_.clusterNum); % membership matrix
     u = u./sum(u,2);
     epsilon = 1e-10;
 
     %% Execute fuzzy c-means clustering
     switch p_.algo
         case 'GFCM'
-            [u, c] = GFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance);
+            [u, c] = GFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance, p_.covariance_matirx);
         case 'HFCM'
             [u, c] = HFCM(obj, x, u, p_.drg_m, p_.drg_n, p_.clusterNum, p_.subClusterNum, p_.max_iter, epsilon, p_.distance);
         case 'GHFCM'
             [u, c] = GHFCM(obj, x, u, p_.drg_m, p_.drg_n, p_.clusterNum, p_.subClusterNum, p_.max_iter, epsilon, p_.distance);
         case 'CFCM'
-            [u, c] = CFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance);
+            [u, c] = CFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance, p_.covariance_matirx);
         otherwise
             error('Incorrect algorithm name.')
     end
@@ -89,18 +95,19 @@ function varargout = myFCM(obj, x, varargin)
 end
 
 %% Generalized FCM
-function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric)
+function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric, covariance_matirx)
     N_DATA = size(x,1);
     DIM = size(x,2);
-	window_size = 3;
+    window_size = 3;
     obf = 0; obf_prev = 0; halt = 0;
     c = zeros(clusterNum, DIM); % cluster centroid
+    c_cov = zeros(3,3,clusterNum); % cluster centroid in covariance 
     weight = zeros(window_size^2,N_DATA);
     row = uint32(zeros(window_size^2,N_DATA));
     x = [x; zeros(1, DIM)];
-    dist_function = @wishart;
-
-
+    rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
+        sqrt(2)*(x(4)-1j*x(5)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
+        x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
     parfor it_n = 1 : N_DATA
         [w, r] = spatialDist(obj, it_n, window_size);
         weight(:,it_n) = w;
@@ -109,14 +116,22 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
     
     for it = 1 : max_iter
         % update centroid
+        
         for it_c = 1 : clusterNum
             temp = sum(squeeze(sum(reshape(x(row(:),:).* ...
                 reshape(weight,[],1),window_size^2,[],DIM),1)).* ...
                 u(:,it_c).^drg_m ,1);
-			c(it_c,:) = temp./sum(u(:,it_c).^drg_m.* ...
+            c(it_c,:) = temp./sum(u(:,it_c).^drg_m.* ...
                 sum(weight,1).',1);
+            if isa(distance_metric, 'function_handle')
+                c_cov(:,:,it_c) = rebuildCov(c(it_c,:));
+            end
         end
-        dist = [pdist2(x,c, distance_metric); zeros(1,clusterNum)];
+        if isa(distance_metric, 'function_handle')  
+            dist = [wishart(covariance_matirx, c_cov); zeros(1,clusterNum)];
+        else
+            dist = [pdist2(x,c, distance_metric); zeros(1,clusterNum)];
+        end
         % dist(i,j) is the distance between observation i in X 
         % and observation j in Y.
         % update membership (phase 1)
@@ -202,7 +217,7 @@ end
 function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_iter, epsilon, distance_metric)
     N_DATA = size(x,1);
     DIM = size(x,2);
-	window_size = 3;
+    window_size = 3;
     obf = 0; obf_prev = 0; halt = 0;
     v = rand(N_DATA, subClusterNum, clusterNum);
     v = v./repmat(sum(v,2),[1,subClusterNum,1]); % submembership 
@@ -322,24 +337,36 @@ function [u, c] = GHFCM(obj, x, u, drg_m, drg_n, clusterNum, subClusterNum, max_
 end
 
 %% Conventional FCM
-function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric)
+function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance_metric, covariance_matirx)
     obf = 0; obf_prev = 0;
     halt = 0;
     DIM = size(x,2);
     c = zeros(clusterNum, DIM); % cluster centroid
-
+    c_cov = zeros(3,3,clusterNum); % cluster centroid in covariance 
+    rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
+        sqrt(2)*(x(4)-1j*x(5)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
+        x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
+        
     for it = 1 : max_iter
-		for it_c = 1 : clusterNum
-			c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
-				./sum(u(:,it_c).^drg_m);
-		end
-        dist = pdist2(x,c, distance_metric);
+        for it_c = 1 : clusterNum
+            c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
+                ./sum(u(:,it_c).^drg_m);
+            if isa(distance_metric, 'function_handle')
+                c_cov(:,:,it_c) = rebuildCov(c(it_c,:));
+            end
+        end
+        if isa(distance_metric, 'function_handle')
+            dist = wishart(covariance_matirx, c_cov);
+            dist = dist + 2*min(min(dist));
+        else
+            dist = pdist2(x,c, distance_metric);
+        end
         u = dist.^(1/(1-drg_m));
         u = u./repmat(sum(u,2),[1, clusterNum]);
         obf = sum(sum((u.^drg_m).*dist));
-		%fprintf('CFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
+        %fprintf('CFCM@Iteration count = %i, obj. fcn = %f \n', it, obf);
         if abs(obf-obf_prev) < epsilon
-            halt = halt+1;
+            %halt = halt+1;
             if halt> 3
                 break;
             end
@@ -353,7 +380,7 @@ end
 function [weight, row_n] = spatialDist(obj, n_1, window_size)
     % SPATIALDIST 
     %
-	% Inputs:
+    % Inputs:
     %	* n_1 : linear index of data
     %	* window_size : the windows size.
     %
@@ -362,57 +389,53 @@ function [weight, row_n] = spatialDist(obj, n_1, window_size)
     %   * row_n  : A array with size 1xN which containing
     %              the row number of the pixel in the window.
     %------------- <<<<< >>>>>--------------
-	
-	sigma = (window_size-1)/2; % Spatial relation
-	box = -(window_size-1)/2:1:(window_size-1)/2;
-	[X,Y] = meshgrid(box,box);
-	% obtain the index of the center of the windows.
-	[row_, col_]= ind2sub(obj.IMAGE_SIZE, n_1);
-	% obtain the index inside windows
-	idx = [row_+Y(:), col_+X(:)]; % idx = (row, col)
-	% exclude the elements which is not in the matrix
-	idx = idx(( (idx(:,1)<=0)+(idx(:,1)>obj.IMAGE_SIZE(1))+...
-			    (idx(:,2)<=0)+(idx(:,2)>obj.IMAGE_SIZE(2)) )==0, :);   
-	% obtain the distance between the center and the elements in windows
-	dist = pdist2([row_, col_], idx);
+    
+    sigma = (window_size-1)/2; % Spatial relation
+    box = -(window_size-1)/2:1:(window_size-1)/2;
+    [X,Y] = meshgrid(box,box);
+    % obtain the index of the center of the windows.
+    [row_, col_]= ind2sub(obj.IMAGE_SIZE, n_1);
+    % obtain the index inside windows
+    idx = [row_+Y(:), col_+X(:)]; % idx = (row, col)
+    % exclude the elements which is not in the matrix
+    idx = idx(( (idx(:,1)<=0)+(idx(:,1)>obj.IMAGE_SIZE(1))+...
+                (idx(:,2)<=0)+(idx(:,2)>obj.IMAGE_SIZE(2)) )==0, :);   
+    % obtain the distance between the center and the elements in windows
+    dist = pdist2([row_, col_], idx);
     padding = zeros(1,window_size^2-numel(dist));
-	% obtain the weight of each element
+    % obtain the weight of each element
     weight = [1/sqrt(2*pi*sigma^2)*exp(-dist/(2*sigma^2)), ...
             padding];
-	% obtain the row number of each elements
+    % obtain the row number of each elements
     row_n = uint32([sub2ind(obj.IMAGE_SIZE, idx(:,1), idx(:,2)).' ...
          obj.IMAGE_SIZE(1)*obj.IMAGE_SIZE(2)+1+padding]);
 end
-function D2 = wishart(data, center)
-    % WISHART implement Wishart distance for custom distance function in pdist2
+function D2 = wishart(x, c)
+    % WISHART implement Wishart distance
     %
     % Inputs:
-    %	* data is a 1-by-n matrix containing a single observation
-    %	* center is a m2-by-n matrix containing multiple observations 
-    %	* D2 is an m2-by-1 vector of distance and D2(k) is the distance bewteen 
-    %     observations ZI and ZJ(k,:)
-    % 
-    % Reference
+    %	* x is a (3,3,n) ndarray containing the observations
+    %	* c is a (3,3,m) ndarray containing the centroids
+    %	* D2 is a (n,m) matrix where D2(i,j) represents the distance between 
+    %       ith observation and mth center.
+    %
+    % Definition:
+    %   * D(a, b) = ln(|b|) + Tr(b^{-1}*a)
+    %     where a is observation and b is cluster centroid.
+    %
+    % Reference:
     % [1] Unsupervised classification using polarimetric decomposition
     %     and the complex Wishart classifier.
     %
     %------------- <<<<< >>>>>--------------
     
-    rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
-        sqrt(2)*(x(3)-1j*x(4)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
-        x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
-    %
-    det_3 = @(x) x(1,1,:).*x(2,2,:).*x(3,3,:)+x(1,2,:).*x(2,3,:).*x(3,1,:)...
-        +x(1,3,:).*x(2,1,:).*x(3,2,:)-(x(1,3,:).*x(2,2,:).*x(3,1,:)...
-        +x(1,1,:).*x(2,3,:).*x(3,2,:)+x(1,2,:).*x(2,1,:).*x(3,3,:));
-    %
-    inv_3 = @(x) 1/det_3(x)*(x*x-sum(diag(x))*x+(sum(diag(x))^2-sum(diag(x*x)))*eye(3)/2);
-    %
-    D2 = zeros(size(center,1),1);
-    pixel = rebuildCov(data);
-    % Wishart distance: d(X,Y) = ln(det(Y))+Tr(Y^{-1}*X)
-    for it = 1 : size(D2,1)
-        D2(it) = real(log(det_3(rebuildCov(center(it,:))))+...
-            sum(diag(inv_3(rebuildCov(center(it,:)))*pixel)));
+    D2 = single(zeros(size(x,3), size(c,3)));
+    for it_c = 1 : size(c,3)
+        ln_det_c = real(log(det(c(:,:,it_c))));
+        inv_c = inv(c(:,:,it_c));
+        temp = repmat(inv_c,1,1,size(D2,1)).*x;
+        temp = temp(1,1,:)+temp(2,2,:)+temp(3,3,:);
+        D2(:,it_c) = ln_det_c+squeeze(temp);
     end
+    D2 = D2+2*min(min(D2));
 end

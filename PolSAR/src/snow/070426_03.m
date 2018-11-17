@@ -1,5 +1,5 @@
 %% Ground truth data
-load('/media/akb/2026EF9426EF696C/raw_data/20070426/MYI_mask.mat')
+load('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_03.mat')
 bw = bw_1 + bw_2 + bw_3 + bw_4 + bw_5 + bw_6 + bw_7 + bw_8;
 clear bw_1  bw_2 bw_3 bw_4 bw_5 bw_6 bw_7 bw_8 bwf_1
 bw = logical(bw);
@@ -17,27 +17,41 @@ fout = [repmat('/home/akb/Code/Matlab/PolSAR/output/20070426/',3,1) ...
         ['430'; '460';'480']];
 x_c = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
         'inputDataDir', fin(3,:),  'outputDataDir', fout(3,:));
-x_c.logCumulant();
-x_c.cov2coh()
-[H, alpha] = x_c.eigenDecomposition(1,'eigen_9x9avg','SaveResults', false); % Eigen-decomposition
 %% Generate data
-im = x_c.generateImage4Classification(texture);
-%[im, texture] = x_c.generateImage4Classification();
-%im = reshape(cat(3, rescale(x_c.kai_1), rescale(x_c.kai_2)), [],2);
-%im = reshape(cat(3, x_c.hh_hh, x_c.hv_hv, x_c.vv_vv,...
-%    real(x_c.hh_hv), imag(x_c.hh_hv),...
-%    real(x_c.hh_vv), imag(x_c.hh_vv),...
-%    real(x_c.hv_vv), imag(x_c.hv_vv)),[],9);
-temp = 10*log10(x_c.vv_vv./x_c.hh_hh);
-temp(temp>3) = 3;
-temp(temp<-3) = -3;
-temp = rescale(temp);
+input_vector = 2;
+[im, texture] = x_c.generateImage4Classification(input_vector,'texture',texture);
+if 0
+    bai = 100;
+    pixel_cov = bai*permute( ...
+    reshape( ...
+    reshape( ...
+    cat(3, x_c.hh_hh, sqrt(2)*x_c.hh_hv, x_c.hh_vv, ...
+    sqrt(2)*conj(x_c.hh_hv), 2*x_c.hv_hv, sqrt(2)*x_c.hv_vv, ...
+    conj(x_c.hh_vv), sqrt(2)*conj(x_c.hv_vv), x_c.vv_vv), ...
+    [], 9).', ...
+    3,3,[]), ...
+    [2, 1, 3]);
+end
+%save(['/home/akb/Code/PolSAR_ML/data/image_070426_3_('+ num2str(input_vector)+').mat'],'im')
+
 %%
-im = [im, H(:), temp(:)];
-clear temp
-%% Test sigle algorithm
+figure
+image(imresize(reshape(im,624,4608,3), [96, 496], 'method','nearest'))
+set(gca,'Ydir','normal')
+map = imresize(reshape(im,624,4608,3), [96, 496], 'method','nearest');
+save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(5).mat','map')
+%%
+save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(3).mat','im')
+%%
+gt = bw(:);
+save('/home/akb/Code/PolSAR_ML/data/mask_070426_3_(2).mat', 'gt')
+%% FCM
 algo = 'GFCM';
-distance_metric = 'squaredeuclidean';
+distance_metric = 'squaredeuclidean'; 
+%{
+wishart
+squaredeuclidean
+%}
 num_c = 4;
 num_subc = 2;
 drg_m = 2;
@@ -50,97 +64,62 @@ tic
                             'drg_m', drg_m, ...
                             'drg_n', drg_n, ...
                             'algo', algo, ...
-                            'distance', distance_metric);
+                            'distance', distance_metric, ...
+                            'covariance', pixel_cov);
 toc
+
 x_c.showLabels(reshape(label_fcm,x_c.IMAGE_SIZE), num_c)
 title(sprintf('(squaredeuclidean) algorithm: %s, (I,J,m,n) = (%i,%i,%i,%i)', algo, num_c, num_subc, drg_m, drg_n))
-%title([algo,' $(I,J,m,n) = ($', num2str(num_c),',',num2str(num_subc),',',...
+%title([algo,' $(I,J,m,n) = ($', num2str(num_c),',',num2str(num_sufrom skimage.transform import resizebc),',',...
 %    num2str(drg_m),',',num2str(drg_n),')'],'Interpreter', 'latex')
 set(gca,'Ydir','normal','yticklabels',[],'xticklabels',[])
-
-%% Grid searching fuzzy parameters
-algo = 'GHFCM';
-for drg_m = [1.5, 3, 4]
-    for drg_n = [1.5, 3, 4]
-        [labels, c, u] = x_c.myFCM(double(im),5,50,10,algo,drg_m,drg_n);
-        figure
-        imagesc(reshape(labels,x_c.IMAGE_SIZE))
-        set(gca,'Ydir','normal')
-        print([num2str(drg_m), num2str(drg_n)],'-djpeg','-r300','-noui')
-    end
-end
-
-%% Grid searching number of cluster center 
-max_iter = 1000;
-im_size = x_c.IMAGE_SIZE;
-parfor num_c = 3 : 6
-
-    for num_subc = 2 : 2
-        g_name = ['(',num2str(num_c),',',num2str(num_subc),')'];
-    %{
-        tic 
-            labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'HFCM',2,2);
-            figure('name',['hfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['hfcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    %} 
-        tic
-            labels = x_c.myFCM(double(im),num_c,max_iter,num_subc,'GHFCM',2,2);
-            figure('name',['ghfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['ghfcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    end
-        g_name = ['(',num2str(num_c),')'];
-    %{
-        tic
-            labels = x_c.myFCM(double(im),num_c,max_iter,0,'CFCM',2,2);
-            figure('name',['fcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['fcm_',g_name],'-djpeg','-noui','-r300')
-        toc
-    %}
-        labels = x_c.myFCM(double(im),num_c,max_iter,0,'GFCM',2,2);
-        tic 
-            figure('name',['gfcm', g_name])
-            imagesc(reshape(labels,im_size))
-            set(gca,'Ydir','normal')
-            print(['gfcm_',g_name],'-djpeg','-noui','-r300')
-        toc    
-    
-end
+%% SVM
+[label_svm, model_svm] = x_c.mySVM(double(reshape(im, [x_c.IMAGE_SIZE, size(im,2)])), double(bw));
 %%
-label_svm = x_c.mySVM(double(reshape(im, [x_c.IMAGE_SIZE, size(im,2)])), double(bw));
-%%
+save([x_c.OUTPUT_PATH, '/model_svm_(4)'], 'model_svm')
+%% k-means
 k_cluster = 4;
 [label_kmeans, ~] = kmeans(im, k_cluster,...
                     'distance','sqeuclidean',...
                     'Replicates',3,...
                     'MaxIter',150,...
-                    'Options',statset('Display','final'));                  
+                    'Options',statset('Display','final'));
 x_c.showLabels(reshape(label_kmeans,x_c.IMAGE_SIZE), k_cluster)
 title(sprintf('k-means cluster number: %i',k_cluster))
 set(gca,'yticklabels',[],'xticklabels',[])
+%% 
+label_agg = clusterdata(randi(5,10,5)+1j*randi(5,10,5),...
+    'Criterion', 'inconsistent',...
+    'Cutoff', 1,...
+    'Linkage','ward',...
+    'Maxclust',5,...
+    'Distance', 'squaredeuclidean')
+%%
+D2 = single(zeros(size(x,3), size(c,3)));
+    for it_c = 1 : size(c,3)
+        ln_det_c = real(log(det(c(:,:,it_c))));
+        inv_c = inv(c(:,:,it_c));
+        temp = repmat(inv_c,1,1,size(D2,1)).*x;
+        temp = temp(1,1,:)+temp(2,2,:)+temp(3,3,:);
+        D2(:,it_c) = ln_det_c+squeeze(temp);
+    end
+
 %%
 temp = label_kmeans;
 label_kmeans(temp==4) = 2;
 label_kmeans(temp==2) = 4;
 %%
 y_hat = reshape(label_svm, x_c.IMAGE_SIZE);
-%y_hat = y_hat > 2;
-%%
+%y_hat = y_hat < 3;
+
 figure
 imagesc(y_hat)
 set(gca,'Ydir','normal','Visible','off')
-colormap(gca, [0,120,0;180,100,50]/255)
+%colormap(gca, [0,120,0;180,100,50]/255)
 %plot_para('Filename','/home/akb/Code/Matlab/PolSAR/output/20070426/label_070426_3_svm','Maximize',true)
 %plot_para('Filename','/home/akb/Code/Matlab/PolSAR/output/20070426/label_070426_3','Maximize',true)
 %%
-disp('--------------kmeans-------------')
+disp('--------------fcm-------------')
 fprintf('Acc: %f\n', sum(sum(y_hat == bw))/numel(bw))
 % Uppercase: predict, lowercase: actual
 Mm = sum(sum((y_hat==1).*(bw==1)))/numel(bw);
