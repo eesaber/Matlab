@@ -37,7 +37,7 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
         texture = p_.texture;
     end
     
-    if isempty(obj.kai_1) || isempty(obj.kai_2) || isempty(obj.kai_3) || isempty(obj.kai_4)
+    if input_vector~=4 && (isempty(obj.kai_1) || isempty(obj.kai_2) || isempty(obj.kai_3) || isempty(obj.kai_4))
         obj.logCumulant();
     end
     if isempty(obj.H) && input_vector==2
@@ -65,5 +65,11 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
                 real(obj.hh_hv), imag(obj.hh_hv),...
                 real(obj.hh_vv), imag(obj.hh_vv),...
                 real(obj.hv_vv), imag(obj.hv_vv)),[],9);
+        case 5
+            ang = 180/pi*obj.getPolAngle([-30 30]);
+            ang(ang>30) = 30;
+            ang(ang<-30) = -30;
+            ang = rescale(ang);
+            im = [im, ang(:)];
     end
 end

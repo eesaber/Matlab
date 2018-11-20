@@ -30,10 +30,10 @@ function theta = getPolAngle(obj, ang_range)
     % atan2(Y,X), returns values in the closed interval [-pi,pi]
     % atan(X), returns values in the closed interval [-pi/2,pi/2]
     mask = ones(2,4)/8;
+    if isempty(obj.T_11), obj.cov2coh(); end    
     %theta = 1/4*(atan2(-4*real(obj.T_23), -obj.T_22 + obj.T_33)+pi);
     theta = 1/4*(atan2(-4*real(conv2(obj.T_23,mask,'same')), -conv2(obj.T_22,mask,'same') + conv2(obj.T_33,mask,'same'))+pi);
     theta(theta > pi/4) = theta(theta > pi/4) - pi/2;
-    
     figure
         imagesc(theta/pi*180)
         obj.plotSetting(ang_range,'Colorbar_unit',"(deg)")

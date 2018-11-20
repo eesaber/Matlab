@@ -20,7 +20,7 @@ x_c = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
 %% Generate data
 input_vector = 3;
 %[im, ~] = x_c.generateImage4Classification(input_vector,'texture',texture);
-[im, texture] = x_c.generateImage4Classification(input_vector);
+[im, ~] = x_c.generateImage4Classification(input_vector);
 if 0
     bai = 100;
     pixel_cov = bai*permute( ...
@@ -33,22 +33,25 @@ if 0
     3,3,[]), ...
     [2, 1, 3]);
 end
-save(['/home/akb/Code/PolSAR_ML/data/image_070426_3_(', num2str(input_vector),').mat'],'im')
+%save(['/home/akb/Code/PolSAR_ML/data/image_070426_3_(', num2str(input_vector),').mat'],'im')
 
 %%
-qq = imresize(reshape(im,624,4608,[]), [496, 496], 'method','nearest');
-save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(5).mat','qq')
+qq = imresize(reshape(im,624,4608,[]), [256, 256], 'method','bilinear');
+figure
+imagesc(qq(:,:,1))
+set(gca,'Ydir','normal')
+%%
+qq = reshape(qq,1,496,496,size(im,2));
+save('/home/akb/Code/PolSAR_ML/data/image_070426_3_(9).mat','qq')
+%{
 qq = cat(3,qq, zeros(496,496));
 
-figure
-image(qq)
-set(gca,'Ydir','normal')
-
+%}
 %%
 gt = imresize(bw, [496, 496], 'method','nearest');
 figure
-image(gt)
-set(gca,'Ydir','normal')
+imagesc(gt)
+set(gca,'Ydir','normal','clim',[0 1])
 
 %%
 gt = gt(:);
@@ -95,22 +98,6 @@ k_cluster = 4;
 x_c.showLabels(reshape(label_kmeans,x_c.IMAGE_SIZE), k_cluster)
 title(sprintf('k-means cluster number: %i',k_cluster))
 set(gca,'yticklabels',[],'xticklabels',[])
-%% 
-label_agg = clusterdata(randi(5,10,5)+1j*randi(5,10,5),...
-    'Criterion', 'inconsistent',...
-    'Cutoff', 1,...
-    'Linkage','ward',...
-    'Maxclust',5,...
-    'Distance', 'squaredeuclidean')
-%%
-D2 = single(zeros(size(x,3), size(c,3)));
-    for it_c = 1 : size(c,3)
-        ln_det_c = real(log(det(c(:,:,it_c))));
-        inv_c = inv(c(:,:,it_c));
-        temp = repmat(inv_c,1,1,size(D2,1)).*x;
-        temp = temp(1,1,:)+temp(2,2,:)+temp(3,3,:);
-        D2(:,it_c) = ln_det_c+squeeze(temp);
-    end
 
 %%
 temp = label_kmeans;
@@ -137,11 +124,82 @@ Ff = sum(sum((y_hat==0).*(bw==0)))/numel(bw);
 fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);
 
 %% Data augmentation
-x_c.myDataAugmentation(im, bw,...
-    'data_size', 1000, ...
-    'shear_range', 0.1, ...
+tic
+[x_train, y_train] = x_c.myDataAugmentation(reshape(im, [x_c.IMAGE_SIZE, size(im,2)]), bw,...
+    'data_size', 2500, ...
+    'shear_range', 0.3, ...
     'rotation_range', 45, ...
-    'zoom_range', 0.3, ...
+    'zoom_range', 0.9, ...
     'horizontal_flip', true, ...
     'vertical_flip', true, ...
-    'filename', '070428_3');
+    'filename', ['070428_3_(', num2str(input_vector), ')']);
+toc
+%%
+%aa = x_train;
+x_train = aa(1:800,:,:,:);
+save(['/home/akb/Code/PolSAR_ML/data_aug/x_train_070426_3_(',num2str(input_vector), ')_1.mat'], 'x_train')
+x_train = aa(801:1600,:,:,:);
+save(['/home/akb/Code/PolSAR_ML/data_aug/x_train_070426_3_(',num2str(input_vector), ')_2.mat'], 'x_train')
+x_train = aa(1601:end,:,:,:);
+save(['/home/akb/Code/PolSAR_ML/data_aug/x_train_070426_3_(',num2str(input_vector), ')_3.mat'], 'x_train')
+%% CNN
+cut_h = 512;
+cut_w = 512;
+img_h = 256;
+img_w = 256;
+new_size = [512 4608];
+it = 1;
+temp_im = imresize(reshape(im, [x_c.IMAGE_SIZE, size(im,2)]), new_size,'method', 'nearest');
+qq = single(zeros(size(temp_im,1)/cut_h*size(temp_im,2)/cut_w, img_h, img_w, size(im,2)));
+disp(size(qq))
+for it = 1 : size(im,2)
+    tile = im2col(temp_im(:,:,it),[cut_h, cut_w],'distinct');
+    tile = permute(reshape(tile, cut_h, cut_w, []),[3,1,2]);
+    for it_t = 1 : size(tile,1)
+        qq(it_t,:,:,it) = imresize(squeeze(tile(it_t,:,:)), [img_h, img_w], 'method', 'nearest');
+    end
+    it = it +1;
+end
+%{
+for it_t = 1 : size(qq,1)
+    figure
+    imagesc(flipud(squeeze(qq(it_t,:,:,1))))
+end
+%}
+clear temp_im 
+save(['/home/akb/Code/PolSAR_ML/data_result/tile_070426_3_', num2str(input_vector),'.mat'], 'qq')
+%%
+load('/home/akb/Code/PolSAR_ML/output/y_hat_070426_3.mat')
+new_size = new_size/2;
+if 1
+    temp = y_hat(:,:,:,1);
+    temp_label = imresize(reshape(bw, x_c.IMAGE_SIZE), new_size, 'method', 'nearest');
+    y_hat = zeros(new_size);
+    
+    %y_hat = permute(y_hat,[2,3,1]);
+    %y_hat = reshape(y_hat, size(temp_label));
+    it = 1;
+    for it_r = 1 : img_h: size(temp_label,1)
+        for it_c = 1 : img_w : size(temp_label, 2)
+            y_hat(it_r: it_r+img_h-1, it_c: it_c+img_w-1) = temp(it,:,:);
+            it = it+1;
+        end
+    end
+    y_hat = y_hat<0.5;
+else 
+    y_hat = squeeze(y_hat(:,:,:,1))<0.5;
+    temp_label = imresize(bw, [496, 496], 'method','nearest');
+end
+figure
+imagesc(y_hat)
+set(gca, 'Ydir', 'normal')
+plot_para('Filename', [x_c.OUTPUT_PATH, '/1'], 'Maximize', true)
+%%
+disp('--------------cnn-------------')
+fprintf('Acc: %f\n', sum(sum(y_hat == temp_label))/numel(temp_label))
+% Uppercase: predict, lowercase: actual
+Mm = sum(sum((y_hat==1).*(temp_label==1)))/numel(temp_label);
+Mf = sum(sum((y_hat==1).*(temp_label==0)))/numel(temp_label);
+Fm = sum(sum((y_hat==0).*(temp_label==1)))/numel(temp_label);
+Ff = sum(sum((y_hat==0).*(temp_label==0)))/numel(temp_label);
+fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);

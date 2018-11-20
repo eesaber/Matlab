@@ -36,7 +36,7 @@ x_b = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
 %% Generate data
 input_vector = 3;
 %[im, ~] = x_b.generateImage4Classification(input_vector,'texture',texture);
-[im, texture] = x_b.generateImage4Classification(input_vector);
+[im, ~] = x_b.generateImage4Classification(input_vector);
 if 0
     bai = 100;
     pixel_cov = bai*permute( ...
@@ -50,7 +50,14 @@ if 0
     [2, 1, 3]);
 end
 save(['/home/akb/Code/PolSAR_ML/data/image_070426_2_(', num2str(input_vector),').mat'],'im')
+%%
+qq = imresize(reshape(im,624,4608,[]), [496, 496], 'method','nearest');
+save('/home/akb/Code/PolSAR_ML/data/image_070426_2_(9).mat','qq')
+qq = cat(3,qq, zeros(496,496));
 
+figure
+image(qq)
+set(gca,'Ydir','normal')
 
 %% FCM
 algo = 'GFCM';
