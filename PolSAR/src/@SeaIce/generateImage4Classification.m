@@ -32,6 +32,7 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
         temp(10*log10(obj.vv_vv)<-25) = -25;
         temp(10*log10(obj.vv_vv)>-5) = -5;
         texture = myGLCM(rescale(temp),21,41);
+        %texture = myGLCM(rescale(temp),11,21);
         clear temp
     else
         texture = p_.texture;
@@ -66,10 +67,17 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
                 real(obj.hh_vv), imag(obj.hh_vv),...
                 real(obj.hv_vv), imag(obj.hv_vv)),[],9);
         case 5
+            %{
             ang = 180/pi*obj.getPolAngle([-30 30]);
             ang(ang>30) = 30;
             ang(ang<-30) = -30;
             ang = rescale(ang);
             im = [im, ang(:)];
+            %}
+            temp = 10*log10(obj.hv_hv);
+            temp(temp<-30) = -30;
+            temp(temp>-15) = -15;
+            temp = rescale(temp);
+            im = [im, temp(:)];
     end
 end

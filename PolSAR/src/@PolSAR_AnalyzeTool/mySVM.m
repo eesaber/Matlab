@@ -22,7 +22,7 @@ function varargout = mySVM(obj, x, y)
     rng(1)
     dim = size(x,3);
     p = randperm(numel(y));
-    data_spilt = int32(numel(y)*0.9);
+    data_spilt = int32(numel(y)*0.1);
     x = reshape(x,[],dim);
     y = y(:);
     train_data = x(1:data_spilt,:);
@@ -32,17 +32,20 @@ function varargout = mySVM(obj, x, y)
     
     % SVM
     disp('SVM training...')
+    disp(datetime)
     tic
     model_linear = svmtrain(train_label, train_data, '-s 0 -t 2 -g 1 -c 10 -e 0.1 -m 8000');
-    [predict_label_L, accuracy_L, dec_values_L] = svmpredict(test_label, test_data, model_linear);
     toc
-    fprintf('Test case accuracy: %f \n', accuracy_L) % Display the accuracy using linear kernel
     % Output results
     %yes_predict = input('Do you want to predict? [1/0] \n');
-    yes_predict = 1;
+    yes_predict = 0;
     if yes_predict
         disp('SVM predicting...')
-        label = svmpredict(y, x, model_linear);
+        disp(datetime)
+        tic
+        [label, accuracy_L, ~] = svmpredict(y, x, model_linear);
+        fprintf('Accuracy: %f \n', accuracy_L) % Display the accuracy using linear kernel
+        toc
     else
         label = [];
     end
