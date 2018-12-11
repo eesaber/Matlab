@@ -30,7 +30,8 @@ classdef SeaIce < PolSAR_AnalyzeTool
         H, alpha_bar;
         kai_1; kai_2; kai_3; kai_4;% log-cumulant;
         im; % log-cumulant plot
-        y_hat; y_hat_MRF;
+        groundtruth;
+        y_hat;
     end
     methods
         % Constructor

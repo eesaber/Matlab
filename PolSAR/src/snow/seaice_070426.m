@@ -1,3 +1,5 @@
+
+%%
 clear; clc
 %% Data 
 plotSetting = @ Plotsetting_seaice;
@@ -46,18 +48,33 @@ temp = imrotate(temp,3.5,'nearest','crop');
 temp = [zeros(100, size(temp,2)); temp];
 temp = temp(1:610,35:1650);
 y_b.vv_vv = imresize(temp, x_b.IMAGE_SIZE,'method','nearest','Antialiasing',true);
-
 clear fin fout temp y_3
+%% Geographical size of image B and C
+%distance(lat1,lon1,lat2,lon2)
+
+disp('ROI 1')
+fprintf('Ground range: %f (km)\n',distance('gc',71.99884796142578,-136.20709216407894,72.08841926820817,-135.41564511704055, referenceEllipsoid('GRS80','km')))
+fprintf('Along track length: %f (km)\n', distance('gc',71.99884796142578,-136.20709216407894,72.5455914485474,-136.89187442066063,referenceEllipsoid('GRS80','km')))
+disp('ROI 2')
+fprintf('Ground range: %f (km)\n', distance('gc',72.92919158935547,-137.3845690684471,73.02244715536794,-136.55607012116644,referenceEllipsoid('GRS80','km')))
+fprintf('Along track length: %f (km)\n', distance('gc',72.92919158935547,-137.3845690684471,73.47220388858524,-138.13810015035256,referenceEllipsoid('GRS80','km')))
+%%
+c = colormap(gray);
+c = [[150 200 255]/255; c];
+figure
+imagesc((10*log10(y_b.vv_vv)), [-25, -5])
+colormap(c)
+set(gca,'Visible','off')
+plot_para('Maximize',true, 'Filename',[x_b.OUTPUT_PATH, '/sigma_vv_e'])
+figure
+imagesc((10*log10(y_c.vv_vv)), [-25, -5])
+colormap(c)
+set(gca,'Visible','off')
+plot_para('Maximize',true, 'Filename',[x_c.OUTPUT_PATH, '/sigma_vv_e'])
 %% Compute log-cumulant
 x_a.logCumulant();
 x_b.logCumulant();
 x_c.logCumulant();
-%x_430.logCumulantDiagram(kai_2, kai_3)
-%x_460.logCumulantDiagram(kai_2, kai_3)
-%x_480.logCumulantDiagram(kai_2, kai_3)
-%%
-x_b.cov2coh();
-pol_ang = x_b.getPolAngle([-30 30]);
 %% K-means Classfication
 nColors = 3;
 if 0

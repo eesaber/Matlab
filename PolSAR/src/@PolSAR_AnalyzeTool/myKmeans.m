@@ -17,7 +17,9 @@ function varargout = myKmeans(obj, x , varargin)
     % Outputs:
     %  * label  : Final label of each observation, returened as a matrix with N
     %             rows where N is the number of observation.
-    %
+    % Reference
+    %  [1] K-means++: The Advantages of Careful Seeding.
+    % 
     %------------- <<<<< >>>>>--------------
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
@@ -37,25 +39,29 @@ function varargout = myKmeans(obj, x , varargin)
     parse(p_,varargin{:})
     p_ = p_.Results;
     minArgs=0;
-    maxArgs=1;
+    maxArgs=2;
     nargoutchk(minArgs,maxArgs)
-
+    rng(10)
     %% k-means
+    tic 
     if strcmp(p_.distance, 'wishart')
-        label = kmeans4Wishart(obj, x, p_);
+        [label, centroid] = kmeans4Wishart(obj, x, p_);
     else
-        label = kmeans(im, p_.maxClusterNum,...
+        [label, centroid] = kmeans(im, p_.maxClusterNum,...
             'distance', p_.distance,...
             'Replicates', p_replicates,...
             'MaxIter', p_.max_iter,...
             'Options',statset('Display','final'));
     end
+    toc
     %% Output arguments
-    a = 1;
-    if nargout>=1, varargout{1} = label; end
+    if nargout>=1, varargout{1} = label;
+        if nargout>=2, varargout{2} = centroid;
+        end
+    end
 end
 
-function label_ans = kmeans4Wishart(obj, x, p_)
+function [label_ans, centroid] = kmeans4Wishart(obj, x, p_)
     label_ans = zeros(size(x,1),1);
     dist_prev = inf;
     rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
@@ -79,13 +85,18 @@ function label_ans = kmeans4Wishart(obj, x, p_)
         num_pixel = size(x,3);
         label = single(ones(num_pixel));
         last = single(zeros(num_pixel));
-        
+        %% iteration 
+        %textprogressbar('iteration: ',0);
         while any(label ~= last) && counter<p_.max_iter
+            %textprogressbar(counter,p_.max_iter);
+            %pause(0.1);
             last = label;
             [label, centroid, dist_sum] = find_label(p_.covariance, centroid);
             counter = counter+1;
             disp(counter)
         end
+        %textprogressbar('done',0);
+        
         if dist_prev > dist_sum
             label_ans =  label;
         end
@@ -113,17 +124,54 @@ function [new_label, centroid, dist_sum] = find_label(x, c)
     end
 end
 function [centroid] = init(obj, x, num_c)
+    disp('initializing...')
+    tic
     centroid = single(zeros(3,3,num_c));
     num_c = single(num_c);
+    
     if isempty(obj.H)
         error('Please calcuilate polarimetry entropy first.')
     end
     H = obj.H(:);
-    section = 1/num_c:1/num_c:1;
-    for it = 1 : numel(section)
-        tmp = x(:,:,H<0.5);
-        centroid(:,:,it) = tmp(:,:,randi(size(tmp,3),1));
+    %{
+    %alpha = obj.alpha_bar(:);
+    %{
+    h = histogram2(x_c.H,x_c.alpha_bar,'YBinLimits',[0 90],'XBinLimits',[0 1],'NumBins',[450 1350]);
+    [~, idx] = max(h.Values(:));
+    [idx_row, idx_col] = ind2sub(size(h.Values), idx);
+    fprintf('H in [%f,%f]\n', idx_row*(1-0)/size(h.Values,1), (idx_row+1)*(1-0)/size(h.Values,1))
+    fprintf('alpha in [%f,%f]\n', idx_col*(90-0)/size(h.Values,2), (idx_col+1)*(90-0)/size(h.Values,2))
+    range = (x_c.H(:)>=idx_row*(1-0)/size(h.Values,1)).*(x_c.H(:)<=(idx_row+1)*(1-0)/size(h.Values,1));
+    range = range.*(x_c.alpha_bar(:)>=idx_col*(90-0)/size(h.Values,2)).*(x_c.alpha_bar(:)<= (idx_col+1)*(90-0)/size(h.Values,2));
+    range = logical(range);
+    %}
+    %}
+    if 1
+        section = 1/num_c:1/num_c:1;
+        for it = 1 : numel(section)
+            tmp = x(:,:,H<0.5);
+            centroid(:,:,it) = tmp(:,:,randi(size(tmp,3),1));
+        end
+    else 
+        %% k-means++ algorithm [1]
+        centroid(:,:,1) = x(:,:,randi(size(x,3))); % take one center uniformly.
+        dist_ = single(zeros(size(x,3), num_c-1)); 
+        % take the new center with probability D(x)
+        for it = 2 : size(centroid,3)
+            ln_det_c = log10(real(det(centroid(:,:,it-1)))); % b
+            inv_c = inv(centroid(:,:,it-1));
+            for it_x = 1 : size(x,3)
+                ln_det_x = log10(real(det(x(:,:,it_x)))); % a 
+                dist_(it_x,it-1) = ln_det_c - ln_det_x + real(trace(inv_c*x(:,:,it_x)));
+            end
+            prob = min(dist_(:,1:it-1),[],2).^2;
+            centroid(:,:,it) = x(:,:,randsample(size(x,3),1,true,prob));
+        end
+        
     end
+    toc
+        disp('initializing finished...')
+        disp(centroid)
 end
 
 %{

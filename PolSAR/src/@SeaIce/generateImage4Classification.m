@@ -80,4 +80,5 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
             temp = rescale(temp);
             im = [im, temp(:)];
     end
+    obj.im = im;
 end

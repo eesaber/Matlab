@@ -87,6 +87,7 @@ classdef PolSAR_AnalyzeTool < handle
         pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)
+        dist_ = wishartDist(obj, x, y)
         %
         coh2cov(obj)
         cov2coh(obj)

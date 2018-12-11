@@ -37,7 +37,6 @@ function varargout = myFCM(obj, x, varargin)
     validationFcn_1_ = @(x) validateattributes(x,{'int32'},{'scalar'});
     validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{'scalar'});
     validationFcn_3_ = @(x) validateattributes(x,{'char'},{'nonempty'});
-    validationFcn_4_ = @(x) validateattributes(x,{'char','function_handle'},{'nonempty'});
     validationFcn_5_ = @(x) validateattributes(x,{'numeric'},{});
     addParameter(p_,'clusterNum', 4,validationFcn_1_);
     addParameter(p_,'subClusterNum', 0,validationFcn_1_);
@@ -45,14 +44,11 @@ function varargout = myFCM(obj, x, varargin)
     addParameter(p_,'drg_m', 2,validationFcn_2_);
     addParameter(p_,'drg_n', 2,validationFcn_2_);
     addParameter(p_,'algo', 'CFCM',validationFcn_3_);
-    addParameter(p_,'distance', 'squaredeuclidean',validationFcn_4_);
+    addParameter(p_,'distance', 'squaredeuclidean',validationFcn_3_);
     addParameter(p_,'covariance_matirx', [],validationFcn_5_);
     addParameter(p_,'verbose', false, validationFcn_5_);
     parse(p_,varargin{:})
     p_ = p_.Results;
-    if strcmp(p_.distance, 'wishart')
-        p_.distance = @wishart;
-    end
     % parse output arguments
     minArgs=1;
     maxArgs=3;
@@ -66,12 +62,13 @@ function varargout = myFCM(obj, x, varargin)
     % significant membership in more than one cluster.
     N = size(x,1);
     %rng(3)
-    rng(2)
+    rng(3)
     u = rand(N, p_.clusterNum); % membership matrix
     u = single(u./sum(u,2));
     epsilon = 1e-5;
-
+    
     %% Execute fuzzy c-means clustering
+    tic
     switch p_.algo
         case 'GFCM'
             [u, c] = GFCM(obj, x, u, p_.drg_m, p_.clusterNum, p_.max_iter, epsilon, p_.distance, p_.covariance_matirx);
@@ -84,6 +81,7 @@ function varargout = myFCM(obj, x, varargin)
         otherwise
             error('Incorrect algorithm name.')
     end
+    toc
     disp('Done')
     % Output results
     [~, label] = max(u,[],2);
@@ -109,16 +107,20 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
     rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
         sqrt(2)*(x(4)-1j*x(5)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
         x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
-    
+    %{
     parfor it_n = 1 : N_DATA
         [w, r] = spatialDist(obj, it_n, window_size);
         weight(:,it_n) = w;
         row(:,it_n) = r;
     end    
-    
-    %save('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
-    %load('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
-    %load('/home/akb/Code/Matlab/PolSAR/src/debug.mat', 'row','weight')
+    %}
+    global summer
+    if summer 
+        %save('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
+        load('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
+    else
+        load('/home/akb/Code/Matlab/PolSAR/src/debug.mat', 'row','weight')
+    end
     
     for it = 1 : max_iter
         % update centroid
@@ -128,12 +130,12 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
                 u(:,it_c).^drg_m ,1);
             c(it_c,:) = temp./sum(u(:,it_c).^drg_m.* ...
                 sum(weight,1).',1);
-            if isa(distance_metric, 'function_handle')
+            if strcmp(distance_metric, 'wishart')
                 c_cov(:,:,it_c) = rebuildCov(c(it_c,:));
             end
         end
-        if isa(distance_metric, 'function_handle')  
-            dist_ = [wishart(covariance_matirx, c_cov); zeros(1,clusterNum)];
+        if strcmp(distance_metric, 'wishart')  
+            dist_ = [obj.wishartDist(c_cov, covariance_matirx); zeros(1,clusterNum)];
         else
             dist_ = [pdist2(x,c, distance_metric); zeros(1,clusterNum)];
         end
@@ -177,13 +179,13 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
                     u(:,it_c).^drg_m ,1);
                 c(it_c,:) = temp./sum(u(:,it_c).^drg_m.* ...
                     sum(weight,1).',1);
-                if isa(distance_metric, 'function_handle')
+                if strcmp(distance_metric, 'wishart')
                     c_cov(:,:,it_c) = rebuildCov(c(it_c,:));
                 end
             end
             % calculate distance
-            if isa(distance_metric, 'function_handle')
-                dist_ = [wishart(covariance_matirx, c_cov); zeros(1,size(c,1))];
+            if strcmp(distance_metric, 'wishart')
+                dist_ = [obj.wishartDist(c_cov, covariance_matirx); zeros(1,size(c,1))];
             else
                 dist_ = [pdist2(x,c, distance_metric); zeros(1,size(c,1))];
             end
@@ -429,12 +431,13 @@ function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
         for it_c = 1 : clusterNum
             c(it_c,:) = sum(x.*(u(:,it_c).^drg_m), 1) ...
                 ./sum(u(:,it_c).^drg_m);
-            if isa(distance_metric, 'function_handle')
+            if strcmp(distance_metric, 'wishart')
                 c_cov(:,:,it_c) = rebuildCov(c(it_c,:));
             end
         end
-        if isa(distance_metric, 'function_handle')
-            dist = wishart(covariance_matirx, c_cov);
+        
+        if strcmp(distance_metric, 'wishart')
+            dist = obj.wishartDist(c_cov, covariance_matirx);
         else
             dist = pdist2(x,c, distance_metric);
         end
@@ -489,6 +492,7 @@ function [weight, row_n] = spatialDist(obj, n_1, window_size)
     row_n = uint32([sub2ind(obj.IMAGE_SIZE, idx(:,1), idx(:,2)).' ...
          obj.IMAGE_SIZE(1)*obj.IMAGE_SIZE(2)+1+padding]);
 end
+%{
 function D2 = wishart(x, c)
     % WISHART implement Wishart distance
     %
@@ -524,18 +528,42 @@ function D2 = wishart(x, c)
         a = 1;
     end
 end
+%}
+function [centroid] = init_wishart(obj, x, num_c)
+    disp('initializing...')
+    tic
+    centroid = single(zeros(3,3,num_c));
+    num_c = single(num_c);
+    %% k-means++ algorithm [1]
+    centroid(:,:,1) = x(:,:,randi(size(x,3))); % take one center uniformly.
+    dist_ = single(zeros(size(x,3), num_c-1)); 
+    % take the new center with probability D(x)
+    for it = 2 : size(centroid,3)
+        ln_det_c = log10(real(det(centroid(:,:,it-1)))); % b
+        inv_c = inv(centroid(:,:,it-1));
+        for it_x = 1 : size(x,3)
+            ln_det_x = log10(real(det(x(:,:,it_x)))); % a 
+            dist_(it_x,it-1) = ln_det_c - ln_det_x + real(trace(inv_c*x(:,:,it_x)));
+        end
+        prob = min(dist_(:,1:it-1),[],2).^2;
+        centroid(:,:,it) = x(:,:,randsample(size(x,3),1,true,prob));
+    end
+    toc
+    disp('initializing finished...')
+    disp(centroid)
+end
 %{
 function label = cluterMerge(x, covariance_matirx, u, c, distance_metric)
     [~, label] = max(u,[],2);
     R = zeros(size(c_prev,3), size(c_prev,3));
-    if isa(distance_metric, 'function_handle')
+    if strcmp(distance_metric, 'wishart')
         rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
             sqrt(2)*(x(4)-1j*x(5)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
             x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
         
         cov = rebuildCov(c);
-        dist = wishart(covariance_matirx, cov);
-        dipersion = wishart(cov,cov);
+        dist = obj.wishartDist(cov, covariance_matirx);
+        dipersion = obj.wishartDist(cov,cov);
     else
         dist = pdist2(c, distance_metric);
         dist 
