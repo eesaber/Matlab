@@ -48,7 +48,7 @@ distance_metric = 'wishart';
 wishart
 squaredeuclidean
 %}
-num_c = 3;
+num_c = 2;
 num_subc = 2;
 drg_m = 2;
 drg_n = 2;
@@ -95,12 +95,14 @@ save([x_c.OUTPUT_PATH, '/model_svm_(' num2str(input_vector) ')'], 'model_svm')
 
 
 %% k-means
+global kpp
+kpp = 0;
 k_cluster = 3;
-distance_metric = '1wishart'; 
+distance_metric = 'wishart'; 
 if strcmp(distance_metric, 'wishart')
     [label_kmeans, c] = x_c.myKmeans(x_c.im,...
                             'maxClusterNum', int32(k_cluster),...
-                            'max_iter', int32(11), ... % test if 10 times will cause warning
+                            'max_iter', int32(20), ... % test if 10 times will cause warning
                             'replicates',int32(1), ...
                             'distance', distance_metric, ...
                             'covariance', pixel_cov);

@@ -37,6 +37,7 @@ function varargout = myFCM(obj, x, varargin)
     validationFcn_1_ = @(x) validateattributes(x,{'int32'},{'scalar'});
     validationFcn_2_ = @(x) validateattributes(x,{'numeric'},{'scalar'});
     validationFcn_3_ = @(x) validateattributes(x,{'char'},{'nonempty'});
+    validationFcn_4_ = @(x) validateattributes(x,{'single'},{});
     validationFcn_5_ = @(x) validateattributes(x,{'numeric'},{});
     addParameter(p_,'clusterNum', 4,validationFcn_1_);
     addParameter(p_,'subClusterNum', 0,validationFcn_1_);
@@ -45,6 +46,7 @@ function varargout = myFCM(obj, x, varargin)
     addParameter(p_,'drg_n', 2,validationFcn_2_);
     addParameter(p_,'algo', 'CFCM',validationFcn_3_);
     addParameter(p_,'distance', 'squaredeuclidean',validationFcn_3_);
+    addParameter(p_,'u', [], validationFcn_4_);    
     addParameter(p_,'covariance_matirx', [],validationFcn_5_);
     addParameter(p_,'verbose', false, validationFcn_5_);
     parse(p_,varargin{:})
@@ -63,8 +65,12 @@ function varargout = myFCM(obj, x, varargin)
     N = size(x,1);
     %rng(3)
     rng(3)
-    u = rand(N, p_.clusterNum); % membership matrix
-    u = single(u./sum(u,2));
+    if isempty(p_.u)
+        u = rand(N, p_.clusterNum); % membership matrix
+        u = single(u./sum(u,2));
+    else
+        u = p_.u;
+    end
     epsilon = 1e-5;
     
     %% Execute fuzzy c-means clustering
@@ -98,12 +104,15 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
     N_DATA = size(x,1);
     DIM = size(x,2);
     window_size = 3;
-    obf = 0; obf_prev = 0; halt = 0;
-    c = single(zeros(clusterNum, DIM)); % cluster centroid
-    c_cov = single(zeros(3,3,clusterNum)); % cluster centroid in covariance 
+    obf = 0; obf_prev = 0; halt = 0;        
     weight = single(zeros(window_size^2,N_DATA));
     row = uint32(zeros(window_size^2,N_DATA));
     x = [x; zeros(1, DIM)];
+    if strcmp(distance_metric, 'wishart')
+        c_cov = single(zeros(3,3,clusterNum)); % cluster centroid in covariance
+    else
+        c = single(zeros(clusterNum, DIM)); % cluster centroid
+    end
     rebuildCov = @(x) [x(1), sqrt(2)*(x(4)+1j*x(5)), x(6)+1j*x(7);...
         sqrt(2)*(x(4)-1j*x(5)), 2*x(2), sqrt(2)*(x(8)+1j*x(9));...
         x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
@@ -116,9 +125,10 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
     %}
     global summer
     if summer 
-        %save('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
+        % save('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
         load('/home/akb/Code/Matlab/PolSAR/src/debug_sum.mat', 'row','weight')
     else
+        % save('/home/akb/Code/Matlab/PolSAR/src/debug.mat', 'row','weight')
         load('/home/akb/Code/Matlab/PolSAR/src/debug.mat', 'row','weight')
     end
     
@@ -135,7 +145,7 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
             end
         end
         if strcmp(distance_metric, 'wishart')  
-            dist_ = [obj.wishartDist(c_cov, covariance_matirx); zeros(1,clusterNum)];
+            dist_ = [obj.wishartDist(covariance_matirx, c_cov); zeros(1,clusterNum)];
         else
             dist_ = [pdist2(x,c, distance_metric); zeros(1,clusterNum)];
         end
@@ -185,7 +195,7 @@ function [u, c] = GFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
             end
             % calculate distance
             if strcmp(distance_metric, 'wishart')
-                dist_ = [obj.wishartDist(c_cov, covariance_matirx); zeros(1,size(c,1))];
+                dist_ = [obj.wishartDist(covariance_matirx, c_cov); zeros(1,size(c,1))];
             else
                 dist_ = [pdist2(x,c, distance_metric); zeros(1,size(c,1))];
             end
@@ -437,7 +447,7 @@ function [u, c] = CFCM(obj, x, u, drg_m, clusterNum, max_iter, epsilon, distance
         end
         
         if strcmp(distance_metric, 'wishart')
-            dist = obj.wishartDist(c_cov, covariance_matirx);
+            dist = obj.wishartDist(covariance_matirx, c_cov);
         else
             dist = pdist2(x,c, distance_metric);
         end
@@ -562,7 +572,7 @@ function label = cluterMerge(x, covariance_matirx, u, c, distance_metric)
             x(6)-1j*x(7), sqrt(2)*(x(8)-1j*x(9)), x(3)];
         
         cov = rebuildCov(c);
-        dist = obj.wishartDist(cov, covariance_matirx);
+        dist = obj.wishartDist(covariance_matirx, cov);
         dipersion = obj.wishartDist(cov,cov);
     else
         dist = pdist2(c, distance_metric);

@@ -55,7 +55,7 @@ function varargout = myKmeans(obj, x , varargin)
     end
     toc
     %% Output arguments
-    if nargout>=1, varargout{1} = label;
+    if nargout>=1, varargout{1} = uint8(label);
         if nargout>=2, varargout{2} = centroid;
         end
     end
@@ -91,30 +91,23 @@ function [label_ans, centroid] = kmeans4Wishart(obj, x, p_)
             %textprogressbar(counter,p_.max_iter);
             %pause(0.1);
             last = label;
-            [label, centroid, dist_sum] = find_label(p_.covariance, centroid);
+            [label, centroid, dist_sum] = find_label(obj, p_.covariance, centroid);
             counter = counter+1;
-            disp(counter)
+            fprintf('%i,', counter)
         end
         %textprogressbar('done',0);
-        
+        disp(' ')
         if dist_prev > dist_sum
             label_ans =  label;
         end
     end
 end
 
-function [new_label, centroid, dist_sum] = find_label(x, c)
+function [new_label, centroid, dist_sum] = find_label(obj, x, c)
     % calculate revised Wishart distance (KL divergence)
-    D2 = single(zeros(size(x, 3), size(c,3)));
-    for it_c = 1 : size(c,3)
-        ln_det_c = log10(real(det(c(:,:,it_c)))); % b
-        for it = 1 : size(x,3)
-            ln_det_x = log10(real(det(x(:,:,it)))); % a 
-            D2(it,it_c) = ln_det_c - ln_det_x + real(trace(c(:,:,it_c)\x(:,:,it)));
-        end
-    end
-    
-    [~, label]= min(D2,[],2); % assign label
+    D2 = obj.wishartDist(x, c);
+    % assign label
+    [~, label]= min(D2,[],2);
     [avaliable_idx,~,new_label(:)] = unique(label); % remove empty cluster
     num_centroid = numel(avaliable_idx); % get number of cluster
     dist_sum = sum(sum(D2)); % sum of total distance
@@ -146,7 +139,8 @@ function [centroid] = init(obj, x, num_c)
     range = logical(range);
     %}
     %}
-    if 1
+    global kpp
+    if ~kpp 
         section = 1/num_c:1/num_c:1;
         for it = 1 : numel(section)
             tmp = x(:,:,H<0.5);
@@ -154,6 +148,7 @@ function [centroid] = init(obj, x, num_c)
         end
     else 
         %% k-means++ algorithm [1]
+        disp('k-means++ initialization used.')
         centroid(:,:,1) = x(:,:,randi(size(x,3))); % take one center uniformly.
         dist_ = single(zeros(size(x,3), num_c-1)); 
         % take the new center with probability D(x)

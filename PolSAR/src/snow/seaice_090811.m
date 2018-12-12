@@ -40,10 +40,8 @@ global summer
 summer = 1;
 %% Reference Data
 load('/media/akb/2026EF9426EF696C/raw_data/20090811/groundtruth')
-clear gt bw_testing
-
 x_b.y_hat = flipud(bw~=0);
-
+clear gt bw_testing bw
 figure
 imagesc(x_b.y_hat)
 set(gca,'Ydir','normal','Visible','off')
@@ -53,7 +51,7 @@ plot_para('Filename',[x_b.OUTPUT_PATH '/label_090811'],'Maximize',true)
 %% Generate data
 input_vector = 4;
 if input_vector==4 || input_vector==3
-    x_b.generateImage4Classification(input_vector);
+    [~] = x_b.generateImage4Classification(input_vector);
     if input_vector == 4
         bai = 100;
         pixel_cov = bai*permute( ...
@@ -83,32 +81,38 @@ drg_n = 2;
                             'clusterNum', int32(num_c), ...
                             'subClusterNum', int32(num_subc), ...
                             'max_iter', int32(15), ...
+                            'u', 1,...
                             'drg_m', drg_m, ...
                             'drg_n', drg_n, ...
                             'algo', algo, ...
                             'distance', distance_metric, ...
                             'covariance', pixel_cov);
 
-%[c, u] = fcm(x_b.im,num_c,[drg_m, 75, 1e-5, false]);
-%[~, label_fcm] = max(u,[],1);
-
+%%
 x_b.showLabels(reshape(label_fcm,x_b.IMAGE_SIZE), num_c)
 z = sprintf('%s %s, $(I,J,m,n)$ = (%i,%i,%i,%i)', algo, distance_metric, num_c, num_subc, drg_m, drg_n);
 title(z,'Interpreter', 'latex')
 set(gca,'Ydir','normal','Visible','off')
-plot_para('ratio',[16 9 1], 'Filename', [x_b.OUTPUT_PATH '/label_fcm_4'],'maximize',true)
+plot_para('ratio',[16 9 1], 'Filename', [x_b.OUTPUT_PATH '/label_fcm_4_3c'],'maximize',true)
 %%
 label_svm = x_b.mySVM(double(reshape(x_b.im, [x_b.IMAGE_SIZE, size(x_b.im,2)])), double(x_b.y_hat));
+%%
+global kpp
+kpp = 1;
 %%
 k_cluster = 3;
 distance_metric = 'wishart'; 
 if strcmp(distance_metric, 'wishart')
     [label_kmeans, c] = x_b.myKmeans(x_b.im,...
                             'maxClusterNum', int32(k_cluster),...
-                            'max_iter', int32(10), ... % test if 10 times will cause warning
+                            'max_iter', int32(30), ... % test if 10 times will cause warning
                             'replicates',int32(1), ...
                             'distance', distance_metric, ...
                             'covariance', pixel_cov);
+    u_pre = 1/(k_cluster-1)*single(ones(size(x_b.im,1),k_cluster));
+    for it = 1 : k_cluster
+        u_pre(label_kmeans==it,it) = 1;
+    end
 else
     [label_kmeans, ~] = kmeans(x_b.im, k_cluster,...
                         'distance','sqeuclidean',...

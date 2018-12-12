@@ -1,4 +1,4 @@
-function [im,texture] = generateImage4Classification(obj, input_vector, varargin)
+function varargout = generateImage4Classification(obj, input_vector, varargin)
     % GENERATIONIMAGE4CLASSIFICATION generate the input image for sea-ice classification.
     %
     % syntax:
@@ -20,13 +20,18 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
-    
+
+    %% input/output parsing
     p_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'numeric'},{'nonempty'});
     addParameter(p_,'texture',[],validationFcn_1_);
     parse(p_,varargin{:})
     p_ = p_.Results;
+    minArgs=0;
+    maxArgs=2;
+    nargoutchk(minArgs,maxArgs)
     
+    %%
     if isempty(p_.texture) && (input_vector==1 || input_vector==2)
         temp = 10*log10(obj.vv_vv);
         temp(10*log10(obj.vv_vv)<-25) = -25;
@@ -81,4 +86,8 @@ function [im,texture] = generateImage4Classification(obj, input_vector, varargin
             im = [im, temp(:)];
     end
     obj.im = im;
+    if nargout>=1, varargout{1} = im;
+        if nargout>=2, varargout{2} = texture;
+        end
+    end
 end

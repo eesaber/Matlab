@@ -42,26 +42,30 @@ function dist_ = pairdist(x)
 end
 
 function dist_ = pairdist2(x, y)
-    % total number of x is far less than total number of y
-    dist_ = single(zeros(size(x,3), size(y,3)));
-    size_x = size(x,3);
-    size_y = size(y,3);
-    if size_x > size_y
+    % Maintain total number of y is less than total number of x
+    flag_exg = false;
+    if size(y,3) > size(x,3)
+        flag_exg = true;
         temp = y;
         y = x;
         x = temp;
         clear temp
     end
-    parfor it_x = 1 : size_x
-        ln_det_x = log10(real(det(x(:,:,it_x))));
-        inv_x = inv(x(:,:,it_x));
-        tmp = single(zeros(size(y,3),1));
-        for it_y = 1 : size_y
-            ln_det_y = log10(real(det(y(:,:,it_y))));
-            tmp(it_y) = ln_det_x-ln_det_y+...
-                real(trace(inv_x*y(:,:,it_y)));
+    % dist_(i,j) is the distance between x(:,:,i) and y(:,:,j)
+    dist_ = single(zeros(size(x,3), size(y,3)));
+    % calculate distance
+    parfor it_y = 1 : size(y,3)
+        ln_det_y = log10(real(det(y(:,:,it_y))));
+        inv_y = inv(y(:,:,it_y));
+        tmp = single(zeros(size(x,3),1));
+        for it_x = 1 : size(x,3)
+            ln_det_x = log10(real(det(x(:,:,it_x))));
+            tmp(it_x) = ln_det_y-ln_det_x+...
+                real(trace(inv_y*x(:,:,it_x)));
         end
-        dist_(it_x,:) = tmp;
+        dist_(:,it_y) = tmp;
     end
-    dist_ = dist_.';
+    if flag_exg 
+        dist_ = dist_.';
+    end
 end

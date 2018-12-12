@@ -45,7 +45,7 @@ colormap(gca, [0,0,0;0,120,0;180,100,50]/255)
 %% Generate data
 input_vector = 4;
 %[im, ~] = x_b.generateImage4Classification(input_vector,'texture',texture);
-[im, ~] = x_b.generateImage4Classification(input_vector);
+x_b.generateImage4Classification(input_vector);
 %[im, texture] = x_b.generateImage4Classification(input_vector);
 
 if 1
@@ -81,7 +81,7 @@ drg_n = 2;
                             'algo', algo, ...
                             'distance', distance_metric,...
                             'covariance', pixel_cov);
-
+%%
 x_b.showLabels(reshape(label_fcm,x_b.IMAGE_SIZE), num_c)
 z = sprintf('%s %s, $(I,J,m,n)$ = (%i,%i,%i,%i)', algo, distance_metric, num_c, num_subc, drg_m, drg_n);
 title(z,'Interpreter', 'latex')
@@ -105,6 +105,8 @@ tic
 label_svm = svmpredict(zeros(numel(x_b.vv_vv),1), double(x_b.im), model_svm);
 toc
 %%
+global kpp
+kpp = 1;
 k_cluster = 2;
 distance_metric = 'wishart'; 
 if strcmp(distance_metric, 'wishart')
