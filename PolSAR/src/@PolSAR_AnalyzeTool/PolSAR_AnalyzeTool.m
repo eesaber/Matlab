@@ -83,7 +83,7 @@ classdef PolSAR_AnalyzeTool < handle
         varargout = mySVM(obj, x, y);
         y = myMaxPooling(obj, x, r_size, c_size);
         %
-        [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+        varargout = eigenDecomposition(obj, Calculate, Filename, varargin)
         pauliDecomposition(obj, varargin)
         fourComponentDecomposition(obj, varargin)
         HAlphaDiagram(obj, H, alpha_bar, varargin)

@@ -53,11 +53,19 @@ classdef SeaIce < PolSAR_AnalyzeTool
                         logCumulant@PolSAR_AnalyzeTool(obj);
         end
 
-        function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+        function varargout = eigenDecomposition(obj, Calculate, Filename, varargin)
+            % parse output arguments
+            minArgs=0;
+            maxArgs=2;
+            nargoutchk(minArgs,maxArgs)
+            % run eigen-decomposition
             [obj.H, obj.alpha_bar] = eigenDecomposition@PolSAR_AnalyzeTool(obj,...
                 Calculate, Filename, varargin{:});
-            H = obj.H;
-            alpha_bar = obj.alpha_bar;
+            % output
+            if nargout>=1, varargout{1} = obj.H;
+                if nargout>=2, varargout{2} = obj.alpha_bar;
+                end
+            end
         end
             
         function imageKCluster(obj, nColors)

@@ -20,13 +20,16 @@ figure
     set(gca, 'Position', pos)
     plot_para('Filename','incidence_angle', 'Maximize',true, 'Ratio',[4 3 1])
 %% Bragg scattering coefficient 
-epsilon_sea = 80-1j*70;
+%epsilon_sea = 80-1j*70;
+epsilon_sea = 76-1j*48;
+epsilon_water = 86-1j*15;
 epsilon_oil = 2.3-1j*0.02;
 oil_ratio = 0.8;
 epsilon_mix = @(x) x*epsilon_oil + (1-x)*epsilon_sea;
 k = 2*pi/(physconst('LightSpeed')/1.2575e9);
 phi = 0:0.5:90;
 theta = 7.2; zeta = theta;
+%theta = 0; zeta = theta;
 phi_i = acosd(cosd(phi+theta)*cosd(zeta));
 
 %{
@@ -92,7 +95,13 @@ figure
     annotation('arrow',0.521*ones(1,2), y_ano(3,:),'Headwidth',10,'Headstyle','vback2','color','b','Linewidth',3)
     %}
     plot_para('Filename','hv_ratio_thm', 'Maximize',true, 'Ratio',[4 3 1])
-
+%%
+figure
+plot(phi, 10*log10(sigma_vv(epsilon_sea)./sigma_hh(epsilon_sea)),'k','Linewidth',2.5)
+xlabel('$\phi$ (deg)','Interpreter', 'latex')
+    ylabel('$\sigma_{vv} / \sigma_{hh}$ (dB)','Interpreter', 'latex')
+    set(gca,'Xlim',[5 30],'Ylim',[0 5],'xGrid','on','yGrid','on')
+plot_para('Filename','hv_ratio_thm', 'Maximize',true, 'Ratio',[4 3 1])
 %% Two Layer Scattering Model
 psi = asind(sind(phi)*(real(physconst('LightSpeed')/sqrt(epsilon_oil))/physconst('LightSpeed')));
 d_oil = 0.1e-3; % oil slick thickness 1mm 

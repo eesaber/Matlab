@@ -1,15 +1,16 @@
-function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
+function varargout = eigenDecomposition(obj, Calculate, Filename, varargin)
     % EIGENDECOMPOSITION implement eigen-decomposition.
     %
     % Syntax:
-    %	[H,alpha_bar] = EIGENDECOMPOSITION(Calculate, Filename)
+    %   * H = EIGENDECOMPOSITION(Calculate, Filename)
+    %   * [H, alpha_bar] = EIGENDECOMPOSITION(Calculate, Filename)
     %
     % Description:
     %   EIGENDECOMPOSITION(Calculate, Filename)
-    %	* If Calculate is 1, the entropy data will be computed and saved
-    %	with the Filename.
-    %	* If Calculate is 0, the entropy of data will be loaded from the
-    %	file Filename.
+    %   * If Calculate is 1, the entropy data will be computed and saved
+    %     with the Filename.
+    %   * If Calculate is 0, the entropy of data will be loaded from the
+    %     file Filename.
     % Name-Value Pair Arguments:
     %   * SaveResult - logical
     %     If Calculate is 1, then the calculated H, alpha_bar, ... etc 
@@ -17,8 +18,8 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     %     If Calculate is 0, it will not do anything.
     %
     % Outputs:
-    %    H - Image of entropy of the PolSAR data.
-    %    alpha_bar - Image of average alpha angle of the PolSAR data.
+    %   * H - Image of entropy of the PolSAR data.
+    %   * alpha_bar - Image of average alpha angle of the PolSAR data.
     %
     % Other m-files required: none
     % Subfunctions: none
@@ -28,11 +29,17 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     % Author: K.S. Yang
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
+
+    %% Parse input/output arguments
     parse_ = inputParser;
     validationFcn_1_ = @(x) validateattributes(x,{'logical'},{});
     addParameter(parse_, 'SaveResults', 0, validationFcn_1_);
     parse(parse_,varargin{:})
-    
+    % parse output arguments
+    minArgs=0;
+    maxArgs=2;
+    nargoutchk(minArgs,maxArgs)
+
     if isempty(obj.T_11)
         obj.cov2coh(); 
     end
@@ -100,5 +107,11 @@ function [H, alpha_bar] = eigenDecomposition(obj, Calculate, Filename, varargin)
     if obj.IS_BIGFILE
         clear A_1 A_2 lambda
         obj.readPolsarData();
+    end
+
+    %% Return
+    if nargout>=1, varargout{1} = H;
+        if nargout>=2, varargout{2} = alpha_bar;
+        end
     end
 end

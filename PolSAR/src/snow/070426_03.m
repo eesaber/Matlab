@@ -10,6 +10,15 @@ x_c = SeaIce([624 4608],'ALOS PALSAR', plotSetting,...
         'inputDataDir', fin(3,:),  'outputDataDir', fout(3,:));
 global summer
 summer = 0;
+%%
+x_c.HAlphaDiagram(x_c.H(:), x_c.alpha_bar(:),'Seglinestyle','k--')
+figure
+imagesc(x_c.H)
+x_c.plotSetting([0 1])
+Plotsetting_gray()
+set(gca,'Visible','off')
+colorbar
+plot_para('Maximize',true,'Filename',[x_c.OUTPUT_PATH '/Entropy'])
 %% Ground truth data
 load('/media/akb/2026EF9426EF696C/raw_data/20070426/mask_070426_03.mat')
 bw = bw_1 + bw_2 + bw_3 + bw_4 + bw_5 + bw_6 + bw_7 + bw_8;
@@ -197,9 +206,9 @@ for it = 1 : 36
     imagesc(flipud(squeeze(y_val(it,:,:))))
 end
 %%
-load(['/home/akb/Code/PolSAR_ML/output/x_c.y_hat_070426_3_', num2str(input_vector),'.mat'])
+load(['/home/akb/Code/PolSAR_ML/output/y_hat_070426_3_', num2str(input_vector),'.mat'])
 bw_cnn = imresize(reshape(x_c.groundtruth, x_c.IMAGE_SIZE), new_size, 'method', 'nearest');
-temp = x_c.y_hat;
+temp = y_hat;
 x_c.y_hat = zeros(size(bw_cnn));
 if 1
     it = 1;

@@ -1,4 +1,4 @@
-function map_beaufort()    
+function map_beaufort(t)    
     figure('Color','w')
     set(gca,'Visible','off')
     %{
@@ -8,12 +8,13 @@ function map_beaufort()
     setm(gca,'MLabelParallel',0,'ParallelLabel','on')
     %}
     % eqdconic flatplrq
-    axesm('eqdcylin','MapLatLimit',[73 77],'MapLonLimit',[-159 -156],...
-    'Frame','off','Grid', 'on','MlineLocation',1,'PlineLocation',1,...
+    axesm('eqdcylin','MapLatLimit',[73.5 75],'MapLonLimit',[-159 -157],...
+    'Frame','off','Grid', 'on','MlineLocation',1,'PlineLocation',0.5,...
+    'MLabelRound',-1,'PLabelRound',-1,...
     'GLineStyle','.-','MeridianLabel','on','ParallelLabel','on',...
     'PlabelMeridian','east','MlabelParallel','south',...
     'LabelFormat','signed','LabelRotation','on',...
-    'Fontsize',32)
+    'FontName','CMU Serif Roman','Fontsize',32)
     %daspectm('m',1)
     %view(-33,18)
     %{
@@ -30,11 +31,11 @@ function map_beaufort()
     geoshow('worldrivers.shp','Color', 'blue')
     tightmap
     hold on 
-    roi()
+    roi(t)
     plane_trajectory()
     hold off
     %view(-90, 90);
-    %plot_para('Maximize',true,'Filename','map','Ratio',[5,1 ,1])
+    plot_para('Maximize',true,'Filename','rough_map')
     
 end
 function plane_trajectory()
@@ -42,22 +43,28 @@ function plane_trajectory()
     lon = double(ncread('/home/akb/Code/Matlab/RDWES1B_CS_OFFL_SIR_SAR_1B_20151005T123541_20151005T124356_C001.nc','lon'));
     elev = double(ncread('/home/akb/Code/Matlab/RDWES1B_CS_OFFL_SIR_SAR_1B_20151005T123541_20151005T124356_C001.nc','elev'));
     plotm(lat, lon, 'LineWidth',3)
+    scatterm(lat(855), lon(855), 64, 'filled','o','c')
+    scatterm(lat(878), lon(878), 64, 'filled','o','y')
     lat = lat(1:3000);
     lon = lon(1:3000);
     elev = elev(1:3000);
     l = 0.01;
+    %{
     surfacem([lat(:) l+lat(:)], [lon(:) l+lon(:)], [elev(:) elev(:)],...
         'CData',[Stat(elev(:)).' Stat(elev(:)).'],...
         'AlphaData',0.1*ones(size([lat lat])),...
         'AlphaDataMapping','none')
     colormap jet
+    %}
 end
-function roi()
+function roi(t)
     info = geotiffinfo('/media/akb/2026EF9426EF696C/raw_data/Beaufort/beaufo_01105_15148_004_151006_L090_CX_01_hgt.tif');
+    %{
     fid = fopen('/media/akb/2026EF9426EF696C/raw_data/Beaufort/beaufo_01105_15148_004_151006_L090VVVV_CX_01.grd','r','ieee-le'); 
     vv_vv = (single(fread(fid, [17186 53672],'real*4'))).';
     t = imresize(10*log10(vv_vv), 0.1);
     t = reshape(Stat(t), size(t));
+    %}
     t(t==0) = 255;
     info.SpatialRef.RasterSize = size(t);
     geoshow(t,info.SpatialRef,'DisplayType','Image')

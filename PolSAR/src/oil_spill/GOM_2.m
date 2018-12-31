@@ -16,30 +16,19 @@ x = [1900, 4200, 5100];
 y = [3100, 1600, 500];
 pow_range = [-35 5];
 size_N = numel(hh_hh);
-span = hh_hh+vv_vv+2*hv_hv;
 plot_set = @ Plotsetting_GOM2;
 mask = @(x) ones(x,x)/x^2;
 mask_size = 9;
 %% 4-component decomposition
 FourComp_decomp(hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv, '4decomp','Plotsetting', plot_set, 'Powrange',[-35 5])
-%FourComp_decomp(temp(hh_hh), temp(hv_hv), temp(vv_vv), temp(hh_hv), temp(hh_vv), temp(hv_vv), '4decomp','Plotsetting', f_plot, 'Powrange',[-35 5])
-%% Span
+%% Radar-cross section
+span = hh_hh+vv_vv+2*hv_hv;
 figure
     imagesc(10*log10(span))
     Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',"(dB)")
     colormap gray
-    plot_para('Filename','span', 'Maximize',true)
-    %Section_GOM2(10*log10(span./(trimmean(span,3,2)*ones(1,8000))),x,y,'Span($\bar{\bar{S}}) / \mu$ (dB)' ,'span')
-%%
-figure
-    imagesc(10*log10(hh_hh))
-    Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',"(dB)")
-    colormap gray
-    plot_para('Ratio',[4 3 1])
-    Section_GOM2(10*log10(hh_hh./(trimmean(hh_hh,3,2)*ones(1,8000))),x,y,'$|S_{hh}|^2/ \mu $ (dB)','hh_hh')
-    %plot_para('Filename','S_hh', 'Maximize',true, 'Ratio',[4 3 1])
-%%
-f_name = 'vv_vv';
+    plot_para('Maximize',true,'Filename','Span')
+f_name = 'sigma_vv';
 figure
     imagesc(10*log10(vv_vv))
     Plotsetting_GOM2(pow_range, 1,'Colorbar_unit',"(dB)")
@@ -47,7 +36,6 @@ figure
     plot_para('Ratio',[4 3 1])
     Section_GOM2(10*log10(vv_vv./(trimmean(vv_vv,3,2)*ones(1,8000))),x,y,'$|S_{vv}|^2/ \mu $ (dB)',f_name)
     plot_para('Ratio',[4 3 1])
-    
     y_ano = [0.85 0.8; 0.5 0.55];
     annotation('arrow',0.425*ones(1,2), y_ano(1,:),'Headwidth',10,'Headstyle','vback2','color','k','Linewidth',3)
     annotation('arrow',0.49*ones(1,2),  y_ano(1,:),'Headwidth',10,'Headstyle','vback2','color','r','Linewidth',3)    
@@ -58,15 +46,31 @@ figure
     annotation('arrow',0.279*ones(2,1), y_ano(2,:),'Headwidth',10,'Headstyle','vback2','color','k','Linewidth',3)
     annotation('arrow',0.287*ones(2,1), y_ano(2,:),'Headwidth',10,'Headstyle','vback2','color','r','Linewidth',3)
     plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])
-    
-%%
 figure
-    imagesc(10*log10(conv2(hv_hv, mask(mask_size), 'same')))
+    imagesc(10*log10(hh_hh))
+    Plotsetting_GOM2(pow_range, 1, 'Colorbar_unit',"(dB)")
+    colormap gray
+    plot_para('Ratio',[4 3 1])
+    Section_GOM2(10*log10(hh_hh./(trimmean(hh_hh,3,2)*ones(1,8000))),x,y,'$|S_{hh}|^2/ \mu $ (dB)','hh_hh')
+    plot_para('Maximize',true,'Filename','sigma_hh', 'Ratio',[4 3 1])
+figure
+    imagesc(10*log10(hv_hv))
     Plotsetting_GOM2([-35 -25], 1,'Colorbar_unit',"(dB)")
     plot_para('Ratio',[4 3 1])
     colormap gray
     Section_GOM2(10*log10(hv_hv./(trimmean(hv_hv,3,2)*ones(1,8000))),x,y,'$|S_{hv}|^2$ (dB)','hv_hv')
-    %plot_para('Filename','S_hv', 'Maximize',true, 'Ratio',[4 3 1])
+    plot_para('Maximize',true,'Filename','sigma_hv')
+
+%%
+close all
+I = 10*log10(conv2(vv_vv,mask(9),'same'));
+I(I<-35) = -35;
+I(I>5) = 5;
+I = (255*(I+35)/40);
+BW = edge(I,'Canny',[0.01 0.04],5);
+figure(1)
+imagesc(BW)
+set(gca, 'Ydir', 'normal')
 %% Find boardar
 close all
 boarder = conv2(filloutliers(vv_vv(100:end,:), 0,2),mask(mask_size),'same');
@@ -159,7 +163,7 @@ clear T_11 T_22 T_33 T_12 T_13 T_23
 temp_C = cat(1,cat(2, reshape(hh_hh,[1,1,size_N]), sqrt(2)*reshape(hh_hv,[1,1,size_N]), reshape(hh_vv,[1,1,size_N])), ......
              cat(2,reshape(sqrt(2)*conj(hh_hv),[1,1,size_N]), reshape(2*hv_hv,[1,1,size_N]), reshape(sqrt(2)*hv_vv,[1,1,size_N])),.......
              cat(2,reshape(conj(hh_vv),[1,1,size_N]), reshape(conj(sqrt(2)*hv_vv),[1,1,size_N]), reshape(vv_vv,[1,1,size_N])));
-[kai_1, kai_2] = logCumulent(temp_C);
+[kai_1, kai_2, kai_3] = Logcumulant(temp_C);
 %%
 temp = zeros(size(hh_hh)) == 1;
 temp(1500:2000, 4500:5000) = true;
@@ -175,13 +179,15 @@ xlabel('$\kappa_1\{\bar{\bar{C}}\}$','interpreter','latex')
 ylabel('$\kappa_2\{\bar{\bar{C}}\}$','interpreter','latex')
 set(gca,'box','on')
 plot_para('Maximize',true, 'Filename','log_cumulant')
+histogram2(kai_1,kai_2)
+
 %% Eigen-decomposition
 read = 1;
 f_name = 'eigen_9x9avg';
 if read
-    [~,lambda] = Eigen_decomp('Filename', f_name, 'Plotsetting', plot_set);
+    [H, alpha] = Eigen_decomp('Filename', f_name, 'Plotsetting', plot_set);
 else
-    [~,lambda] = Eigen_decomp('T',temp_T,'Calculate',true,'Filename',f_name, 'Plotsetting', plot_set);
+    [H, alpha] = Eigen_decomp('T',temp_T,'Calculate',true,'Filename',f_name, 'Plotsetting', plot_set);
 end
 clear temp_T
 T_11 = (hh_hh+vv_vv+hh_vv+conj(hh_vv))/2;
@@ -192,16 +198,6 @@ T_13 = hh_hv + conj(hv_vv);
 T_23 = hh_hv - conj(hv_vv);
 
 %% Indicator
-
-%{
-figure
-    imagesc(H+alpha_bar/180*pi+A_1+abs(hh_vv)./sqrt(hh_hh.*vv_vv))
-    Plotsetting_GOM2([0 3])
-    xlabel('Azimuth (km)')
-    ylabel('Range (km)') 
-    plot_para('Filename','para_F', 'Maximize',true)
-%}
-%%
 close all
 f_name = 'para_confomty';
 mu = 2*(-hv_hv+real(hh_vv))./(hh_hh + 2*hv_hv + vv_vv);
@@ -232,7 +228,7 @@ figure
     plot_para('Filename', 'para_muller', 'Maximize',true)
 %%
 close all
-f_name = 'para_corelation12';
+f_name = 'para_gamma12';
 figure
     imagesc(abs(T_12)./sqrt(T_11.*T_22))
     Plotsetting_GOM2([0 1],1)
@@ -253,7 +249,7 @@ figure
     Section_GOM2((T_22-T_33)./(T_22+T_33),x,y, '$\gamma_{r r_\perp}$',f_name)
     plot_para('Maximize',true,'Filename',[f_name '_am'],'Ratio',[4 3 1])
 %%
-f_name = 'para_dielectric';
+f_name = 'para_dielectric';orizontal distance to near range:  4512.83838 m
 figure
     %imagesc(atand((T_22+T_33)./T_11))
     imagesc((T_22+T_33)./T_11)

@@ -7,10 +7,13 @@ figure
 [bw_testing(:,:,8), ver_x, ver_y] = roipoly(flipud(img4roi));
 %%
 bw = zeros(x_b.IMAGE_SIZE);
-for it = 1 : size(bw_testing,3), bw = bw+bw_testing(:,:,it); end
-bw = bw > 0;
+for it = 1 : 7, bw = bw+bw_testing(:,:,it); end
+bw = double(~logical(bw));
+bw(bw_testing(:,:,8)) = 2;
+
 figure
-imagesc(bw)
+imagesc(flipud(bw))
+%caxis([0 1])
 %save('/media/akb/2026EF9426EF696C/raw_data/20090811/groundtruth', 'bw', 'bw_testing')
 %gt = logical(bw);
 %save('/home/akb/Code/PolSAR_ML/data/final_version/mask_090811', 'gt')
@@ -40,12 +43,13 @@ global summer
 summer = 1;
 %% Reference Data
 load('/media/akb/2026EF9426EF696C/raw_data/20090811/groundtruth')
-x_b.y_hat = flipud(bw~=0);
+x_b.groundtruth = bw;
 clear gt bw_testing bw
+
 figure
-imagesc(x_b.y_hat)
+imagesc(x_b.groundtruth)
 set(gca,'Ydir','normal','Visible','off')
-colormap(gca, [0,120,0; 255,255,0]/255)
+colormap(gca, [255,255,0;0,120,0; 123 1 2]/255)
 plot_para('Filename',[x_b.OUTPUT_PATH '/label_090811'],'Maximize',true)
 
 %% Generate data
@@ -71,7 +75,7 @@ end
 %save(['/home/akb/Code/PolSAR_ML/data/image_090811_('+ num2str(input_vector)+').mat'],'im')
 %% Test sigle algorithm
 algo = 'GFCM';
-num_c = 3;
+num_c = 2;
 num_subc = 2;
 %distance_metric = 'squaredeuclidean';
 distance_metric = 'wishart';
@@ -81,14 +85,13 @@ drg_n = 2;
                             'clusterNum', int32(num_c), ...
                             'subClusterNum', int32(num_subc), ...
                             'max_iter', int32(15), ...
-                            'u', 1,...
                             'drg_m', drg_m, ...
                             'drg_n', drg_n, ...
                             'algo', algo, ...
                             'distance', distance_metric, ...
                             'covariance', pixel_cov);
 
-%%
+
 x_b.showLabels(reshape(label_fcm,x_b.IMAGE_SIZE), num_c)
 z = sprintf('%s %s, $(I,J,m,n)$ = (%i,%i,%i,%i)', algo, distance_metric, num_c, num_subc, drg_m, drg_n);
 title(z,'Interpreter', 'latex')
@@ -100,7 +103,7 @@ label_svm = x_b.mySVM(double(reshape(x_b.im, [x_b.IMAGE_SIZE, size(x_b.im,2)])),
 global kpp
 kpp = 1;
 %%
-k_cluster = 3;
+k_cluster = 2;
 distance_metric = 'wishart'; 
 if strcmp(distance_metric, 'wishart')
     [label_kmeans, c] = x_b.myKmeans(x_b.im,...
@@ -129,23 +132,24 @@ load('/home/akb/Code/PolSAR_ML/data/output/y_hat_090811.mat')
 label_nn = y_hat;
 clear y_hat
 %%
-x_b.y_hat = reshape(label_kmeans, x_b.IMAGE_SIZE);
-x_b.y_hat = x_b.y_hat == 2;
+x_b.y_hat = reshape(label_fcm, x_b.IMAGE_SIZE);
+x_b.y_hat = x_b.y_hat == 1;
 figure
 imagesc(x_b.y_hat)
 set(gca,'Ydir','normal','Visible','off')
 colormap(gca, [0,120,0; 255,255,0]/255)
-plot_para('Filename',[x_b.OUTPUT_PATH '/label_090811_km_4'],'Maximize',true)
-
+plot_para('Filename',[x_b.OUTPUT_PATH '/label_090811_fcm_4a'],'Maximize',true)
+%%
 disp('--------------fcm-------------')
-fprintf('Acc: %f\n', sum(sum(x_b.y_hat == x_b.y_hat))/numel(x_b.y_hat))
+fprintf('Acc: %f\n', sum(sum(x_b.y_hat == x_b.groundtruth))/numel(x_b.groundtruth))
 % Uppercase: predict, lowercase: actual
-Mm = sum(sum((x_b.y_hat==1).*(x_b.y_hat==1)))/numel(x_b.y_hat);
-Mf = sum(sum((x_b.y_hat==1).*(x_b.y_hat==0)))/numel(x_b.y_hat);
-Fm = sum(sum((x_b.y_hat==0).*(x_b.y_hat==1)))/numel(x_b.y_hat);
-Ff = sum(sum((x_b.y_hat==0).*(x_b.y_hat==0)))/numel(x_b.y_hat);
-fprintf('Acc:\n %f, %f\n %f ,%f \n', Mm, Mf, Fm, Ff);
-clear Mm Mf Fm Ff
+confmat = zeros(2,2);
+confmat(1,1) = sum(sum((x_b.y_hat==1).*(x_b.groundtruth==0)))/numel(x_b.groundtruth);
+confmat(1,2) = sum(sum((x_b.y_hat==1).*(x_b.groundtruth~=0)))/numel(x_b.groundtruth);
+confmat(2,1) = sum(sum((x_b.y_hat==0).*(x_b.groundtruth==0)))/numel(x_b.groundtruth);
+confmat(2,2) = sum(sum((x_b.y_hat==0).*(x_b.groundtruth~=0)))/numel(x_b.groundtruth);
+fprintf('%s\n',['+' repmat('-',1,7) '+' repmat('-',1,7) '+'])
+fprintf(repmat(['| %.3f | %.3f |\n' '+' repmat('-',1,7) '+' repmat('-',1,7) '+\n'], 1,size(confmat,1)), confmat');
 %% CNN
 img_h = 256;
 img_w = 256;
@@ -209,23 +213,27 @@ x_b.HAlphaDiagram(H(:,1:4269), alpha(:,1:4269)) % H/alpha diagram
 %%
 temp = 10*log10(x_b.vv_vv./x_b.hh_hh);
 figure
-    histogram2(H(:), temp(:),'DisplayStyle','tile',...
+    histogram2(x_b.H(:), temp(:),'DisplayStyle','tile',...
         'YBinLimits',[-4 4],'XBinLimits',[0 1],'NumBins',[750,750],...
         'Normalization','pdf');
     xlabel('$H$','Interpreter', 'latex')
     ylabel('$\sigma_{vv}/\sigma_{hh}$','Interpreter', 'latex')
     colormap jet
     c = colorbar;
+    Plotsetting_gray()
     set(gca,'clim',[0,0.8],'Color',[0 0 0]+0.7,'XGrid','off','YGrid','off')
-    plot_para('Maximize',true, 'Filename',[x_b.OUTPUT_PATH '/H_Copol_090811'])
+    plot_para('Maximize',true, 'Filename',[x_b.OUTPUT_PATH '/H_Copol_090811_bw'])
     %c.Ticks = [0.1:0.1:0.3,0.35];
 %%
 figure
-imagesc(H)
+imagesc(x_b.H)
 x_b.plotSetting([0 1])
+Plotsetting_gray()
 set(gca,'Visible','off')
 colorbar
 plot_para('Maximize',true,'Filename',[x_b.OUTPUT_PATH '/Entropy'])
+%%
+x_b.paraRatioVVHH()
 %%
 x_b.RCS('vv',true)
 %imagesc(10*log10([x_b.vv_vv, x_b.vv_vv(:,678:end)]))
