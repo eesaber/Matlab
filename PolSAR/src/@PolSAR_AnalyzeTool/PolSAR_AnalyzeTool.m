@@ -34,6 +34,7 @@ classdef PolSAR_AnalyzeTool < handle
         POW_RANGE = [-25 -5];
         plotSetting;
         IS_BIGFILE = false;
+        hh; hv; vv;
         hh_hh; hv_hv; vv_vv; hh_hv; hh_vv; hv_vv;
         T_11; T_22; T_33; T_12; T_13; T_23;
     end
@@ -42,9 +43,12 @@ classdef PolSAR_AnalyzeTool < handle
             parse_ = inputParser;
             validationFcn_1_ = @(x) validateattributes(x,{'char'},{'nonempty'});
             validationFcn_2_ = @(x) validateattributes(x,{'logical'},{});
+            validationFcn_3_ = @(x) validateattributes(x,{'scalar'},{});
             addParameter(parse_,'inputDataDir', '',validationFcn_1_);
             addParameter(parse_,'outputDataDir','',validationFcn_1_);
             addParameter(parse_,'null', false, validationFcn_2_);
+            addParameter(parse_,'offset', 0, validationFcn_3_);
+            addParameter(parse_,'size', -1, validationFcn_3_);
             parse(parse_,varargin{:})
             if parse_.Results.null 
                 return;
@@ -68,11 +72,13 @@ classdef PolSAR_AnalyzeTool < handle
             obj.plotSetting = plotSetting;
             obj.IMAGE_SIZE = image_size;
             obj.PLATFORM =  carrier;
-            obj.readPolsarData()
+            obj.readPolsarData('offset', parse_.Results.offset, ...
+                               'size', parse_.Results.size);
+            
             
         end
         % class function declearation
-        readPolsarData(obj);
+        readPolsarData(obj, varargin);
         %
         varargout = logCumulant(obj)
         logCumulantDiagram(obj, kai_2, kai_3)

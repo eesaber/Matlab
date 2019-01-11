@@ -141,6 +141,12 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 			dir = '/media/akb/2026EF9426EF696C/raw_data/North_Sea_2/';
 			task = 'norway_00709_15091_004_150610_L090';
 			verid = '01';
+        case 13 
+            im_size = [3300, 26145];
+            im_size_c = im_size.*[2,1];
+			dir = '/media/akb/2026EF9426EF696C/raw_data/California_Valley/160614/';
+			task = 'Snjoaq_14511_16054_011_160614_L090';
+			verid = '01';
 		otherwise 
 			error('You need to select a mission')
 	end
@@ -148,35 +154,35 @@ function [hh_hh, hv_hv, vv_vv, hh_hv, hh_vv, hv_vv] = Data_IO(varargin)
 	if(parse_.Results.ReadNewFile)
 		disp('Parsing input file...')
 		fid = fopen([dir task 'HHHH_CX_' verid '.' typ ],'r','ieee-le'); 
-		hh_hh = (single(fread(fid, im_size,'real*4')));
+		hh_hh = (fread(fid, im_size,'real*4=>single'));
 		%hh_hh = single((fread(fid, im_size,'real*4')));
         %hh_hh = hh_hh(:,im_size(2)/2);
         
 		fid = fopen([dir task 'HVHV_CX_' verid '.' typ ],'r','ieee-le'); 
-		hv_hv = (single(fread(fid, im_size,'real*4')));
+		hv_hv = single(fread(fid, im_size,'real*4=>single'));
         %hv_hv = single((fread(fid, im_size,'real*4')));
         %hv_hv = hv_hv(:,im_size(2)/2);
         
 		fid = fopen([dir task 'VVVV_CX_' verid '.' typ ],'r','ieee-le'); 
-		vv_vv = (single(fread(fid, im_size,'real*4')));
+		vv_vv = fread(fid, im_size,'real*4=>single');
         %vv_vv = single((fread(fid, im_size,'real*4')));
 		%vv_vv = vv_vv(:,im_size(2)/2);
         
 		fid = fopen([dir task 'HVVV_CX_' verid '.' typ ],'r','ieee-le'); 
-		hv_vv = fread(fid,im_size_c,'real*4');
-		hv_vv = (single(hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
+		hv_vv = fread(fid,im_size_c,'real*4=>single');
+		hv_vv = hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :);
         %hv_vv = single((hv_vv(1:2:end, :) + 1j*hv_vv(2:2:end, :)));
         %hv_vv = hv_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHVV_CX_' verid '.' typ ],'r','ieee-le'); 
-		hh_vv = single(fread(fid,im_size_c,'real*4'));
-		hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
+		hh_vv = fread(fid,im_size_c,'real*4=>single');
+		hh_vv = hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :);
 		%hh_vv = (hh_vv(1:2:end, :) + 1j*hh_vv(2:2:end, :));
         %hh_vv = hh_vv(:,im_size(2)/2);
 		
 		fid = fopen([dir task 'HHHV_CX_' verid '.' typ ],'r','ieee-le'); 
-		hh_hv = single(fread(fid,im_size_c,'real*4'));
-		hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
+		hh_hv = fread(fid,im_size_c,'real*4=>single');
+		hh_hv = hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :);
 		%hh_hv = (hh_hv(1:2:end, :) + 1j*hh_hv(2:2:end, :));
         %hh_hv = hh_hv(:,im_size(2)/2);
         

@@ -32,7 +32,7 @@ function varargout = logCumulant(obj)
     % email: fbookzone@gmail.com
     %------------- <<<<< >>>>>--------------
 
-    minArgs=1;  
+    minArgs=0;  
     maxArgs=6;
     nargoutchk(minArgs,maxArgs)
     row = 2;
