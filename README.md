@@ -1,5 +1,17 @@
 # MATLAB Code for the Research in Graduate School
 
+## What is Synthetic-aperture radar (SAR)?
+
+Synthetic-aperture radar (SAR) is a radar that create two-dimensional images of landscapes under any weather circumstance.
+
+And, what is polarimetric SAR (PolSAR)?
+Note that objects reflect radar waves with different intensities with respect to the polarization of the incident waves.
+So, we can obtain the information of the objects by analyzing the characteristic of reflect waves.
+
+SAR Wiki: https://en.wikipedia.org/wiki/Synthetic-aperture_radar
+
+PolSAR Wiki: https://en.wikipedia.org/wiki/Polarimetry
+
 ## Folder - VelocitySAR
 
 The first research topic in graduate school. The research is aimed to detect the velocity of moving target in the radar image.
@@ -7,14 +19,31 @@ It is known that the moving target makes images blur in synthetic aperture radar
 
 ## Folder - PolSAR
 
-The source code of radar image toolbox for polarimetric synthetic aperture radar (PolSAR) is including in this folder.
+##
+
+The source code of radar image toolbox for polarimetric synthetic aperture radar (PolSAR) was including in this folder.
+They are inside the folders 
+[PolSAR/src/@PolSAR_AnalyzeTool](https://github.com/eesaber/Matlab/tree/master/PolSAR/src/%40PolSAR_AnalyzeTool)
+and [PolSAR/src/@SeaIce](https://github.com/eesaber/Matlab/tree/master/PolSAR/src/%40SeaIce), respectively.
 The toolbox was implemented to generate the experiment results for the master thesis.
 
 ### PolSAR_AnalyzeTool
 
-`PolSAR_AnalyzeTool`is the class for PolSAR analysis. Algorithms for radar image analysis were impelmented as memeber function, including `eigenDecomposition()`, `fourComponentDecomposition()` and `pauliDecomposition()`. 
-And, memeber functions `para<name>()`, including `paraCoPolCorrelation()`, `paraMoisture()` and `paraRoughness1()`,  etc. 
-were used to extract the characteristic of each pixel in radar image.
+`PolSAR_AnalyzeTool`is the class for analyzing the characteristic of PolSAR images. 
+It wraps the radar images, classification results as data member, and implements the member function for analyzing PolSAR images.
+
+1. The conventional radar image analysis algorithms were implemented as class member function, including `eigenDecomposition()`, `fourComponentDecomposition()` and `pauliDecomposition()`. 
+The conventional radar image analysis algorithms were used to classified the objects in the image.
+
+2. We can assess polarimetric characteristic of the object in the image by using the member functions `para<name>()`, 
+including `paraCoPolCorrelation()`, `paraMoisture()` and `paraRoughness1()`,  etc. 
+For example, we can find the level of roughness of the ground by calling `paraRoughness1()`.
+
+3. The machine learning algorithms, including support vector machine (SVM), fuzzy *c*-means (FCM) and *k*-means were wrapped in the member functions, `mySVM()`, `myFCM()` and `myKmeans()`, respectively. 
+By calling these function, the supervised model, SVM, will trained on image and then show the classified results; 
+the unsupervised model, FCM and *k*-means will show the classified results.
+
+The deep learning model, convolutional neural network (CNN), is implemented by python, thus, in [other repository](https://github.com/eesaber/PolSAR_ML).
 
 #### How to Use
 ---------------
@@ -47,11 +76,11 @@ in the console. Then, the usage of `fourComponentDecomposition` is shown as
  
   Inputs:
   Name-Value Pair Arguments:
-     ('vv', s) - The pixel above SNR thershold is marked. If s is ture, 
+     ('vv', s) - The pixel above SNR threshold is marked. If s is ture, 
                  function will show the figure.
-     ('hh', s) - The pixel above SNR thershold is marked. If s is ture, 
+     ('hh', s) - The pixel above SNR threshold is marked. If s is ture, 
                  function will show the figure.
-     ('hv', s) - The pixel above SNR thershold is marked. If s is ture, 
+     ('hv', s) - The pixel above SNR threshold is marked. If s is ture, 
                  function will show the figure.
  
   Example: 
@@ -71,7 +100,7 @@ in the console. Then, the usage of `fourComponentDecomposition` is shown as
 `SeaIce` was the derived class from `PolSAR_AnalyzeTool`. This class was designed for sea-ice classification. The usage is the same as
 `PolSAR_AnalyzeTool`, and the member functions, which were specific for image classification, were implemented.
 
-How To Use
+#### How To Use
 -------------
 * Initialization a class object as
 ```Matlab
