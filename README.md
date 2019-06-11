@@ -43,7 +43,7 @@ For example, we can find the level of roughness of the ground by calling `paraRo
 By calling these function, the supervised model, SVM, will trained on image and then show the classified results; 
 the unsupervised model, FCM and *k*-means will show the classified results.
 
-The deep learning model, convolutional neural network (CNN), is implemented by python, thus, in [other repository](https://github.com/eesaber/PolSAR_ML).
+Note: The deep learning model, convolutional neural network (CNN), for PolSAR image was implemented by python which is in [repository](https://github.com/eesaber/PolSAR_ML/tree/master/src/sea_ice).
 
 #### How to Use
 ---------------
